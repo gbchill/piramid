@@ -1,4 +1,3 @@
-
 # Pirmid 🔺
 
 > **Neuro-symbolic vector database** that solves retrieval ambiguity in RAG pipelines with a two-stage query engine: filter on **symbolic facts** first, then rank by **neural similarity**.
@@ -12,6 +11,7 @@ Traditional vector databases store a single embedding for each document. This cr
 **Query:** "Where can I deposit money at a bank?"
 
 **What happens with pure vector search:**
+
 ```
 Results (by similarity score):
 1. "The river bank was flooded"           ← 0.87 similarity ❌
@@ -21,6 +21,7 @@ Results (by similarity score):
 ```
 
 **Why it fails:**
+
 - The word "bank" has 5+ meanings (financial, river, storage, tilt, etc.)
 - Vector embeddings average all meanings into one "vibe"
 - Similar-sounding but semantically wrong documents rank high
@@ -28,11 +29,11 @@ Results (by similarity score):
 
 ### More Real-World Failures
 
-| Query | Wrong Results (High Similarity) | Why |
-|-------|--------------------------------|-----|
-| "Apple product launches" | "Apple pie recipes" | "Apple" is ambiguous |
-| "Python web frameworks" | "Python snake habitats" | "Python" has multiple meanings |
-| "Java security updates" | "Java coffee origins" | Can't distinguish programming vs. coffee |
+| Query                    | Wrong Results (High Similarity) | Why                                      |
+| ------------------------ | ------------------------------- | ---------------------------------------- |
+| "Apple product launches" | "Apple pie recipes"             | "Apple" is ambiguous                     |
+| "Python web frameworks"  | "Python snake habitats"         | "Python" has multiple meanings           |
+| "Java security updates"  | "Java coffee origins"           | Can't distinguish programming vs. coffee |
 
 **The core issue:** Vector search is *vibes-only*. It has no concept of **facts**.
 
@@ -45,6 +46,7 @@ Pirmid doesn't just match embeddings. It understands **what** you're asking abou
 For every document, Pirmid stores **two** representations:
 
 #### 1. Symbolic Facts (Structured Knowledge)
+
 ```json
 {
   "doc_id": "doc_123",
@@ -67,6 +69,7 @@ For every document, Pirmid stores **two** representations:
 ```
 
 #### 2. Neural Vector (Semantic Embedding)
+
 ```python
 [0.12, -0.45, 0.89, ..., 0.34]  # 768-dimensional vector
 ```
@@ -116,6 +119,7 @@ The key innovation: **Facts first, vibes second.**
 ```
 
 **Benefits:**
+
 - ✅ **Precision**: Only factually relevant documents
 - ✅ **Speed**: Vector search on 500 docs, not 1M
 - ✅ **Accuracy**: Combines exact-match (facts) + fuzzy-match (semantics)
@@ -176,6 +180,7 @@ curl -X POST "http://localhost:8000/upsert" \
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -204,6 +209,7 @@ curl -X POST "http://localhost:8000/upsert" \
 Performs two-stage neuro-symbolic search.
 
 **Python Example:**
+
 ```python
 import requests
 
@@ -224,6 +230,7 @@ print(response.json())
 ```
 
 **Response:**
+
 ```json
 {
   "query": "What did Apple launch in 2024?",
@@ -274,6 +281,7 @@ response = requests.post(
 ### Symbolic Extraction Pipeline
 
 **LLM Prompt** (for fact extraction):
+
 ```python
 SYSTEM_PROMPT = """
 Extract structured facts from the text in JSON format:
@@ -337,6 +345,7 @@ labels, distances = index.knn_query(query_vector, k=10)
 ```
 
 **Why HNSW?**
+
 - Fast: O(log N) search complexity
 - Accurate: 95%+ recall@10
 - Memory efficient: ~100 bytes per vector
@@ -371,26 +380,28 @@ labels, distances = index.knn_query(query_vector, k=10)
 ### Dataset: MS MARCO Passage Ranking
 
 **Setup:**
+
 - 8.8M passages
 - 6,980 queries
 - Metric: Recall@10 (what % of relevant docs in top-10?)
 
-| Method | Latency (ms) | Recall@10 | Notes |
-|--------|--------------|-----------|-------|
-| **BM25** (lexical) | 50 | 68.5% | Keyword-only, no semantics |
-| **Dense Retrieval** (pure vector) | 80 | 76.2% | Fails on polysemy |
-| **Pirmid** (neuro-symbolic) | 120 | **89.4%** | 17% improvement! |
+| Method                                  | Latency (ms) | Recall@10       | Notes                      |
+| --------------------------------------- | ------------ | --------------- | -------------------------- |
+| **BM25** (lexical)                | 50           | 68.5%           | Keyword-only, no semantics |
+| **Dense Retrieval** (pure vector) | 80           | 76.2%           | Fails on polysemy          |
+| **Pirmid** (neuro-symbolic)       | 120          | **89.4%** | 17% improvement!           |
 
 ### Real Query Examples
 
 **Query:** "Python async programming"
 
-| System | Top Wrong Result | Rank |
-|--------|------------------|------|
+| System      | Top Wrong Result                       | Rank  |
+| ----------- | -------------------------------------- | ----- |
 | Pure Vector | "Python snake's asynchronous movement" | #3 ❌ |
-| Pirmid | (none in top-10) | ✅ |
+| Pirmid      | (none in top-10)                       | ✅    |
 
 **Why Pirmid wins:**
+
 - Stage 1 filters to `domain: "programming"` entities
 - Stage 2 ranks by semantic relevance within programming docs
 
@@ -423,11 +434,11 @@ from pirmid.extractors.base import BaseExtractor
 
 class BiomedExtractor(BaseExtractor):
     """Extract medical entities (diseases, drugs, proteins)"""
-    
+  
     def extract(self, text: str) -> dict:
         # Use domain-specific NER model
         entities = self.ner_model(text)
-        
+      
         return {
             "entities": entities,
             "entity_types": self.classify_entities(entities),
@@ -536,24 +547,28 @@ index.init_index(
 ## Roadmap
 
 **Phase 1 - Core Engine** ✅
-- [x] Two-stage query pipeline
-- [x] LLM-based fact extraction
-- [x] HNSW vector index
-- [x] PostgreSQL symbolic store
+
+- [X] Two-stage query pipeline
+- [X] LLM-based fact extraction
+- [X] HNSW vector index
+- [X] PostgreSQL symbolic store
 
 **Phase 2 - Production Ready**
+
 - [ ] Distributed indexing (Celery workers)
 - [ ] Sharding for 100M+ docs
 - [ ] Hybrid BM25 + neural + symbolic (3-stage)
 - [ ] Fine-tuned fact extraction model (no API calls)
 
 **Phase 3 - Advanced RAG**
+
 - [ ] Multi-hop reasoning (graph traversal)
 - [ ] Temporal queries ("What changed since last month?")
 - [ ] Multi-modal (images, tables, code)
 - [ ] Federated search (multiple Pirmid instances)
 
 **Phase 4 - Ecosystem**
+
 - [ ] LangChain integration
 - [ ] LlamaIndex integration
 - [ ] Cloud-hosted version (Pirmid Cloud)
@@ -562,16 +577,19 @@ index.init_index(
 ## Why Pirmid?
 
 **vs. Traditional Vector DBs (Pinecone, Weaviate, Qdrant)**
+
 - ❌ They only store vectors (no structured facts)
 - ❌ Can't filter by entity types or relationships
 - ❌ Suffer from polysemy problem
 
 **vs. Graph DBs (Neo4j)**
+
 - ❌ No semantic search (pure symbolic)
 - ❌ Requires manual schema design
 - ❌ Hard to integrate with LLMs
 
 **Pirmid = Best of Both Worlds**
+
 - ✅ Structured facts (like graph DB)
 - ✅ Semantic search (like vector DB)
 - ✅ Unified query language
@@ -588,12 +606,14 @@ index.init_index(
 ## Contributing
 
 Pirmid demonstrates:
+
 - **Hybrid retrieval** (symbolic + neural)
 - **Production ML systems** (indexing pipeline, serving, monitoring)
 - **Database optimization** (JSONB, GIN indexes, vector indexing)
 - **RAG engineering** (two-stage retrieval, re-ranking)
 
 Areas to explore:
+
 - Fine-tuned fact extraction (replace LLM API with local model)
 - ColBERT-style late interaction
 - Graph neural networks for relationship scoring
@@ -602,7 +622,3 @@ Areas to explore:
 ## License
 
 MIT
-
----
-
-**Questions?** Open an issue or check the [technical docs](./docs/)
