@@ -1,4 +1,4 @@
-# Pirmid 🔺
+# Pyramid 🔺
 
 > **Neuro-symbolic vector database** that solves retrieval ambiguity in RAG pipelines with a two-stage query engine: filter on **symbolic facts** first, then rank by **neural similarity**.
 
@@ -37,13 +37,13 @@ Results (by similarity score):
 
 **The core issue:** Vector search is *vibes-only*. It has no concept of **facts**.
 
-## The Pirmid Solution: Neuro-Symbolic Architecture
+## The Pyramid Solution: Neuro-Symbolic Architecture
 
-Pirmid doesn't just match embeddings. It understands **what** you're asking about (facts) *and* **how** you're saying it (semantics).
+Pyramid doesn't just match embeddings. It understands **what** you're asking about (facts) *and* **how** you're saying it (semantics).
 
 ### Dual Representation
 
-For every document, Pirmid stores **two** representations:
+For every document, Pyramid stores **two** representations:
 
 #### 1. Symbolic Facts (Structured Knowledge)
 
@@ -131,8 +131,8 @@ The key innovation: **Facts first, vibes second.**
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/ashworks1706/Pirmid.git
-cd Pirmid
+git clone https://github.com/ashworks1706/Pyramid.git
+cd Pyramid
 
 # 2. Start with docker-compose
 docker-compose up -d
@@ -151,15 +151,15 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # 3. Setup database (PostgreSQL for symbolic store)
-createdb pirmid
-psql pirmid < schema.sql
+createdb Pyramid
+psql Pyramid < schema.sql
 
 # 4. Configure environment
 cp .env.example .env
 # Edit .env: set DATABASE_URL, LLM_API_KEY
 
 # 5. Run server
-uvicorn pirmid.server:app --reload --port 8000
+uvicorn Pyramid.server:app --reload --port 8000
 ```
 
 ## API Reference
@@ -354,7 +354,7 @@ labels, distances = index.knn_query(query_vector, k=10)
 
 ```
 ┌─────────────────────────────────────────────────┐
-│              Pirmid Server (FastAPI)            │
+│              Pyramid Server (FastAPI)            │
 └───────┬─────────────────────────────┬───────────┘
         │                             │
 ┌───────▼────────┐           ┌────────▼──────────┐
@@ -389,7 +389,7 @@ labels, distances = index.knn_query(query_vector, k=10)
 | --------------------------------------- | ------------ | --------------- | -------------------------- |
 | **BM25** (lexical)                | 50           | 68.5%           | Keyword-only, no semantics |
 | **Dense Retrieval** (pure vector) | 80           | 76.2%           | Fails on polysemy          |
-| **Pirmid** (neuro-symbolic)       | 120          | **89.4%** | 17% improvement!           |
+| **Pyramid** (neuro-symbolic)       | 120          | **89.4%** | 17% improvement!           |
 
 ### Real Query Examples
 
@@ -398,9 +398,9 @@ labels, distances = index.knn_query(query_vector, k=10)
 | System      | Top Wrong Result                       | Rank  |
 | ----------- | -------------------------------------- | ----- |
 | Pure Vector | "Python snake's asynchronous movement" | #3 ❌ |
-| Pirmid      | (none in top-10)                       | ✅    |
+| Pyramid      | (none in top-10)                       | ✅    |
 
-**Why Pirmid wins:**
+**Why Pyramid wins:**
 
 - Stage 1 filters to `domain: "programming"` entities
 - Stage 2 ranks by semantic relevance within programming docs
@@ -428,9 +428,9 @@ response = requests.post("/query", json={
 ### Custom Entity Extractors
 
 ```python
-# pirmid/extractors/custom.py
+# Pyramid/extractors/custom.py
 
-from pirmid.extractors.base import BaseExtractor
+from Pyramid.extractors.base import BaseExtractor
 
 class BiomedExtractor(BaseExtractor):
     """Extract medical entities (diseases, drugs, proteins)"""
@@ -446,7 +446,7 @@ class BiomedExtractor(BaseExtractor):
         }
 
 # Register extractor
-pirmid.register_extractor("biomed", BiomedExtractor())
+Pyramid.register_extractor("biomed", BiomedExtractor())
 
 # Use in upsert
 requests.post("/upsert", json={
@@ -485,8 +485,8 @@ response = requests.post("/query", json={
 ## Project Structure
 
 ```
-Pirmid/
-├── pirmid/
+Pyramid/
+├── Pyramid/
 │   ├── server.py              # FastAPI main app
 │   ├── query/
 │   │   ├── decomposer.py      # LLM-based query → facts
@@ -565,16 +565,16 @@ index.init_index(
 - [ ] Multi-hop reasoning (graph traversal)
 - [ ] Temporal queries ("What changed since last month?")
 - [ ] Multi-modal (images, tables, code)
-- [ ] Federated search (multiple Pirmid instances)
+- [ ] Federated search (multiple Pyramid instances)
 
 **Phase 4 - Ecosystem**
 
 - [ ] LangChain integration
 - [ ] LlamaIndex integration
-- [ ] Cloud-hosted version (Pirmid Cloud)
+- [ ] Cloud-hosted version (Pyramid Cloud)
 - [ ] GUI for query visualization
 
-## Why Pirmid?
+## Why Pyramid?
 
 **vs. Traditional Vector DBs (Pinecone, Weaviate, Qdrant)**
 
@@ -588,7 +588,7 @@ index.init_index(
 - ❌ Requires manual schema design
 - ❌ Hard to integrate with LLMs
 
-**Pirmid = Best of Both Worlds**
+**Pyramid = Best of Both Worlds**
 
 - ✅ Structured facts (like graph DB)
 - ✅ Semantic search (like vector DB)
@@ -605,7 +605,7 @@ index.init_index(
 
 ## Contributing
 
-Pirmid demonstrates:
+Pyramid demonstrates:
 
 - **Hybrid retrieval** (symbolic + neural)
 - **Production ML systems** (indexing pipeline, serving, monitoring)
