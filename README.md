@@ -1,3 +1,2 @@
 # Piramid
-A database for the new agentic age.
-
+Rust based Hybrid vector database for LLM agents and MCP
