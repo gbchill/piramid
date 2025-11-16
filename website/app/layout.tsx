@@ -9,7 +9,7 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Piramid - Hybrid Vector Database | Graph-Based & Traditional Vector Search",
+  title: "Piramid - Rust Based Vector database for Agentic Applications ",
   description: "Piramid is an open-source hybrid vector database written in Rust, combining graph-based and traditional vector search capabilities for customizable, high-performance AI applications.",
   keywords: ["vector database", "graph database", "hybrid database", "rust", "open source", "vector search", "AI", "machine learning", "embeddings", "similarity search"],
   authors: [{ name: "Piramid Team" }],
