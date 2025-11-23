@@ -1,4 +1,4 @@
-<img width="1287" height="200" alt="image" src="https://github.com/user-attachments/assets/4eb4d28a-c292-48a6-851d-3d7e9ddd783f" />
+<img width="1114" height="191" alt="Screenshot 2025-11-23 at 12 47 47 AM" src="https://github.com/user-attachments/assets/efaa4c47-62d1-4397-9899-8bd58d400fc6" />
 
 <p align="center">
     <b>Vector database for Agentic Applications</b>
