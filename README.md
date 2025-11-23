@@ -1,4 +1,4 @@
-<img width="996" height="172" alt="image" src="https://github.com/user-attachments/assets/30cb2687-224f-4c57-b735-e37cb4773ddf" />
+<img width="1287" height="200" alt="image" src="https://github.com/user-attachments/assets/4eb4d28a-c292-48a6-851d-3d7e9ddd783f" />
 
 <p align="center">
     <b>Vector database for Agentic Applications</b>
