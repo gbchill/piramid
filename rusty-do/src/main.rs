@@ -10,7 +10,7 @@
 // [X] Add ability to change task priorities (low, medium, high)
 // [X] Add ability to set deadlines for tasks
 // [X] Add ability to edit deadlines for tasks
-// [ ] Add ability to sort tasks by priority or deadline
+// [X] Add ability to sort tasks by priority or deadline
 // [ ] Add ability to search tasks by name
 // [ ] Optimize functions and code structure
 
@@ -23,7 +23,7 @@ use serde::{Serialize, Deserialize}; // serde is a popular serialization/deseria
 // a "Macro" called derive
 use chrono::NaiveDate; // chrono is a popular date and time library in Rust. we will use it for
                        // deadlines.
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 enum Priority{
     Low,
     Medium,
@@ -89,6 +89,10 @@ impl TodoList{
         false
     }
 
+    fn search(&self, query: &str) -> Vec<&TodoItem>{
+            self.items.iter().filter(|item| item.name.to_lowercase().contains(&query.to_lowercase())).collect()
+    }
+
     fn edit_task_priority(&mut self, id: u64, new_priority: Priority) -> bool {
        if let Some(item) = self.items.iter_mut().find(|item| item.id==id){ 
             item.priority = new_priority;
@@ -148,6 +152,18 @@ impl TodoList{
         println!("Task added successfully");
         self.print();
        return true;
+    }
+    fn sort_by_priority(&mut self){
+        self.items.sort_by(|a,b| b.priority.cmp(&a.priority)); // cmp is compare function. we sort
+                                                               // B to A for descending order
+        println!("Tasks sorted by priority");
+        self.print();
+    }
+    fn sort_by_deadline(&mut self){
+        self.items.sort_by(|a,b| a.deadline.cmp(&b.deadline)); // cmp is compare function. we sort
+                                                               // B to A for descending order
+        println!("Tasks sorted by deadline");
+        self.print();
     }
     fn delete_all_completed(&mut self){
         self.items.retain(|item| !item.completed);
@@ -235,7 +251,10 @@ fn main(){
         println!("6. Edit task name");
         println!("7. Edit task priority");
         println!("8. Edit task deadline");
-        println!("9. Exit");
+        println!("9. Sort by priority");
+        println!("10. Sort by deadline");
+        println!("11. Search tasks by name");
+        println!("12. Exit");
         let input = get_input();
         match input.as_str() {
             "1"=> {
@@ -361,12 +380,47 @@ fn main(){
                         println!("Invalid ID number");
                     },
             }
-             },"9"=>{
+             },
+               "9"=>{
+                todolist.sort_by_priority();
+            },
+            
+"10"=>{
+                todolist.sort_by_deadline();
+            },
+            
+ "11"=>{
+                println!("Enter search query");
+                let query = get_input();
+                let results = todolist.search(&query);
+                if results.is_empty(){
+                    println!("No tasks found matching the query");
+                } else{
+                    println!("Search results:");
+                    println!("================================================================");
+                    println!("ID\tStatus\tPriority\tDue Date\tName");
+                    println!("================================================================");
+                    for item in results{
+                        let status = if item.completed {"[X]"} else {"[ ]"};
+                        let deadline_str = match item.deadline{
+                            Some(date) => date.to_string(),
+                            None => "No deadline".to_string(),
+                        };
+                        println!("{}\t{}\t{:?}\t\t{:?}\t\t{}",  item.id, status, item.priority, deadline_str,item.name);
+                    }
+                    println!("----------------------------------------------------------------");
+                    println!("================================================================");
+                }
+            },
+ "12"=>{
                 println!("Bye!");
                 break;
             },
-            
-           _ => println!("Invalid choice!"),
+           
+           _ => {
+                println!("Invalid option");
+                todolist.print();
+           },
         }
     }
 
