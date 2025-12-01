@@ -1,1 +1,1 @@
-/home/ash/projects/Piramid/rusty-do/target/debug/rusty-do: /home/ash/projects/Piramid/rusty-do/src/main.rs
+/home/ash/projects/Piramid/rusty-do/target/debug/rusty-do: /home/ash/projects/Piramid/rusty-do/src/main.rs /home/ash/projects/Piramid/rusty-do/src/models.rs /home/ash/projects/Piramid/rusty-do/src/tui.rs
