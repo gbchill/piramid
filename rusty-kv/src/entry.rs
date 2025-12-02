@@ -110,6 +110,7 @@ impl Entry{
 }
 
 
+#[cfg(test)]
 
 
 
