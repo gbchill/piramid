@@ -111,6 +111,13 @@ impl Entry{
 
 
 #[cfg(test)]
+mod tests{
+    use super::*;
+
+
+
+   
+}
 
 
 
