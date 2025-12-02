@@ -29,3 +29,6 @@ The Header solves this ambiguity. It tells the computer: "The next 4 bytes are t
 
 lib.rs -> public face of the database
 entry.rs -> definition of the data packet
+
+
+TODO : Build rust kv engine
