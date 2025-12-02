@@ -34,12 +34,12 @@ impl Entry{
         // to_be_bytes -> It takes a number like 500 and breaks it down into raw bytes [0, 0, 1, 244].
         out.extend_from_slice(&self.timestamp.to_be_bytes());
         out.extend_from_slice(&key_len.to_be_bytes());
-        out.extend_from_slice(&key_len.to_be_bytes());
+        out.extend_from_slice(&val_len.to_be_bytes());
 
         // now write it to payload
 
-        out.extend_from_slice(&self.key)
-        out.extend_from_slice(&self.key)
+        out.extend_from_slice(&self.key);
+        out.extend_from_slice(&self.value);
 
         out
     }
@@ -110,13 +110,36 @@ impl Entry{
 }
 
 
-#[cfg(test)]
+#[cfg(test)] // identifier for rust to run tests when passed
 mod tests{
     use super::*;
+    // Since the test is in its own module (mod tests), it can't see 
+    // the Entry struct by default. super refers to the parent scope 
+    // (entry.rs), so we import everything from there.
+
+    #[test]
+    fn test_encode_decode(){
+        let key= b"my_key".to_vec();
+        // This is a shortcut. Instead of writing String::from("my_key").into_bytes(),
+        // we use b"my_key".
+        let value = b"my_value".to_vec();
+        let timestamp=1234567890;
 
 
+        let entry = Entry::new(key.clone(), value.clone(), timestamp);
 
-   
+        let encoded = entry.encode();
+        println!("Encoded bytes {:?} ", encoded);
+
+        let decoded = Entry::decode(&encoded).expect("Failed to decode");
+        
+
+        assert_eq!(decoded.key, key);
+        // This is the judge. It compares two variables. 
+        // If they are different, it panics and fails the test.
+        assert_eq!(decoded.value, value);
+        assert_eq!(decoded.timestamp, timestamp);
+    }
 }
 
 
