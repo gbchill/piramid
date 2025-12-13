@@ -77,13 +77,95 @@ impl RustyKV{
         Ok(())
 
     }
+
+    pub fn get(&mut self, key: String) -> io::Result<Option><String>>{
+        // checking the index
+        // ofcourse, if its not we return None option
+
+        let offset = match self.index.get(&key){
+            Some(&o) => o, // reference to the requested key we found 
+            None => return Ok(None),
+        }
+
+        // once we find the offset, we move the file pointer to that offset (index) location
+        self.file.seek(seekFrom::Start(offset))?; 
+
+        // now once we're at the position we will read the header
+        // temporaryirly create array to hold the data we will read off the file(first 24 bytes)
+        let mut header = [0u8; 24];
+        // 0u8 = 0 -> value is zero, u8 -> unsigned 8 bit integer        
+        // we use this isntead of vec! because we don't know if klen + vlen is a variable until 
+        // the program runs. which is why [] is on the heap memory
+
+        // but why 24?
+        // because we decided to store three specific piece of information as meta data at the start 
+        // of every entry: timestamp, key_length and value length -> totalling to 24 bytes 
+
+        // Byte Index:  0  1  ...  15 | 16 17 18 19 | 20 21 22 23
+        //    [  TIMESTAMP  ] [  KEY LEN  ] [  VAL LEN  ]
+        //    <---16 bytes--> <---4 bytes-> <---4 bytes->
+
+        self.file.read_exact(&mut header)?;
+
+        // now we take 16 to 20 to find out how long the key is  
+        let klen_bytes : [u8; 4] = header[16..20].try_into().unwrap();
+        let klen = u32::from_be_bytes(klen_bytes) as usize;
+
+        // we take 20 to 24 bytes to find out how long the value is 
+        let vlen_bytes: [u8; 4] = header[20..24].try_into().unwrap();
+        let vlen = u32::from_be_bytes(vlen_bytes) as usize;
+
+        // NOW we will create the payload which is basically a dynamic buffer exactly the size of
+        // key + value
+        let total_size = klen + vlen;
+        let mut payload = vec![0u8; total_size];
+
+        // reading the rest of the data into this new buffer
+        self.file.read_exact(&mut payload)?;
+
+        // now that the payload contains the [KEY][VALUE] together into one thing. we will exact
+        // value from it which is essentially the start from klen to the end
+        let value_bytes = &payload[klen..];
+
+        // finally converting the raw bytes back into the string
+        // we use unwrap here to handle if hte bytes aint valid
+        // since value_bytes is just a slice or temporary view of the array, we use
+        // String::from_utf8 to own the data and turn it into array with to_Vec() and then to
+        // string
+        let value = String::from_utf8(value_bytes.to_vec()).map_err(|e| io::Error::new(io::ErrorKind::InvalidData,e))?;
+
+        Ok(Some(value))
+
+
+    } 
 }
 
 
 
 
 
+// now we will create test as usual to -
+// 1. Index lookup for checking ram to find the address 
+// 2. seek by moving the disk head to that address
+// 3. read the first 24 bytes to get the size
+// 4. read the exact data bytes
+// 5. convert those bytes back to strings
 
+
+#[cfg(test)]
+mod tests{
+    use super::*;
+
+    #[test]
+    fn test_kv_store(){
+        let path = "test_database.db"
+
+        let _ = std::fs::remove_files(path);
+
+        let mut store = RustyKV::open(path).expect("Failed to open the DB")
+
+    }
+}
 
 
 
