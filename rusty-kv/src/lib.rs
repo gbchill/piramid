@@ -265,10 +265,17 @@ mod tests{
 
         store.set("key2".to_string(), "value2".to_string()).expect("Failed to set");
 
+        // In Rust, there are two types of strings, and they are not the same:
+        // &str (String Slice): This is what "persistent_key" is. It is a view into text stored 
+        // in the program's binary. It is fixed and immutable.
+        // String (Owned String): This is a growable text buffer stored in memory (Heap).
+
+The Mismatch: Your function signature demands ownership: pub fn set(&mut self, key: String, ...)
+
         let val1 = store.get("key1".to_String()).expect("Failed to get").unwrap();
         let val2 = store.get("key2".to_String()).expect("Failed to get").unwrap();
 
-        assert_eq!(val1, "value1");
+        assert_eq!(val1, "value1"); // if 'val' is NOT 'persistent_value'. fail the test
         assert_eq!(val2, "value2");
 
         let missing = store.get("key3".to_string()).expect("Failed to get");
@@ -297,6 +304,20 @@ fn test_persistence() {
         // at this point, the hashmap entry is memory
         // but store.load() should have run and refilled it 
         let val = store.get("persistent_key".to_string()).expect("Failed to get").unwrap();
+        // This looks weird because get returns a Double Wrapper: Result<Option<String>>
+        // Think of it like a Box inside a Shipping Crate.
+        
+        // Layer 1: The Result (The Shipping Crate) 
+        // Question: Did the function run successfully, or did the hard drive crash?
+        // Action: .expect("Failed to get") checks this. If the disk failed, it crashes here.
+        // Outcome: Now we have opened the crate. Inside is the Option.
+        
+        // Layer 2: The Option (The Inner Box)
+        // Question: We read the file fine, but did we actually find the key, or 
+        // was it missing (None)?
+        // Action: .unwrap() checks this. It says "I am sure the value is there. If it's None, crash."
+        // Outcome: Now we have opened the box. Inside is the actual data: "persistent_value".
+
         assert_eq!(val, "persistent_value");
 
     }
