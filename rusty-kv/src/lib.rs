@@ -1,18 +1,15 @@
-use std::collections:Hashmap;
+use std::collections::HashMap;
 use std::fs::{File, OpenOptions}; // we use OpenOptions specificlly because we want to "edit" files
-use std::io;
-use std::path::Path;
-use std::io::{self, SeekFrom, Read, Write, Seek, SeekFrom}; // for writing and seeking traits
-
+use std::io::{self,Read, Write, Seek, SeekFrom}; // for writing and seeking traits
 pub mod entry;
-use entry::Entry;
+use entry::{EntryKind, Entry};
 
 pub struct RustyKV{
     // the physical file on the disk
-    file::File,
+    file:File,
 
     // in memory map: key -> byte offset
-    index: HashMap<String, u64>,
+    index:HashMap<String, u64>,
 }
 
 
@@ -27,7 +24,7 @@ impl RustyKV{
             .open(path)?;
         let mut store = RustyKV{
             file,
-            index: HashMap::new();
+            index: HashMap::new(),
         };
 
         store.load()?;
@@ -53,7 +50,8 @@ impl RustyKV{
             // as_bytes converts string to slice of bytes
             // but we use into bytes because we need ownership of the data
             value.into_bytes(),
-            0
+            0,
+            EntryKind::Insert,
             );
 
         let encoded = entry.encode();
@@ -80,17 +78,17 @@ impl RustyKV{
 
     }
 
-    pub fn get(&mut self, key: String) -> io::Result<Option><String>>{
+    pub fn get(&mut self, key: String) -> io::Result<Option<String>>{
         // checking the index
         // ofcourse, if its not we return None option
 
         let offset = match self.index.get(&key){
             Some(&o) => o, // reference to the requested key we found 
             None => return Ok(None),
-        }
+        };
 
         // once we find the offset, we move the file pointer to that offset (index) location
-        self.file.seek(seekFrom::Start(offset))?; 
+        self.file.seek(SeekFrom::Start(offset))?; 
 
         // now once we're at the position we will read the header
         // temporaryirly create array to hold the data we will read off the file(first 24 bytes)
@@ -140,6 +138,42 @@ impl RustyKV{
 
 
     } 
+
+    fn pub delete(&mut self, key: String) -> io::Result<()>{
+        // In a normal file system, you cannot easily "snip" bytes out of the middle of a 
+        // file. It's like a written notebook: you can't just make page 5 disappear.
+        // Instead, we write a new note at the end of the notebook that says: 
+        // "Ignore the entry for 'user1'." This note is called a Tombstone.
+        // prepare a replacement of empty value 
+        let entry = Entry::new(
+            key.clone().into_bytes(),
+            vec![], // value for empty 
+            0,
+            EntryKind::Delete, // flagging as delete 
+            );
+
+        let encoded = entry.encode();
+
+        // The file actually gets bigger when you delete something!
+        // Old Data: Still sitting in the file at byte 0.
+        // New Data: The Tombstone is now at byte 100.
+        // Note: Real databases eventually run a "Compaction" process to clean up 
+        // the old garbage, but for now, we just let the file grow.
+
+
+        // 1. "Computer, move the pen to the very bottom of the page."
+        self.file.seek(SeekFrom::End(0))?;
+
+        // 2. "Now write this paragraph right there."
+        self.file.write_all(&encoded)?;
+
+        self.index.remove(&key);
+
+        Ok(())
+        // On Disk (Permanent): We added a record saying "User1 is dead."
+        // In RAM (Current): We forgot User1 ever existed.
+    }
+
     // we keep this private because only our engine should call this, this is like utility function
     // the purpose of load method is to read only the keys and their offset on the go and read the
     // values only when needed
@@ -157,37 +191,43 @@ impl RustyKV{
 
         loop {
             // we try to read the header
-            let mut header = [0u8;24];
+            let mut header = [0u8;25];
 
             // basically a graceful handle method such that if this fails in EOF issues, we just
             // break it
             match self.file.read_exact(&mut header) {
                 Ok(_) =>{},
-                Err(ref e) if e.kind() == io:ErrorKind::UnexpectedEof=>{
+                Err(ref e) if e.kind() == io::ErrorKind::UnexpectedEof=>{
                     // end of file error so we're good 
                     break;
-                }
+                },
                 Err(e) => return Err(e), // now this is serious
             }
 
-            let klen_bytes : [u8, 4] = header[16..20].try_into().unwrap();
+            let klen_bytes : [u8; 4] = header[16..20].try_into().unwrap();
             let klen = u32::from_be_bytes(klen_bytes) as usize;
 
-            let vlen_bytes : [u8, 4] = header[20..24].try_into().unwrap();
+            let vlen_bytes : [u8; 4] = header[20..24].try_into().unwrap();
             let vlen = u32::from_be_bytes(vlen_bytes) as usize;
 
+            let kind = header[24];
             
             let mut key_buffer = vec![0u8; klen];
             self.file.read_exact(&mut key_buffer)?;
 
-
             let key= String::from_utf8(key_buffer).map_err(|e| io::Error::new(io::ErrorKind::InvalidData,e))?;
 
-            // offset is where the entry started 
-            self.index.insert(key, current_pos);
+            if kind ==1{
+                // this is a Tombstone so remove it 
+                self.index.remove(&key);
+
+            } else{
+                // offset is where the entry started 
+                self.index.insert(key, current_pos);
+            }
 
             // we advance 'current_pos' by the total size of this entry
-            let total_size = 24+klen+vlen;
+            let total_size = 25+klen+vlen;
 
             // seek the cursor past the value
             self.file.seek(SeekFrom::Current(vlen as i64))?;
@@ -198,47 +238,9 @@ impl RustyKV{
         }
 
         Ok(())
-    }
-    // this is supposed to be prviate 
-    fn load(&mut self) -> io::Result<()> {
-        let mut current_pos = 0;
-
-        self.file.seek(SeekFrom::Start(0))?;
-
-        loop{
-            // try to reard the header
-            let mut header = [0u8; 24];
-
-            // handle EOF gracefullyo
-            match self.file.read_exact(&mut header){
-                Ok(_) =>{},
-                Err(ref e) if e.kind() == io::ErrorKind::UnexpectedEof=>{
-                    break;
-                }
-                Err(e) => return Err(e);
-            }
-            
-            let klen_bytes: [u8; 4] = header[16..20].try_into().unwrap();
-            let kln = u32::from_be_bytes(klen_bytes) as usize;
-
-            let vlen_bytes: [u8; 4] = header[16..20].try_into().unwrap();
-            let vln = u32::from_be_bytes(vlen_bytes) as usize;
-
-            // read the key for the hashmape
-            let mut key_buffer = vec![0u8; klen];
-            self.file.read_exact(&mut key_buffer)?;
-
-            let key = String::from_utf8(key_buffer)
-                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-
-            // key starts at 'current_pos'
-            self.index.insert(key, current_pos)
-            
-
-        }
 
     }
-
+    
 }
 
 // now we will create test as usual to -
@@ -255,11 +257,11 @@ mod tests{
 
     #[test]
     fn test_kv_store(){
-        let path = "test_database.db"
+        let path = "test_database.db";
 
         let _ = std::fs::remove_file(path);
 
-        let mut store = RustyKV::open(path).expect("Failed to open the DB")
+        let mut store = RustyKV::open(path).expect("Failed to open the DB");
 
         store.set("key1".to_string(), "value1".to_string()).expect("Failed to set");
 
@@ -270,7 +272,8 @@ mod tests{
         // in the program's binary. It is fixed and immutable.
         // String (Owned String): This is a growable text buffer stored in memory (Heap).
 
-The Mismatch: Your function signature demands ownership: pub fn set(&mut self, key: String, ...)
+        // The Mismatch: Your function signature demands ownership: 
+        // pub fn set(&mut self, key: String, ...)
 
         let val1 = store.get("key1".to_String()).expect("Failed to get").unwrap();
         let val2 = store.get("key2".to_String()).expect("Failed to get").unwrap();

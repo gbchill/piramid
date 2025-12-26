@@ -41,8 +41,20 @@ fn main(){
                 Err(e) => println!("Error is {}", e),
             }
         },
+        "rm" =>{
+            if args.len() < 3{
+                println!("Error : rm requires a key")
+                return;
+            }
+            else{
+                let key= args[2].clone();
+                store.delte(key).expect("Failed to delete");
+                println!("ok");
+            }
+
+        }
         _ =>{
-            println("Unknown command : {}",command);
+            println!("Unknown command : {}",command);
         }
     }
 

@@ -4,21 +4,29 @@
 // the sizes are not explicitly stored because vector<i8> already knows the size, we just store the
 // size so we know how many bytes to read back
 
-use std::mem; // we need this to calculate byte sizes
+use std::mem;
+
+#[derive(Debug, PartialEq)]
+pub enum EntryKind{
+    Insert = 0,
+    Delete = 1,
+}
 
 
 pub struct Entry{
     pub key: Vec<u8>, // we store raw bytes, not strings -> binary keys
     pub value: Vec<u8>, 
     pub timestamp: u128,  // nano seconds
+    pub kind: EntryKind,
 }
 
 impl Entry{
-    pub fn new(key: Vec<u8>, value: Vec<u8>, timestamp: u128) -> Entry{
+    pub fn new(key: Vec<u8>, value: Vec<u8>, timestamp: u128, kind: EntryKind) -> Entry{
         Entry{
             key,
             value,
             timestamp,
+            kind,
         }
     }
 
@@ -35,6 +43,8 @@ impl Entry{
         out.extend_from_slice(&self.timestamp.to_be_bytes());
         out.extend_from_slice(&key_len.to_be_bytes());
         out.extend_from_slice(&val_len.to_be_bytes());
+
+        out.push(self.kind as u8);
 
         // now write it to payload
 
@@ -54,8 +64,8 @@ impl Entry{
         // &'static str: This specifies the type of the error value returned in the failure case (Err variant).
         
         // timestamp (16) * Key size (4) + Value size (4) = 24 bytes
-
-        let header_size = 24;
+        // 24 but we have one more for getting the "kind"
+        let header_size = 25;
 
         if data.len() < header_size {
             return Err("Data too short to contain a header");
@@ -82,6 +92,12 @@ impl Entry{
         let vlen_bytes : [u8; 4] = data[20..24].try_into().unwrap();
         let vlen = u32::from_be_bytes(vlen_bytes) as usize;
 
+        let kind_byte = data[24];
+        let kind = match kind_byte{
+            0 => EntryKind::Insert,
+            1 => EntryKind::Delete,
+            _ => return Err("Invalid Type"),
+        }
 
         // we check if the size matches the payload requirements
 
