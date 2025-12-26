@@ -2,7 +2,7 @@ use std::collections:Hashmap;
 use std::fs::{File, OpenOptions}; // we use OpenOptions specificlly because we want to "edit" files
 use std::io;
 use std::path::Path;
-use std::io::{self, Write, Seek, SeekFrom}; // for writing and seeking traits
+use std::io::{self, SeekFrom, Read, Write, Seek, SeekFrom}; // for writing and seeking traits
 
 pub mod entry;
 use entry::Entry;
@@ -198,6 +198,43 @@ impl RustyKV{
         }
 
         Ok(())
+    }
+    pub fn get(&mut self, key: String) -> io::Result<Option<String>> {
+        // check the index, if the key isnt in our hashmap, its not in the database
+        let offset = match self.index.get(&key){
+            Some(&o)=> o,
+            None => return Ok(None),
+        }
+
+        // jump to the location where the byte offset is stored
+        self.file.seek(SeekFrom::Start(offset))?;
+
+        // read the header (first 24 byteso)
+        let mut header = [0u8;24];
+        self.file.read_exact(&mut header)?;
+
+        // we need to know how much more to read 
+        let klen_bytes : [u8;4] = header[16..20].try_into().unwrap();
+        let klen = u32::from_be_bytes(klen_bytes) as usize;
+
+        // value length is at bytes 20..24
+        let vlen_bytes : [u8;4] = header[20..24].try_into().unwrap();
+        let vlen = u32::from_be_bytes(vlen_bytes) as usize;
+
+        // now we know eactly how big the key + value is 
+        let mut payload = vec![0u8; klen+vlen];
+        self.file.read_exact(&mut payload)?;
+
+        // payload : [ Key Bytes... | Value Bytes ... ]
+        let value_bytes = &payload[klen..];
+
+        // convert bytes back to string
+        let value = String::from_utf8(value_bytes.to_vec()).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+
+        Ok(Some(value))
+
+
+
     }
 
 }
