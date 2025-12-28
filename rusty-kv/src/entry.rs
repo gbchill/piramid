@@ -1,10 +1,6 @@
 // this module seres as low level binary data structure
-
-
 // the sizes are not explicitly stored because vector<i8> already knows the size, we just store the
 // size so we know how many bytes to read back
-
-use std::mem;
 
 #[derive(Debug, PartialEq)]
 pub enum EntryKind{
@@ -97,7 +93,7 @@ impl Entry{
             0 => EntryKind::Insert,
             1 => EntryKind::Delete,
             _ => return Err("Invalid Type"),
-        }
+        };
 
         // we check if the size matches the payload requirements
 
@@ -119,12 +115,10 @@ impl Entry{
             key,
             value,
             timestamp,
+            kind,
         })
-
-
     }
 }
-
 
 #[cfg(test)] // identifier for rust to run tests when passed
 mod tests{
@@ -157,17 +151,4 @@ mod tests{
         assert_eq!(decoded.timestamp, timestamp);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 

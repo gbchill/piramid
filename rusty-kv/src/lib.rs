@@ -56,7 +56,6 @@ impl RustyKV{
 
         let encoded = entry.encode();
 
-        let size = encoded.len() as u64;
 
         // asking the OS where is the end of the file
 
@@ -139,7 +138,7 @@ impl RustyKV{
 
     } 
 
-    fn pub delete(&mut self, key: String) -> io::Result<()>{
+    pub fn delete(&mut self, key: String) -> io::Result<()>{
         // In a normal file system, you cannot easily "snip" bytes out of the middle of a 
         // file. It's like a written notebook: you can't just make page 5 disappear.
         // Instead, we write a new note at the end of the notebook that says: 
