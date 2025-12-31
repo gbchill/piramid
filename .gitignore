@@ -1,1 +1,31 @@
-*/target/
+# rust build artifacts
+target/
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# debug files
+debug/
+*.pdb
+
+# test artifacts
+*.db
+test*.db
+
+# ide
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# claude code
+.claude/
+
+# os
+.DS_Store
+Thumbs.db
+
+# data
+/data/
+piramid_data/
