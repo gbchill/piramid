@@ -139,3 +139,35 @@ let filtered = storage.search_with_filter(&query, 5, DistanceMetric::Cosine, Som
 cargo run --example basic
 ```
 
+---
+
+## Running the Server & Dashboard
+
+### Server (Python)
+
+```bash
+cd server
+pip install -r requirements.txt
+python main.py
+```
+
+Server runs at `http://localhost:6333`
+
+### Dashboard (Next.js)
+
+```bash
+cd dashboard
+npm install
+npm run dev
+```
+
+Dashboard runs at `http://localhost:3000`
+
+### Production (Docker)
+
+```bash
+docker-compose up
+```
+
+Both server and dashboard at `http://localhost:6333`
+
