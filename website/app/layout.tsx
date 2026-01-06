@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     siteName: "Piramid",
     images: [
       {
-        url: "/logo.png",
+        url: "/logo_dark.png",
         width: 1200,
         height: 630,
         alt: "Piramid Vector Database",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Piramid - Hybrid Vector Database",
     description: "Open-source hybrid vector database combining graph-based and traditional vector search capabilities.",
-    images: ["/logo.png"],
+    images: ["/logo_dark.png"],
     creator: "@piramiddb",
   },
   metadataBase: new URL("https://piramid.dev"),
