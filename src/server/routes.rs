@@ -1,9 +1,5 @@
-//! Route definitions - maps URLs to handlers
-//!
 //! This is the "routing table" of our API.
 //! axum uses a builder pattern: Router::new().route(...).route(...)
-//!
-//! REST conventions we follow:
 //! - GET    = read (list, get one)
 //! - POST   = create or action (store, search)
 //! - DELETE = remove
@@ -15,12 +11,11 @@ use axum::{
     Router,
 };
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::services::{ServeDir, ServeFile};
 
 use super::handlers;
 use super::state::SharedState;
 
-/// Build the complete router with all endpoints
-/// 
 /// This function wires everything together:
 /// 1. Creates route definitions
 /// 2. Adds CORS middleware (so browsers can call us)
@@ -58,4 +53,9 @@ pub fn create_router(state: SharedState) -> Router {
         .layer(cors)
         // State available to all handlers
         .with_state(state)
+        // Serve static dashboard files (Next.js export)
+        .fallback_service(
+            ServeDir::new("dashboard")
+                .not_found_service(ServeFile::new("dashboard/index.html"))
+        )
 }

@@ -1,9 +1,5 @@
-//! Request and Response types for the HTTP API
-//!
 //! These structs define the JSON shape for API communication.
 //! Serde does the heavy lifting: Serialize = Rust → JSON, Deserialize = JSON → Rust.
-//!
-//! Tip: keep request/response types close together so you can see the full picture.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

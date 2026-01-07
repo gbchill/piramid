@@ -1,10 +1,8 @@
-//! Shared application state
-//!
 //! In a web server, you need to share data across requests.
 //! But HTTP is stateless - each request is independent.
 //! 
 //! Solution: wrap shared data in `Arc<T>` (atomic reference counting)
-//! so multiple threads can access it safely.
+//! so multiple threads can share ownership safely.
 //!
 //! For mutable shared data, we also need `RwLock` or `Mutex`:
 //! - `Mutex` = one reader OR one writer at a time

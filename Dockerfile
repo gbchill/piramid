@@ -19,7 +19,7 @@ RUN npm run build
 # -----------------------------------------------------------------------------
 # Stage 2: Build Rust server
 # -----------------------------------------------------------------------------
-FROM rust:1.75-slim AS rust-builder
+FROM rust:1.83-slim AS rust-builder
 
 WORKDIR /app
 

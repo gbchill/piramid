@@ -1,8 +1,4 @@
 //! Piramid Server - the main entry point
-//!
-//! This is what you run: `cargo run --bin piramid-server`
-//!
-//! It's intentionally minimal - just config and startup.
 //! All the real logic lives in the `server` module.
 
 use std::sync::Arc;

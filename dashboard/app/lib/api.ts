@@ -1,9 +1,9 @@
-"""
-API Client - Helper functions for calling the Piramid REST API
-
-This module handles all HTTP communication with the server.
-Keeps API logic separate from UI components.
-"""
+/**
+ * API Client - Helper functions for calling the Piramid REST API
+ *
+ * This module handles all HTTP communication with the server.
+ * Keeps API logic separate from UI components.
+ */
 
 const API_BASE = typeof window !== 'undefined' 
   ? `${window.location.protocol}//${window.location.hostname}:6333/api`
@@ -112,6 +112,7 @@ export interface SearchResult {
 
 export interface SearchResponse {
   results: SearchResult[];
+  took_ms?: number;
 }
 
 export async function searchVectors(

@@ -1,6 +1,6 @@
 //! HTTP request handlers
 //!
-//! Each function here handles one endpoint. The pattern:
+//! Each function here handles one endpoint:
 //! 1. Extract what you need from the request (State, Path, Json, Query)
 //! 2. Do the work (call into our library)
 //! 3. Return JSON response or error
@@ -19,10 +19,6 @@ use uuid::Uuid;
 use crate::{DistanceMetric, MetadataValue, VectorEntry};
 use super::state::SharedState;
 use super::types::*;
-
-// =============================================================================
-// METADATA CONVERSION
-// =============================================================================
 
 /// Convert JSON values to our Metadata type
 /// 
@@ -89,10 +85,6 @@ fn parse_metric(s: Option<String>) -> DistanceMetric {
     }
 }
 
-// =============================================================================
-// HEALTH
-// =============================================================================
-
 /// GET /api/health - simple liveness check
 pub async fn health() -> Json<HealthResponse> {
     Json(HealthResponse {
@@ -101,9 +93,6 @@ pub async fn health() -> Json<HealthResponse> {
     })
 }
 
-// =============================================================================
-// COLLECTIONS
-// =============================================================================
 
 /// GET /api/collections - list all loaded collections
 pub async fn list_collections(State(state): State<SharedState>) -> Json<CollectionsResponse> {
@@ -179,10 +168,6 @@ pub async fn collection_count(
     
     Ok(Json(CountResponse { count }))
 }
-
-// =============================================================================
-// VECTORS
-// =============================================================================
 
 /// POST /api/collections/:collection/vectors - store a new vector
 pub async fn store_vector(
@@ -282,10 +267,6 @@ pub async fn delete_vector(
     
     Ok(Json(DeleteResponse { deleted }))
 }
-
-// =============================================================================
-// SEARCH
-// =============================================================================
 
 /// POST /api/collections/:collection/search - similarity search
 pub async fn search_vectors(

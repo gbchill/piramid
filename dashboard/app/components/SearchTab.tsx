@@ -25,12 +25,12 @@ export function SearchTab({ collection }: SearchTabProps) {
       
       const res = await searchVectors(collection, {
         vector: vectorArray,
-        limit: parseInt(limit),
+        k: parseInt(limit),
         metric,
       });
       
       setResults(res.results);
-      setTookMs(res.took_ms);
+      setTookMs(res.took_ms ?? null);
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Search failed');
     } finally {

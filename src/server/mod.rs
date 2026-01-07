@@ -1,5 +1,3 @@
-//! Server module - HTTP API for Piramid
-//!
 //! This is the "web layer" - it turns our Rust library into a network service.
 //! The pattern: Library (pure logic) → Server (HTTP wrapper) → Clients (SDK, dashboard)
 //!

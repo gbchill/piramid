@@ -3,6 +3,7 @@
  */
 "use client";
 
+import Image from 'next/image';
 import { Collection } from '../lib/api';
 
 interface SidebarProps {
@@ -24,10 +25,13 @@ export function Sidebar({
     <aside className="w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-color)] flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-[var(--border-color)]">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <span className="text-2xl">🔺</span> Piramid
-        </h1>
-        <p className="text-xs text-[var(--text-secondary)] mt-1">Vector Database</p>
+          <Image
+            src="../../public/navbar_dark.png"
+            alt="Piramid - Hybrid Vector Database"
+            width={120}
+            height={40}
+            className="drop-shadow-lg"
+          />
       </div>
 
       {/* Collections List */}
