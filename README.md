@@ -173,6 +173,95 @@
 - [ ] Custom distance functions
 - [ ] Graph relationships between vectors (like HelixDB)
 
+### Phase 13: Semantic Cache for LLMs 
+*Cache LLM responses by meaning, not exact match - save 70%+ on API costs*
+- [ ] **Semantic matching**
+  - [ ] Hash query embeddings for fast lookup
+  - [ ] Configurable similarity threshold
+  - [ ] "What's the capital of France?" ≈ "Tell me France's capital"
+- [ ] **Cache management**
+  - [ ] TTL (time-to-live) per entry
+  - [ ] LRU eviction
+  - [ ] Manual invalidation API
+- [ ] **LLM integration helpers**
+  - [ ] OpenAI/Anthropic response caching
+  - [ ] Token usage tracking
+  - [ ] Cost savings dashboard
+
+### Phase 14: WebAssembly (WASM) - Run Anywhere 
+*Rust's superpower - Piramid in the browser, edge, mobile*
+- [ ] **Browser runtime**
+  - [ ] Compile core to WASM
+  - [ ] Client-side vector search (no server needed)
+  - [ ] IndexedDB persistence
+- [ ] **Edge deployment**
+  - [ ] Cloudflare Workers compatible
+  - [ ] Vercel Edge Functions
+  - [ ] Deno Deploy
+- [ ] **Embedded use cases**
+  - [ ] React Native / Flutter integration
+  - [ ] Desktop apps (Tauri)
+  - [ ] Offline-first applications
+
+### Phase 15: Agent Memory System 
+*Purpose-built for AI agents, not just RAG*
+- [ ] **Memory types**
+  - [ ] Working Memory - current conversation context
+  - [ ] Episodic Memory - past interactions, time-decayed
+  - [ ] Semantic Memory - long-term knowledge
+  - [ ] Procedural Memory - learned tool usage patterns
+- [ ] **Memory management**
+  - [ ] Importance scoring (what to remember)
+  - [ ] Auto-consolidation (compress old memories)
+  - [ ] Cross-session persistence
+  - [ ] Memory retrieval by recency + relevance
+- [ ] **Agent integrations**
+  - [ ] LangChain/LlamaIndex memory backend
+  - [ ] AutoGPT/CrewAI compatible
+
+### Phase 16: Temporal Vectors (Time-Travel) 
+*Version control for embeddings*
+- [ ] **Vector versioning**
+  - [ ] Query: "What was similar to X as of 3 months ago?"
+  - [ ] Track embedding drift over time
+  - [ ] Rollback bad embedding updates
+- [ ] **A/B testing embeddings**
+  - [ ] Compare embedding models without migration
+  - [ ] Shadow indexing with new models
+- [ ] **Audit trail**
+  - [ ] Who changed what, when
+  - [ ] Compliance-friendly logging
+
+### Phase 17: Privacy-First / Local-Only Mode 
+*GDPR, HIPAA, enterprise-ready*
+- [ ] **Zero network mode**
+  - [ ] All embeddings via local models (Ollama/candle)
+  - [ ] No telemetry, no external calls
+  - [ ] Air-gapped deployment support
+- [ ] **Encryption**
+  - [ ] Encrypted at rest (AES-256)
+  - [ ] Encrypted in transit (TLS)
+  - [ ] Key management integration (Vault, KMS)
+- [ ] **Compliance features**
+  - [ ] Audit logs
+  - [ ] Data residency controls
+  - [ ] Right to deletion (GDPR Article 17)
+
+### Phase 18: Auto-Pilot Mode 
+*Zero-config optimization - it just works*
+- [ ] **Auto-indexing**
+  - [ ] Auto-select HNSW vs brute-force based on collection size
+  - [ ] Auto-tune M and ef_construction parameters
+  - [ ] Rebuild index in background when beneficial
+- [ ] **Auto-optimization**
+  - [ ] Auto-quantize when memory is tight
+  - [ ] Auto-batch small inserts
+  - [ ] Query pattern analysis → index hints
+- [ ] **Smart defaults**
+  - [ ] Suggest embedding model based on your data
+  - [ ] Warn about dimension mismatches
+  - [ ] Performance recommendations in dashboard
+
 ---
 
 ## Current Architecture
