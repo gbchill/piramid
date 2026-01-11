@@ -93,6 +93,14 @@ pub async fn health() -> Json<HealthResponse> {
     })
 }
 
+/// GET /api/health/embeddings - check if embeddings are available
+pub async fn health_embeddings(State(state): State<SharedState>) -> StatusCode {
+    match state.embedder {
+        Some(_) => StatusCode::OK,
+        None => StatusCode::SERVICE_UNAVAILABLE,
+    }
+}
+
 
 /// GET /api/collections - list all loaded collections
 pub async fn list_collections(State(state): State<SharedState>) -> Json<CollectionsResponse> {

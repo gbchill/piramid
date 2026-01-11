@@ -6,6 +6,66 @@
 
 ---
 
+## Quick Start
+
+### Using Docker (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/ashworks1706/piramid
+cd piramid
+
+# Start with Docker Compose
+docker compose up -d
+
+# Access the dashboard
+open http://localhost:6333
+```
+
+The database is now running! Data persists in a Docker volume.
+
+### Configuration
+
+Piramid is configured via environment variables (following industry standard practices like Qdrant, Milvus, etc.):
+
+#### Core Settings
+```bash
+PORT=6333              # HTTP server port (default: 6333)
+DATA_DIR=/app/data     # Data storage directory
+```
+
+#### Embedding Providers (Optional)
+
+**OpenAI:**
+```yaml
+environment:
+  - EMBEDDING_PROVIDER=openai
+  - EMBEDDING_MODEL=text-embedding-3-small  # or text-embedding-3-large
+  - OPENAI_API_KEY=sk-your-key-here
+```
+
+**Ollama (Local):**
+```yaml
+environment:
+  - EMBEDDING_PROVIDER=ollama
+  - EMBEDDING_MODEL=nomic-embed-text  # or mxbai-embed-large
+  - EMBEDDING_BASE_URL=http://host.docker.internal:11434
+```
+
+Without embedding configuration, Piramid works as a pure vector database (like Qdrant) - you provide pre-computed vectors.
+
+### Building from Source
+
+```bash
+# Build the server
+cargo build --release --bin piramid-server
+
+# Run
+./target/release/piramid-server
+```
+
+---
+
 ## Roadmap
 
 ### Phase 1: Core Foundation 

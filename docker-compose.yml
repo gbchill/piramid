@@ -1,6 +1,6 @@
 # =============================================================================
 # PIRAMID DOCKER COMPOSE
-# Easy local development and deployment
+# Production-ready deployment configuration
 # =============================================================================
 
 services:
@@ -14,9 +14,21 @@ services:
       # Persist data across container restarts
       - piramid-data:/app/data
     environment:
-      - PIRAMID_HOST=0.0.0.0
-      - PIRAMID_PORT=6333
-      - RUST_LOG=info
+      # Server configuration
+      - PORT=6333
+      - DATA_DIR=/app/data
+      
+      # Optional: Enable embeddings (uncomment to use)
+      # OpenAI Configuration:
+      # - EMBEDDING_PROVIDER=openai
+      # - EMBEDDING_MODEL=text-embedding-3-small
+      # - OPENAI_API_KEY=your-api-key-here
+      
+      # Ollama Configuration (local):
+      # - EMBEDDING_PROVIDER=ollama
+      # - EMBEDDING_MODEL=nomic-embed-text
+      # - EMBEDDING_BASE_URL=http://host.docker.internal:11434
+      
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:6333/api/health"]

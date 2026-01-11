@@ -7,6 +7,10 @@ use piramid::{EmbeddingConfig, embeddings};
 
 #[tokio::main]
 async fn main() {
+    println!("🔺 Piramid Vector Database");
+    println!("   Version: {}", env!("CARGO_PKG_VERSION"));
+    println!();
+    
     // Config from environment (with sensible defaults)
     let port = std::env::var("PORT").unwrap_or_else(|_| "6333".to_string());
     let data_dir = std::env::var("DATA_DIR").unwrap_or_else(|_| "./piramid_data".to_string());
@@ -37,17 +41,24 @@ async fn main() {
 
         match embeddings::providers::create_embedder(&config) {
             Ok(embedder) => {
-                println!("   Embedding provider: {}", provider);
-                println!("   Embedding model: {}", embedder.model_name());
+                println!("✓ Embeddings:  ENABLED");
+                println!("  Provider:    {}", provider);
+                println!("  Model:       {}", embedder.model_name());
+                println!();
                 Arc::new(AppState::with_embedder(&data_dir, embedder))
             }
             Err(e) => {
-                eprintln!("⚠️  Failed to initialize embedder: {}", e);
-                eprintln!("   Continuing without embedding support");
+                eprintln!("✗ Embeddings:  FAILED");
+                eprintln!("  Error:       {}", e);
+                eprintln!("  Status:      Running without embedding support");
+                eprintln!();
                 Arc::new(AppState::new(&data_dir))
             }
         }
     } else {
+        println!("○ Embeddings:  DISABLED");
+        println!("  Configure EMBEDDING_PROVIDER to enable");
+        println!();
         Arc::new(AppState::new(&data_dir))
     };
     
@@ -56,8 +67,12 @@ async fn main() {
     
     // Start listening
     let addr = format!("0.0.0.0:{}", port);
-    println!("🔺 Piramid server running on http://{}", addr);
-    println!("   Data directory: {}", data_dir);
+    println!("⚡ Server:      READY");
+    println!("  HTTP:        http://{}", addr);
+    println!("  Data:        {}", data_dir);
+    println!("  Dashboard:   http://localhost:{}/", port);
+    println!();
+    println!("Press Ctrl+C to stop");
     
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();

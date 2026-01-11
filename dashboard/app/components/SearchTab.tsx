@@ -3,8 +3,8 @@
  */
 "use client";
 
-import { useState } from 'react';
-import { searchVectors, searchByText, SearchResult, APIError } from '../lib/api';
+import { useState, useEffect } from 'react';
+import { searchVectors, searchByText, checkEmbeddingsAvailable, SearchResult, APIError } from '../lib/api';
 import { ErrorDisplay } from './ErrorDisplay';
 
 interface SearchTabProps {
@@ -12,7 +12,8 @@ interface SearchTabProps {
 }
 
 export function SearchTab({ collection }: SearchTabProps) {
-  const [mode, setMode] = useState<'vector' | 'text'>('text');
+  const [embeddingsAvailable, setEmbeddingsAvailable] = useState(false);
+  const [mode, setMode] = useState<'vector' | 'text'>('vector');
   const [vector, setVector] = useState('');
   const [textQuery, setTextQuery] = useState('');
   const [limit, setLimit] = useState('10');
@@ -21,6 +22,16 @@ export function SearchTab({ collection }: SearchTabProps) {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [tookMs, setTookMs] = useState<number | null>(null);
   const [error, setError] = useState<Error | APIError | null>(null);
+
+  // Check if embeddings are available
+  useEffect(() => {
+    checkEmbeddingsAvailable().then(available => {
+      setEmbeddingsAvailable(available);
+      if (!available && mode === 'text') {
+        setMode('vector');
+      }
+    });
+  }, [mode]);
 
   async function handleVectorSearch() {
     try {
@@ -69,16 +80,18 @@ export function SearchTab({ collection }: SearchTabProps) {
     <div className="space-y-6">
       {/* Mode Toggle */}
       <div className="flex gap-2">
-        <button
-          onClick={() => setMode('text')}
-          className={`px-4 py-2 rounded-lg ${
-            mode === 'text' 
-              ? 'bg-[var(--accent)] text-white' 
-              : 'bg-[var(--bg-secondary)] border border-[var(--border-color)]'
-          }`}
-        >
-          Text Search
-        </button>
+        {embeddingsAvailable && (
+          <button
+            onClick={() => setMode('text')}
+            className={`px-4 py-2 rounded-lg ${
+              mode === 'text' 
+                ? 'bg-[var(--accent)] text-white' 
+                : 'bg-[var(--bg-secondary)] border border-[var(--border-color)]'
+            }`}
+          >
+            Text Search
+          </button>
+        )}
         <button
           onClick={() => setMode('vector')}
           className={`px-4 py-2 rounded-lg ${

@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 // API client
-import { checkHealth, listCollections, deleteCollection, Collection } from './lib/api';
+import { checkHealth, checkEmbeddingsAvailable, listCollections, deleteCollection, Collection } from './lib/api';
 
 // UI Components
 import { Sidebar } from './components/Sidebar';
@@ -29,6 +29,7 @@ type Tab = 'overview' | 'embed' | 'search' | 'browse';
 export default function Dashboard() {
   // Server state
   const [serverOnline, setServerOnline] = useState<boolean | null>(null);
+  const [embeddingsAvailable, setEmbeddingsAvailable] = useState(false);
   
   // Collections state
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -72,6 +73,9 @@ export default function Dashboard() {
       const online = await checkServer();
       if (online) {
         await loadCollections();
+        // Check if embeddings are available
+        const embedAvail = await checkEmbeddingsAvailable();
+        setEmbeddingsAvailable(embedAvail);
       }
     }
     init();
@@ -149,19 +153,21 @@ export default function Dashboard() {
 
               {/* Tabs */}
               <nav className="flex gap-2 mt-6">
-                {(['overview', 'embed', 'search', 'browse'] as Tab[]).map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={'px-4 py-2 rounded-lg capitalize transition-colors ' +
-                      (activeTab === tab
-                        ? 'bg-[var(--accent)] text-white'
-                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]')
-                    }
-                  >
-                    {tab}
-                  </button>
-                ))}
+                {(['overview', 'embed', 'search', 'browse'] as Tab[])
+                  .filter(tab => tab !== 'embed' || embeddingsAvailable)
+                  .map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={'px-4 py-2 rounded-lg capitalize transition-colors ' +
+                        (activeTab === tab
+                          ? 'bg-[var(--accent)] text-white'
+                          : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]')
+                      }
+                    >
+                      {tab}
+                    </button>
+                  ))}
               </nav>
             </header>
 

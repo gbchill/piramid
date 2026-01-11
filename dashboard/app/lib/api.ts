@@ -97,6 +97,15 @@ export async function checkHealth(): Promise<boolean> {
   }
 }
 
+export async function checkEmbeddingsAvailable(): Promise<boolean> {
+  try {
+    await fetchAPI('/health/embeddings');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // =============================================================================
 // COLLECTIONS
 // =============================================================================

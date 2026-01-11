@@ -32,6 +32,7 @@ pub fn create_router(state: SharedState) -> Router {
     Router::new()
         // Health check - always first, it's what load balancers hit
         .route("/api/health", get(handlers::health))
+        .route("/api/health/embeddings", get(handlers::health_embeddings))
         
         // Collections CRUD
         .route("/api/collections", get(handlers::list_collections))
