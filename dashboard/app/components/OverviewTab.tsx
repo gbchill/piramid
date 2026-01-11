@@ -4,7 +4,8 @@
 "use client";
 
 import { useState } from 'react';
-import { Collection, insertVector } from '../lib/api';
+import { Collection, insertVector, APIError } from '../lib/api';
+import { ErrorDisplay } from './ErrorDisplay';
 
 interface OverviewTabProps {
   collection: Collection;
@@ -43,10 +44,13 @@ function QuickInsert({ collection }: { collection: string }) {
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<Error | APIError | null>(null);
 
   async function handleInsert() {
     try {
       setLoading(true);
+      setError(null);
+      setResult(null);
       const vectorArray = vector.split(',').map(v => parseFloat(v.trim()));
       
       const res = await insertVector(collection, {
@@ -58,7 +62,7 @@ function QuickInsert({ collection }: { collection: string }) {
       setVector('');
       setText('');
     } catch (e) {
-      setResult(`Error: ${e instanceof Error ? e.message : 'Failed'}`);
+      setError(e instanceof Error ? e : new Error('Failed to insert vector'));
     } finally {
       setLoading(false);
     }
@@ -99,11 +103,12 @@ function QuickInsert({ collection }: { collection: string }) {
           {loading ? 'Inserting...' : 'Insert Vector'}
         </button>
         {result && (
-          <span className={`text-sm ${result.startsWith('Error') ? 'text-[var(--error)]' : 'text-[var(--success)]'}`}>
+          <span className="text-sm text-[var(--success)]">
             {result}
           </span>
         )}
       </div>
+      {error && <ErrorDisplay error={error} onDismiss={() => setError(null)} />}
     </div>
   );
 }

@@ -4,7 +4,8 @@
 "use client";
 
 import { useState } from 'react';
-import { searchVectors, searchByText, SearchResult } from '../lib/api';
+import { searchVectors, searchByText, SearchResult, APIError } from '../lib/api';
+import { ErrorDisplay } from './ErrorDisplay';
 
 interface SearchTabProps {
   collection: string;
@@ -19,10 +20,12 @@ export function SearchTab({ collection }: SearchTabProps) {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [tookMs, setTookMs] = useState<number | null>(null);
+  const [error, setError] = useState<Error | APIError | null>(null);
 
   async function handleVectorSearch() {
     try {
       setLoading(true);
+      setError(null);
       const vectorArray = vector.split(',').map(v => parseFloat(v.trim()));
       
       const res = await searchVectors(collection, {
@@ -34,7 +37,7 @@ export function SearchTab({ collection }: SearchTabProps) {
       setResults(res.results);
       setTookMs(res.took_ms ?? null);
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Search failed');
+      setError(e instanceof Error ? e : new Error('Search failed'));
     } finally {
       setLoading(false);
     }
@@ -43,6 +46,7 @@ export function SearchTab({ collection }: SearchTabProps) {
   async function handleTextSearch() {
     try {
       setLoading(true);
+      setError(null);
       
       const res = await searchByText(collection, {
         query: textQuery,
@@ -53,7 +57,7 @@ export function SearchTab({ collection }: SearchTabProps) {
       setResults(res.results);
       setTookMs(res.took_ms ?? null);
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Text search failed. Make sure embedding provider is configured.');
+      setError(e instanceof Error ? e : new Error('Text search failed. Make sure embedding provider is configured.'));
     } finally {
       setLoading(false);
     }
@@ -158,6 +162,9 @@ export function SearchTab({ collection }: SearchTabProps) {
           </button>
         </div>
       </div>
+
+      {/* Error Display */}
+      {error && <ErrorDisplay error={error} onDismiss={() => setError(null)} />}
 
       {/* Results */}
       {results.length > 0 && (

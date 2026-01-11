@@ -9,26 +9,79 @@ const API_BASE = typeof window !== 'undefined'
   ? `${window.location.protocol}//${window.location.hostname}:6333/api`
   : 'http://localhost:6333/api';
 
-// Generic fetch wrapper with error handling
+// Enhanced error type with more details
+export class APIError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public statusText: string,
+    public endpoint: string,
+    public details?: unknown
+  ) {
+    super(message);
+    this.name = 'APIError';
+  }
+
+  toString(): string {
+    return `[${this.status} ${this.statusText}] ${this.message}`;
+  }
+}
+
+// Generic fetch wrapper with enhanced error handling
 export async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
-  
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(error.message || 'API error');
+  try {
+    const res = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+    });
+    
+    if (!res.ok) {
+      // Try to parse error response
+      let errorData;
+      let errorMessage = res.statusText;
+      
+      try {
+        const text = await res.text();
+        if (text) {
+          errorData = JSON.parse(text);
+          errorMessage = errorData.message || errorData.error || text;
+        }
+      } catch {
+        // If parsing fails, use status text
+        errorMessage = res.statusText || 'Request failed';
+      }
+      
+      throw new APIError(
+        errorMessage,
+        res.status,
+        res.statusText,
+        endpoint,
+        errorData
+      );
+    }
+    
+    if (res.status === 204) {
+      return {} as T;
+    }
+    
+    return res.json();
+  } catch (error) {
+    // If it's already an APIError, re-throw
+    if (error instanceof APIError) {
+      throw error;
+    }
+    
+    // Network error or other issues
+    throw new APIError(
+      error instanceof Error ? error.message : 'Network error',
+      0,
+      'Network Error',
+      endpoint
+    );
   }
-  
-  if (res.status === 204) {
-    return {} as T;
-  }
-  
-  return res.json();
 }
 
 // =============================================================================

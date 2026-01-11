@@ -4,7 +4,8 @@
 "use client";
 
 import { useState } from 'react';
-import { embedText, embedBatch, EmbedResponse, EmbedBatchResponse } from '../lib/api';
+import { embedText, embedBatch, EmbedResponse, EmbedBatchResponse, APIError } from '../lib/api';
+import { ErrorDisplay } from './ErrorDisplay';
 
 interface EmbedTabProps {
   collection: string;
@@ -18,11 +19,13 @@ export function EmbedTab({ collection }: EmbedTabProps) {
   const [metadata, setMetadata] = useState('{}');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<EmbedResponse | null>(null);
+  const [error, setError] = useState<Error | APIError | null>(null);
   
   // Batch embed
   const [batchText, setBatchText] = useState('');
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchResult, setBatchResult] = useState<EmbedBatchResponse | null>(null);
+  const [batchError, setBatchError] = useState<Error | APIError | null>(null);
 
   async function handleEmbed() {
     if (!text.trim()) return;
@@ -30,6 +33,7 @@ export function EmbedTab({ collection }: EmbedTabProps) {
     try {
       setLoading(true);
       setResult(null);
+      setError(null);
       
       const metadataObj = metadata.trim() ? JSON.parse(metadata) : {};
       const res = await embedText(collection, {
@@ -40,7 +44,7 @@ export function EmbedTab({ collection }: EmbedTabProps) {
       setResult(res);
       setText('');
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Embedding failed');
+      setError(e instanceof Error ? e : new Error('Embedding failed'));
     } finally {
       setLoading(false);
     }
@@ -53,13 +57,14 @@ export function EmbedTab({ collection }: EmbedTabProps) {
     try {
       setBatchLoading(true);
       setBatchResult(null);
+      setBatchError(null);
       
       const res = await embedBatch(collection, { texts });
       
       setBatchResult(res);
       setBatchText('');
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Batch embedding failed');
+      setBatchError(e instanceof Error ? e : new Error('Batch embedding failed'));
     } finally {
       setBatchLoading(false);
     }
@@ -137,6 +142,9 @@ export function EmbedTab({ collection }: EmbedTabProps) {
             </div>
           </div>
 
+          {/* Error Display */}
+          {error && <ErrorDisplay error={error} onDismiss={() => setError(null)} />}
+
           {/* Single Result */}
           {result && (
             <div className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border-color)]">
@@ -199,9 +207,12 @@ export function EmbedTab({ collection }: EmbedTabProps) {
             </div>
           </div>
 
+          {/* Error Display */}
+          {batchError && <ErrorDisplay error={batchError} onDismiss={() => setBatchError(null)} />}
+
           {/* Batch Result */}
           {batchResult && (
-            <div className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border-color)]">
+            <div className="bg-[var(--bg-secondary)} rounded-xl p-6 border border-[var(--border-color)]">
               <h3 className="font-semibold mb-4">Batch Embedded Successfully</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">

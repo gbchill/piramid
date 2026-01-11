@@ -23,7 +23,11 @@ FROM rust:1.83-slim AS rust-builder
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y pkg-config && rm -rf /var/lib/apt/lists/*
+# Install build dependencies (OpenSSL required by reqwest)
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
@@ -37,7 +41,12 @@ FROM debian:bookworm-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y ca-certificates curl && rm -rf /var/lib/apt/lists/*
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    curl \
+    libssl3 \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=rust-builder /app/target/release/piramid-server ./piramid-server
 COPY --from=dashboard-builder /app/dashboard/out ./dashboard

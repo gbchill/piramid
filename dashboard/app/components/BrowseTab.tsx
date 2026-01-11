@@ -4,8 +4,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { Collection, deleteVector } from '../lib/api';
-import { fetchAPI } from '../lib/api';
+import { Collection, deleteVector, fetchAPI, APIError } from '../lib/api';
+import { ErrorDisplay } from './ErrorDisplay';
 
 interface BrowseTabProps {
   collection: string;
@@ -20,10 +20,12 @@ interface VectorEntry {
 export function BrowseTab({ collection }: BrowseTabProps) {
   const [vectors, setVectors] = useState<VectorEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | APIError | null>(null);
 
   const loadVectors = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const info = await fetchAPI<Collection>(`/collections/${collection}`);
       
       if (info.count > 0) {
@@ -39,7 +41,7 @@ export function BrowseTab({ collection }: BrowseTabProps) {
         setVectors([]);
       }
     } catch (e) {
-      console.error('Failed to load vectors:', e);
+      setError(e instanceof Error ? e : new Error('Failed to load vectors'));
     } finally {
       setLoading(false);
     }
@@ -56,12 +58,26 @@ export function BrowseTab({ collection }: BrowseTabProps) {
       await deleteVector(collection, id);
       setVectors(vectors.filter(v => v.id !== id));
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Failed to delete');
+      setError(e instanceof Error ? e : new Error('Failed to delete'));
     }
   }
 
   if (loading) {
     return <div className="text-center py-8 text-[var(--text-secondary)]">Loading vectors...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <ErrorDisplay error={error} onDismiss={() => setError(null)} />
+        <button
+          onClick={loadVectors}
+          className="px-6 py-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] rounded-lg"
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
   if (vectors.length === 0) {
