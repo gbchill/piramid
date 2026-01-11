@@ -18,7 +18,7 @@
 - [x] Persistence to disk
 
 ### Phase 2: Search & Similarity 
-- [x] **Distance metrics module**
+- [x] **Similarity metrics module**
   - [x] Cosine similarity
   - [x] Euclidean distance
   - [x] Dot product
@@ -274,8 +274,8 @@ src/
 ├── metadata.rs      # MetadataValue enum + Metadata type alias
 ├── error.rs         # PiramidError + Result type
 ├── config.rs        # Config struct
-├── distance/        # Distance metrics
-│   ├── mod.rs       # DistanceMetric enum
+├── metrics/         # Similarity metrics
+│   ├── mod.rs       # SimilarityMetric enum
 │   ├── cosine.rs    # Cosine similarity
 │   ├── euclidean.rs # Euclidean distance
 │   └── dot.rs       # Dot product
@@ -305,7 +305,7 @@ dashboard/           # Next.js admin UI
 ### As a Library
 
 ```rust
-use piramid::{VectorEntry, VectorStorage, DistanceMetric, Filter, metadata};
+use piramid::{VectorEntry, VectorStorage, SimilarityMetric, Filter, metadata};
 
 // Open or create storage
 let mut storage = VectorStorage::open("vectors.db").unwrap();
@@ -323,7 +323,7 @@ let id = storage.store(entry).unwrap();
 
 // Search for similar vectors
 let query = vec![0.1, 0.2, 0.3, 0.4];
-let results = storage.search(&query, 5, DistanceMetric::Cosine);
+let results = storage.search(&query, 5, SimilarityMetric::Cosine);
 
 for result in results {
     println!("{}: {} (score: {})", result.id, result.text, result.score);
@@ -333,7 +333,7 @@ for result in results {
 let filter = Filter::new()
     .eq("category", "greeting")
     .gt("importance", 3i64);
-let filtered = storage.search_with_filter(&query, 5, DistanceMetric::Cosine, Some(&filter));
+let filtered = storage.search_with_filter(&query, 5, SimilarityMetric::Cosine, Some(&filter));
 ```
 
 ### Via HTTP API

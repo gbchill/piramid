@@ -1,5 +1,5 @@
 use piramid::{
-    VectorEntry, VectorStorage, DistanceMetric, 
+    VectorEntry, VectorStorage, SimilarityMetric, 
     Filter, metadata, SearchResult
 };
 
@@ -76,7 +76,7 @@ fn main() {
     println!("\nQuery vector: {:?}", query);
     println!("Finding top 3 similar vectors (Cosine):\n");
 
-    let results = storage.search(&query, 3, DistanceMetric::Cosine);
+    let results = storage.search(&query, 3, SimilarityMetric::Cosine);
     print_results(&results);
 
     // --- Filtered Search ---
@@ -87,14 +87,14 @@ fn main() {
         .eq("category", "programming")
         .gt("year", 2000i64);
 
-    let results = storage.search_with_filter(&query, 10, DistanceMetric::Cosine, Some(&filter));
+    let results = storage.search_with_filter(&query, 10, SimilarityMetric::Cosine, Some(&filter));
     print_results(&results);
 
     // --- Different Distance Metrics ---
     println!("\n=== Distance Metrics Comparison ===");
     println!("Same query with different metrics:\n");
 
-    for metric in [DistanceMetric::Cosine, DistanceMetric::Euclidean, DistanceMetric::DotProduct] {
+    for metric in [SimilarityMetric::Cosine, SimilarityMetric::Euclidean, SimilarityMetric::DotProduct] {
         println!("{:?}:", metric);
         let results = storage.search(&query, 2, metric);
         for r in &results {

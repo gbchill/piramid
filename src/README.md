@@ -13,9 +13,9 @@ The heart of the database. Understand:
 - `VectorStorage` - how storage works (HashMap in RAM, file on disk)
 - How `search()` works (brute-force: compare against all vectors)
 
-### 3. How similarity works → `distance/`
+### 3. How similarity works → `metrics/`
 Read in order:
-1. `mod.rs` - the `DistanceMetric` enum and `match`
+1. `mod.rs` - the `SimilarityMetric` enum and `match`
 2. `cosine.rs` - the most important metric, with math explanation
 3. Skim `euclidean.rs` and `dot.rs`
 
@@ -60,7 +60,7 @@ User calls storage.search(query_vector, k, metric)
 │         │                               │
 │         ▼  for each entry               │
 │  ┌─────────────────────────────────┐    │
-│  │ DistanceMetric::Cosine          │    │
+│  │ SimilarityMetric::Cosine        │    │
 │  │   cosine_similarity(query, vec) │    │
 │  └─────────────────────────────────┘    │
 │         │                               │
@@ -77,7 +77,7 @@ User calls storage.search(query_vector, k, metric)
 |------|-------------------|
 | `storage.rs` | `&self` vs `&mut self`, `?` operator, iterators, closures |
 | `metadata.rs` | Enums with data, `From` trait, const generics |
-| `distance/mod.rs` | Modules, `pub use`, exhaustive `match` |
+| `metrics/mod.rs` | Modules, `pub use`, exhaustive `match` |
 | `cosine.rs` | Tests, `#[cfg(test)]`, assertions |
 | `error.rs` | `Result`, `thiserror`, type aliases |
 | `filter.rs` | Builder pattern, `Option::map_or` |
@@ -96,8 +96,8 @@ src/
 ├── error.rs         # Error types
 ├── metadata.rs      # Key-value metadata for vectors
 ├── search.rs        # Search result struct
-├── distance/        # Similarity calculations
-│   ├── mod.rs       # DistanceMetric enum
+├── metrics/         # Similarity calculations
+│   ├── mod.rs       # SimilarityMetric enum
 │   ├── cosine.rs    # Cosine similarity (most common)
 │   ├── euclidean.rs # L2 distance
 │   └── dot.rs       # Dot product

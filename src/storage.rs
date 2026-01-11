@@ -6,7 +6,7 @@ use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};  // Traits for file I/O
 use uuid::Uuid;
 
-use crate::distance::DistanceMetric;  // `crate::` means "from this project"
+use crate::metrics::SimilarityMetric;  // `crate::` means "from this project"
 use crate::error::Result;
 use crate::metadata::Metadata;
 use crate::query::Filter;
@@ -97,7 +97,7 @@ impl VectorStorage {
 
     /// Brute-force search: compare query against ALL vectors.
     /// O(n) complexity - fine for <10k vectors, need indexing for more.
-    pub fn search(&self, query: &[f32], k: usize, metric: DistanceMetric) -> Vec<SearchResult> {
+    pub fn search(&self, query: &[f32], k: usize, metric: SimilarityMetric) -> Vec<SearchResult> {
         self.search_with_filter(query, k, metric, None)
     }
 
@@ -106,7 +106,7 @@ impl VectorStorage {
         &self,
         query: &[f32],        // &[f32] = slice, a view into any contiguous f32s
         k: usize,             // usize = unsigned integer, size depends on platform
-        metric: DistanceMetric,
+        metric: SimilarityMetric,
         filter: Option<&Filter>,  // Option = might be None or Some(value)
     ) -> Vec<SearchResult> {
         // Rust iterators: lazy, chainable, zero-cost abstractions

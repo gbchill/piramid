@@ -69,7 +69,7 @@ export function SearchTab({ collection }: SearchTabProps) {
               />
             </div>
             <div className="flex-1">
-              <label className="block text-sm text-[var(--text-secondary)] mb-1">Distance Metric</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-1">Similarity Metric</label>
               <select
                 value={metric}
                 onChange={(e) => setMetric(e.target.value as 'cosine' | 'euclidean' | 'dot')}
