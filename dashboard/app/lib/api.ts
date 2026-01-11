@@ -124,3 +124,64 @@ export async function searchVectors(
     body: JSON.stringify(query),
   });
 }
+
+// =============================================================================
+// EMBEDDINGS
+// =============================================================================
+
+export interface EmbedRequest {
+  text: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface EmbedResponse {
+  id: string;
+  embedding: number[];
+  tokens?: number;
+}
+
+export async function embedText(
+  collection: string,
+  data: EmbedRequest
+): Promise<EmbedResponse> {
+  return fetchAPI(`/collections/${collection}/embed`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export interface EmbedBatchRequest {
+  texts: string[];
+  metadata?: Record<string, unknown>[];
+}
+
+export interface EmbedBatchResponse {
+  ids: string[];
+  total_tokens?: number;
+}
+
+export async function embedBatch(
+  collection: string,
+  data: EmbedBatchRequest
+): Promise<EmbedBatchResponse> {
+  return fetchAPI(`/collections/${collection}/embed/batch`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export interface TextSearchRequest {
+  query: string;
+  k?: number;
+  metric?: 'cosine' | 'euclidean' | 'dot';
+}
+
+export async function searchByText(
+  collection: string,
+  query: TextSearchRequest
+): Promise<SearchResponse> {
+  return fetchAPI(`/collections/${collection}/search/text`, {
+    method: 'POST',
+    body: JSON.stringify(query),
+  });
+}

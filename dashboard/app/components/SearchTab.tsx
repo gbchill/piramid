@@ -4,21 +4,23 @@
 "use client";
 
 import { useState } from 'react';
-import { searchVectors, SearchResult } from '../lib/api';
+import { searchVectors, searchByText, SearchResult } from '../lib/api';
 
 interface SearchTabProps {
   collection: string;
 }
 
 export function SearchTab({ collection }: SearchTabProps) {
+  const [mode, setMode] = useState<'vector' | 'text'>('text');
   const [vector, setVector] = useState('');
+  const [textQuery, setTextQuery] = useState('');
   const [limit, setLimit] = useState('10');
   const [metric, setMetric] = useState<'cosine' | 'euclidean' | 'dot'>('cosine');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [tookMs, setTookMs] = useState<number | null>(null);
 
-  async function handleSearch() {
+  async function handleVectorSearch() {
     try {
       setLoading(true);
       const vectorArray = vector.split(',').map(v => parseFloat(v.trim()));
@@ -38,25 +40,90 @@ export function SearchTab({ collection }: SearchTabProps) {
     }
   }
 
+  async function handleTextSearch() {
+    try {
+      setLoading(true);
+      
+      const res = await searchByText(collection, {
+        query: textQuery,
+        k: parseInt(limit),
+        metric,
+      });
+      
+      setResults(res.results);
+      setTookMs(res.took_ms ?? null);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Text search failed. Make sure embedding provider is configured.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleSearch = mode === 'vector' ? handleVectorSearch : handleTextSearch;
+
   return (
     <div className="space-y-6">
+      {/* Mode Toggle */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setMode('text')}
+          className={`px-4 py-2 rounded-lg ${
+            mode === 'text' 
+              ? 'bg-[var(--accent)] text-white' 
+              : 'bg-[var(--bg-secondary)] border border-[var(--border-color)]'
+          }`}
+        >
+          🔤 Text Search
+        </button>
+        <button
+          onClick={() => setMode('vector')}
+          className={`px-4 py-2 rounded-lg ${
+            mode === 'vector' 
+              ? 'bg-[var(--accent)] text-white' 
+              : 'bg-[var(--bg-secondary)] border border-[var(--border-color)]'
+          }`}
+        >
+          🔢 Vector Search
+        </button>
+      </div>
+
       {/* Search Form */}
       <div className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border-color)]">
-        <h3 className="font-semibold mb-4">Search Query</h3>
+        <h3 className="font-semibold mb-4">
+          {mode === 'text' ? 'Search by Text' : 'Search by Vector'}
+        </h3>
         
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm text-[var(--text-secondary)] mb-1">
-              Query Vector
-            </label>
-            <input
-              type="text"
-              value={vector}
-              onChange={(e) => setVector(e.target.value)}
-              placeholder="0.1, 0.2, 0.3, 0.4"
-              className="w-full px-4 py-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:border-[var(--accent)]"
-            />
-          </div>
+          {mode === 'text' ? (
+            <div>
+              <label className="block text-sm text-[var(--text-secondary)] mb-1">
+                Search Query
+              </label>
+              <input
+                type="text"
+                value={textQuery}
+                onChange={(e) => setTextQuery(e.target.value)}
+                placeholder="What are you looking for?"
+                className="w-full px-4 py-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:border-[var(--accent)]"
+              />
+              <p className="text-xs text-[var(--text-secondary)] mt-1">
+                Text will be automatically embedded using the configured provider
+              </p>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm text-[var(--text-secondary)] mb-1">
+                Query Vector
+              </label>
+              <input
+                type="text"
+                value={vector}
+                onChange={(e) => setVector(e.target.value)}
+                placeholder="0.1, 0.2, 0.3, 0.4"
+                className="w-full px-4 py-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:border-[var(--accent)]"
+              />
+            </div>
+          )}
           
           <div className="flex gap-4">
             <div className="flex-1">
@@ -84,7 +151,7 @@ export function SearchTab({ collection }: SearchTabProps) {
           
           <button
             onClick={handleSearch}
-            disabled={loading || !vector.trim()}
+            disabled={loading || (mode === 'vector' ? !vector.trim() : !textQuery.trim())}
             className="px-6 py-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] rounded-lg disabled:opacity-50"
           >
             {loading ? 'Searching...' : 'Search'}

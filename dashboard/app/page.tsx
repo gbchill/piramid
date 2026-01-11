@@ -18,12 +18,13 @@ import { CreateCollectionModal } from './components/Modal';
 import { OverviewTab } from './components/OverviewTab';
 import { SearchTab } from './components/SearchTab';
 import { BrowseTab } from './components/BrowseTab';
+import { EmbedTab } from './components/EmbedTab';
 
 // =============================================================================
 // MAIN DASHBOARD
 // =============================================================================
 
-type Tab = 'overview' | 'search' | 'browse';
+type Tab = 'overview' | 'embed' | 'search' | 'browse';
 
 export default function Dashboard() {
   // Server state
@@ -148,7 +149,7 @@ export default function Dashboard() {
 
               {/* Tabs */}
               <nav className="flex gap-2 mt-6">
-                {(['overview', 'search', 'browse'] as Tab[]).map((tab) => (
+                {(['overview', 'embed', 'search', 'browse'] as Tab[]).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -166,6 +167,7 @@ export default function Dashboard() {
 
             {/* Tab Content */}
             {activeTab === 'overview' && <OverviewTab collection={currentCollection} />}
+            {activeTab === 'embed' && <EmbedTab collection={selectedCollection} />}
             {activeTab === 'search' && <SearchTab collection={selectedCollection} />}
             {activeTab === 'browse' && <BrowseTab collection={selectedCollection} />}
           </>
