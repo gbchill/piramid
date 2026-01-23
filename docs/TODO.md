@@ -1,175 +1,153 @@
-# Documentation TODO
+# Piramid TODO - Build Order & Documentation
 
-These files need to be created/updated as development progresses:
+**Use this as your single source of truth for what to build and when.**
 
-### Phase 1: Core Foundation ✅ **COMPLETED** 
-- [x] Basic vector storage (HashMap + file persistence)
-- [x] Binary serialization with bincode
-- [x] UUID-based document IDs
-- [x] Error handling with thiserror
-- [x] Store and retrieve vectors by ID
-- [x] Get all vectors
-- [x] Persistence to disk
+---
 
-### Phase 2: Search & Similarity ✅ **COMPLETED**
-- [x] **Similarity metrics module**
-  - [x] Cosine similarity
-  - [x] Euclidean distance
-  - [x] Dot product
-- [x] **Similarity search API**
-  - [x] `search(query_vector, top_k)` → returns nearest neighbors
-  - [x] Return results with scores
-- [x] **Metadata support**
-  - [x] Add `metadata: HashMap<String, Value>` to VectorEntry
-  - [x] JSON-like metadata storage
-- [x] **Filtered search**
-  - [x] Filter by metadata during search
-  - [x] Support basic operators (eq, ne, gt, gte, lt, lte, in)
+## 🎯 BUILD ORDER
 
-### Phase 3: Data Operations ✅ **COMPLETED** 
-- [x] **Delete operations**
-  - [x] Delete by ID
-- [x] **Update operations**
-  - [x] Update vector by ID
-  - [x] Update metadata by ID
+**Follow this exact order. Each step depends on the previous.**
 
-### Phase 4: HTTP Server ✅ **COMPLETED** 
-- [x] **REST API (axum)**
-  - [x] Health endpoint
-  - [x] Collections CRUD
-  - [x] Vectors CRUD
-  - [x] Search endpoint
-  - [x] CORS support
-- [x] **Dashboard (Next.js)**
-  - [x] Static export embedded in Rust server
-  - [x] Collection management UI
-  - [x] Vector browsing
-  - [x] Search interface
+---
 
-### Phase 5: Built-in Embeddings ✅ **COMPLETED**
-*no need to embed before storing*
-- [x] **Embedding providers module**
-  - [x] OpenAI (text-embedding-3-small, text-embedding-3-large)
-  - [x] Ollama (local models - nomic-embed-text, mxbai-embed-large)
-  - [ ] HuggingFace Inference API
-- [x] **Text-to-vector API endpoints**
-  - [x] `POST /api/collections/{name}/embed` - embed text and store
-  - [x] `POST /api/collections/{name}/search/text` - search by text query
-- [x] **Configuration**
-  - [x] Provider selection via env vars / config
-  - [x] API key management
-  - [x] Model selection per collection
-- [x] **Batch embedding**
-  - [x] Batch embed multiple texts in one request
-  - [ ] Rate limiting / retry logic (→ moved to Phase 10.5)
+## ✅ COMPLETED
 
-### Phase 6: Document Ingestion 
-*Upload docs, auto-chunk, auto-embed*
-- [ ] **Chunking strategies**
-  - [ ] Fixed-size chunking (by tokens/characters)
-  - [ ] Semantic chunking (sentence/paragraph boundaries)
-  - [ ] Recursive character splitter
-  - [ ] Overlap configuration
-- [ ] **Document upload endpoint**
-  - [ ] `POST /api/collections/{name}/ingest` - upload raw text/file
-  - [ ] PDF support (via pdf-extract or similar)
-  - [ ] Markdown/HTML support
-- [ ] **Chunk metadata**
-  - [ ] Auto-add chunk index, source document ID
-  - [ ] Parent-child relationships
+### Core Foundation
+- [x] Vector storage (HashMap + bincode persistence)
+- [x] UUID-based IDs, error handling
+- [x] Store, retrieve, get all, delete, update
 
-### Phase 7: MCP (Model Context Protocol) Integration 
-*Let AI agents discover and walk your data*
-- [ ] **MCP server implementation**
-  - [ ] Built-in MCP tool definitions
-  - [ ] `search_similar` tool
-  - [ ] `get_document` tool
-  - [ ] `list_collections` tool
-- [ ] **Agent-friendly responses**
-  - [ ] Structured output formats
-  - [ ] Context window aware truncation
+### Search & Similarity
+- [x] Similarity metrics (cosine, euclidean, dot product)
+- [x] Top-k search with scores
+- [x] Metadata support with filtering
 
-### Phase 8: Hybrid Search 
-*Vector + keyword search combined*
-- [ ] **BM25 keyword search**
-  - [ ] Inverted index for text fields
-  - [ ] TF-IDF scoring
-- [ ] **Hybrid ranking**
-  - [ ] Reciprocal Rank Fusion (RRF)
-  - [ ] Configurable vector/keyword weights
-- [ ] **Full-text search endpoint**
-  - [ ] `POST /api/collections/{name}/search/hybrid`
+### HTTP Server & Embeddings
+- [x] REST API (axum), Collections/Vectors CRUD
+- [x] Dashboard (Next.js)
+- [x] Embedding providers (OpenAI, Ollama)
+- [x] Batch embedding endpoints
 
-### Phase 9: Performance & Indexing ⚡ **HIGH PRIORITY**
-- [ ] **HNSW (Hierarchical Navigable Small World)**
+---
+
+## 🔴 CRITICAL PATH - v1.0 Production
+
+**Build these in order. Don't skip ahead.**
+
+### 1️⃣ Performance & Indexing ⚡ **START HERE**
+
+**Why first:** Without HNSW, everything else is unusably slow at scale.
+
+**Implementation:**
+- [ ] **HNSW indexing**
   - [ ] Build HNSW graph on insert
-  - [ ] Approximate nearest neighbor search
+  - [ ] Approximate nearest neighbor search (O(log n))
   - [ ] Configurable ef_construction and M parameters
+  - [ ] Benchmark: 1M vectors in <10ms
 - [ ] **SIMD acceleration**
   - [ ] SIMD distance calculations (AVX2/AVX-512)
   - [ ] Portable SIMD fallback
+  - [ ] 3-5x speedup target
 - [ ] **Memory optimization**
   - [ ] Memory-mapped files (mmap)
-  - [ ] Scalar quantization (int8)
+  - [ ] Scalar quantization (int8) - 4x memory reduction
+  - [ ] Handle 10M vectors on 32GB RAM
 - [ ] **Parallel processing**
   - [ ] Parallel search with rayon
   - [ ] Concurrent inserts
+  - [ ] Linear scaling with CPU cores
 
-### Phase 9.5: Data Durability & Integrity 🔴 **CRITICAL - MUST DO BEFORE PRODUCTION**
-*Production databases don't lose your data*
+**Goal:** Search 1M vectors in <10ms
+
+**Documentation after completion:**
+- [ ] `docs/ARCHITECTURE.md` - HNSW implementation details
+- [ ] `docs/PERFORMANCE.md` - Real benchmarks
+
+---
+
+### 2️⃣ Data Durability & Integrity 🛡️ **DO IMMEDIATELY AFTER #1**
+
+**Why second:** Phase 1 gives speed, this makes it production-safe. Without this, you WILL lose user data.
+
+**Implementation:**
 - [ ] **Write-Ahead Log (WAL)**
   - [ ] Append-only log for all mutations
   - [ ] Recovery from WAL on crash/restart
-  - [ ] Periodic checkpointing to main storage
-  - [ ] Configurable fsync strategies (performance vs durability)
+  - [ ] Periodic checkpointing
+  - [ ] Configurable fsync strategies
+  - [ ] Test: Kill process mid-write, verify no data loss
 - [ ] **ACID Transactions**
   - [ ] Atomic batch operations (all-or-nothing)
   - [ ] Rollback on failure
-  - [ ] Isolation levels (at least serializable)
-  - [ ] Transaction log for debugging
+  - [ ] Isolation (at least serializable)
+  - [ ] Transaction log
 - [ ] **Graceful shutdown & recovery**
-  - [ ] Flush pending writes on SIGTERM/SIGINT
-  - [ ] Clean lock release on shutdown
-  - [ ] Corrupted file detection on startup
-  - [ ] Auto-repair minor corruption
+  - [ ] Flush on SIGTERM/SIGINT
+  - [ ] Clean lock release
+  - [ ] Corrupted file detection + auto-repair
   - [ ] Emergency read-only mode
 - [ ] **Backup & Restore**
   - [ ] Snapshot API (copy-on-write)
   - [ ] Point-in-time recovery (PITR)
-  - [ ] Export/import collections (portable format)
+  - [ ] Export/import (portable format)
   - [ ] Incremental backups
-  - [ ] Verify backup integrity
 - [ ] **Error handling hardening**
-  - [ ] Replace all .unwrap() with proper error types
-  - [ ] Graceful degradation on failures
-  - [ ] Poison-free lock handling (no panics while holding locks)
+  - [ ] Replace ALL `.unwrap()` with proper errors
+  - [ ] Graceful degradation
+  - [ ] Poison-free lock handling
   - [ ] Retry logic with exponential backoff
 - [ ] **Async storage I/O**
-  - [ ] Non-blocking disk writes
-  - [ ] Async file handles (tokio-fs)
+  - [ ] Non-blocking writes (tokio-fs)
   - [ ] Background flush worker
   - [ ] Write batching/coalescing
 
-### Phase 10: Production Features 
+**Goal:** Zero data loss on crashes. Pass chaos engineering tests.
+
+**Documentation after completion:**
+- [ ] `docs/RECOVERY.md` - WAL recovery troubleshooting
+
+---
+
+### 3️⃣ Production Features 📊 **THIRD - OBSERVABILITY**
+
+**Why third:** Can't run #1+#2 in production without knowing what's happening.
+
+**Implementation:**
+- [ ] **Observability**
+  - [ ] Metrics (insert/search latency, index size, memory)
+  - [ ] Structured logging (tracing crate)
+  - [ ] Prometheus endpoint (`/metrics`)
+  - [ ] Enhanced health checks
 - [ ] **Batch operations**
-  - [ ] Batch insert (insert many vectors at once)
-  - [ ] Batch search (multiple queries)
+  - [ ] Batch insert (10k inserts in <1s)
+  - [ ] Batch search
   - [ ] Bulk delete
 - [ ] **Validation**
-  - [ ] Dimension consistency checks per collection
+  - [ ] Dimension consistency checks
   - [ ] Vector normalization option
-- [ ] **Observability**
-  - [ ] Metrics (insert latency, search latency, index size)
-  - [ ] Structured logging (tracing)
-  - [ ] Prometheus endpoint
+  - [ ] Clear error messages
 - [ ] **Schema support**
   - [ ] Define expected dimensions per collection
   - [ ] Metadata schema validation
-- [ ] **gRPC API**
-  - [ ] Alternative to REST for performance
+  - [ ] Schema versioning
+- [ ] **gRPC API** (optional but recommended)
+  - [ ] Alternative to REST
+  - [ ] Streaming inserts
+  - [ ] Bi-directional streaming
 
-### Phase 10.5: Security & Authentication 🔒 **HIGH PRIORITY**
-*Don't let anyone delete your production data*
+**Goal:** Observable system with clear metrics and errors.
+
+**Documentation after completion:**
+- [ ] `docs/OBSERVABILITY.md` - Using metrics/logging
+- [ ] `docs/DEPLOYMENT.md` - Production deployment
+
+---
+
+### 4️⃣ Security & Authentication 🔒 **FOURTH - LOCK IT DOWN**
+
+**Why fourth:** Now that it works and is observable, prevent abuse.
+
+**Implementation:**
 - [ ] **Authentication**
   - [ ] API key authentication
   - [ ] JWT token support
@@ -177,187 +155,190 @@ These files need to be created/updated as development progresses:
   - [ ] Service-to-service auth (mTLS)
 - [ ] **Authorization**
   - [ ] Role-based access control (RBAC)
-  - [ ] Collection-level permissions (read/write/admin)
+  - [ ] Collection-level permissions
   - [ ] Read-only vs read-write users
-  - [ ] Fine-grained operation permissions
+  - [ ] Admin APIs
 - [ ] **Rate limiting & quotas**
   - [ ] Per-client rate limits (requests/second)
-  - [ ] Per-collection quotas (vector count, storage size)
-  - [ ] Quota enforcement
-  - [ ] DDoS protection (connection limits)
-  - [ ] Slow-query detection & throttling
+  - [ ] Per-collection quotas
+  - [ ] DDoS protection
+  - [ ] Slow-query throttling
 - [ ] **Security hardening**
   - [ ] Input validation & sanitization
-  - [ ] SQL injection prevention (if adding SQL features)
   - [ ] Request size limits
   - [ ] TLS/SSL enforcement
-  - [ ] Security headers (CORS, CSP)
+  - [ ] Security headers (CORS, CSP, HSTS)
+  - [ ] Audit logging
 
-### Phase 11: GPU Acceleration 
-*most vector DBs are CPU-only*
-- [ ] **GPU-accelerated distance calculations**
-  - [ ] wgpu backend (cross-platform: Vulkan/Metal/DX12/WebGPU)
-  - [ ] Optional CUDA backend for NVIDIA GPUs (cudarc)
-  - [ ] Automatic fallback to CPU SIMD
-- [ ] **Batch operations on GPU**
-  - [ ] Batch search (100+ queries) - 10-100x faster
-  - [ ] Brute-force search on large collections
-  - [ ] Matrix multiplication for distance calculations
-- [ ] **GPU memory management**
-  - [ ] Keep hot vectors in VRAM
-  - [ ] Async transfer between CPU/GPU
-  - [ ] LRU eviction for large collections
-- [ ] **Local embedding models on GPU**
-  - [ ] Candle integration for Rust-native inference
-  - [ ] GGUF model support (nomic-embed, bge, etc.)
-  - [ ] Same GPU for embedding + search (zero round-trip)
-- [ ] **Quantized GPU operations**
-  - [ ] INT8/FP16 tensor core acceleration
-  - [ ] Reduced VRAM usage
+**Goal:** Production-safe, multi-tenant ready.
 
-### Phase 12: Advanced Features 
-- [ ] Multi-vector documents
-- [ ] Clustering & auto-organization
-- [ ] Streaming inserts
-- [ ] Replication
-- [ ] Sharding
-- [ ] Custom distance functions
-- [ ] Graph relationships between vectors (like HelixDB)
-
-### Phase 13: Semantic Cache for LLMs 
-*Cache LLM responses by meaning, not exact match - save 70%+ on API costs*
-- [ ] **Semantic matching**
-  - [ ] Hash query embeddings for fast lookup
-  - [ ] Configurable similarity threshold
-  - [ ] "What's the capital of France?" ≈ "Tell me France's capital"
-- [ ] **Cache management**
-  - [ ] TTL (time-to-live) per entry
-  - [ ] LRU eviction
-  - [ ] Manual invalidation API
-- [ ] **LLM integration helpers**
-  - [ ] OpenAI/Anthropic response caching
-  - [ ] Token usage tracking
-  - [ ] Cost savings dashboard
-
-### Phase 14: WebAssembly (WASM) - Run Anywhere 
-*Rust's superpower - Piramid in the browser, edge, mobile*
-- [ ] **Browser runtime**
-  - [ ] Compile core to WASM
-  - [ ] Client-side vector search (no server needed)
-  - [ ] IndexedDB persistence
-- [ ] **Edge deployment**
-  - [ ] Cloudflare Workers compatible
-  - [ ] Vercel Edge Functions
-  - [ ] Deno Deploy
-- [ ] **Embedded use cases**
-  - [ ] React Native / Flutter integration
-  - [ ] Desktop apps (Tauri)
-  - [ ] Offline-first applications
-
-### Phase 15: Agent Memory System 
-*Purpose-built for AI agents, not just RAG*
-- [ ] **Memory types**
-  - [ ] Working Memory - current conversation context
-  - [ ] Episodic Memory - past interactions, time-decayed
-  - [ ] Semantic Memory - long-term knowledge
-  - [ ] Procedural Memory - learned tool usage patterns
-- [ ] **Memory management**
-  - [ ] Importance scoring (what to remember)
-  - [ ] Auto-consolidation (compress old memories)
-  - [ ] Cross-session persistence
-  - [ ] Memory retrieval by recency + relevance
-- [ ] **Agent integrations**
-  - [ ] LangChain/LlamaIndex memory backend
-  - [ ] AutoGPT/CrewAI compatible
-
-### Phase 16: Temporal Vectors (Time-Travel) 
-*Version control for embeddings*
-- [ ] **Vector versioning**
-  - [ ] Query: "What was similar to X as of 3 months ago?"
-  - [ ] Track embedding drift over time
-  - [ ] Rollback bad embedding updates
-- [ ] **A/B testing embeddings**
-  - [ ] Compare embedding models without migration
-  - [ ] Shadow indexing with new models
-- [ ] **Audit trail**
-  - [ ] Who changed what, when
-  - [ ] Compliance-friendly logging
-
-### Phase 17: Privacy-First / Local-Only Mode 
-*GDPR, HIPAA, enterprise-ready*
-- [ ] **Zero network mode**
-  - [ ] All embeddings via local models (Ollama/candle)
-  - [ ] No telemetry, no external calls
-  - [ ] Air-gapped deployment support
-- [ ] **Encryption**
-  - [ ] Encrypted at rest (AES-256)
-  - [ ] Encrypted in transit (TLS)
-  - [ ] Key management integration (Vault, KMS)
-- [ ] **Compliance features**
-  - [ ] Audit logs
-  - [ ] Data residency controls
-  - [ ] Right to deletion (GDPR Article 17)
-
-### Phase 18: Auto-Pilot Mode 
-*Zero-config optimization - it just works*
-- [ ] **Auto-indexing**
-  - [ ] Auto-select HNSW vs brute-force based on collection size
-  - [ ] Auto-tune M and ef_construction parameters
-  - [ ] Rebuild index in background when beneficial
-- [ ] **Auto-optimization**
-  - [ ] Auto-quantize when memory is tight
-  - [ ] Auto-batch small inserts
-  - [ ] Query pattern analysis → index hints
-- [ ] **Smart defaults**
-  - [ ] Suggest embedding model based on your data
-  - [ ] Warn about dimension mismatches
-  - [ ] Performance recommendations in dashboard
+**Documentation after completion:**
+- [ ] `docs/SECURITY.md` - Security policy
+- [ ] `docs/AUTH.md` - Auth/authorization guide
 
 ---
 
-## 🏆 Production Readiness Tracker
+## 🎉 v1.0 PRODUCTION READY
 
-### Phases Required for Production (v1.0)
-| Phase | Status | Priority | Blocks Production? |
-|-------|--------|----------|-------------------|
-| Phase 1-5 | ✅ Complete | N/A | Already done |
-| **Phase 9** | ⏳ Pending | 🔴 Critical | **YES** - Need HNSW indexing |
-| **Phase 9.5** | ⏳ Pending | 🔴 Critical | **YES** - Need WAL/ACID |
-| **Phase 10** | ⏳ Pending | 🔴 Critical | **YES** - Need observability |
-| **Phase 10.5** | ⏳ Pending | 🔴 Critical | **YES** - Need auth/security |
+**After completing steps 1-4:**
+- ✅ Fast (HNSW)
+- ✅ Reliable (WAL/ACID)
+- ✅ Observable (metrics)
+- ✅ Secure (auth/RBAC)
 
-### Feature Expansion (v1.x)
-| Phase | Priority | Can Deploy Without? |
-|-------|----------|---------------------|
-| Phase 6 | 🟡 Medium | Yes - users can chunk manually |
-| Phase 7 | 🟡 Medium | Yes - MCP is nice-to-have |
-| Phase 8 | 🟡 Medium | Yes - vector-only is viable |
+**→ Deploy to production, get real users, gather feedback**
 
-### Advanced Features (v2.0+)
-| Phase | Status | Competitive Advantage |
-|-------|--------|----------------------|
-| Phase 11 | 🟢 Future | **HIGH** - GPU acceleration (unique) |
-| Phase 12 | 🟢 Future | Medium - Replication/sharding (table stakes) |
-| Phase 13 | 🟢 Future | **HIGH** - Semantic cache (unique) |
-| Phase 14 | 🟢 Future | **HIGH** - WASM (unique) |
-| Phase 15 | 🟢 Future | **HIGH** - Agent memory (unique) |
-| Phase 16-18 | 🟢 Future | Medium - Nice differentiators |
-
-### Comparison with Competitors (After Phases 9-10.5)
-| Feature | Piramid v1.0 | Qdrant | HelixDB | Milvus |
-|---------|--------------|--------|---------|--------|
-| HNSW Indexing | ✅ (Phase 9) | ✅ | ✅ | ✅ |
-| SIMD Acceleration | ✅ (Phase 9) | ✅ | ✅ | ✅ |
-| WAL/ACID | ✅ (Phase 9.5) | ✅ | ✅ | ✅ |
-| Auth/RBAC | ✅ (Phase 10.5) | ✅ | ✅ | ✅ |
-| Observability | ✅ (Phase 10) | ✅ | ✅ | ✅ |
-| Replication | ❌ (Phase 12) | ✅ | ✅ | ✅ |
-| **GPU Acceleration** | 🎯 (Phase 11) | ❌ | ❌ | Limited |
-| **Semantic Cache** | 🎯 (Phase 13) | ❌ | ❌ | ❌ |
-| **WASM Support** | 🎯 (Phase 14) | ❌ | ❌ | ❌ |
-| **Agent Memory** | 🎯 (Phase 15) | ❌ | ❌ | ❌ |
-
-🎯 = Unique competitive advantage after implementation
+**General v1.0 documentation:**
+- [ ] `CONTRIBUTING.md` - Contribution guidelines
+- [ ] `CHANGELOG.md` - Start version tracking
+- [ ] `docs/API.md` - Complete REST API reference
+- [ ] `docs/QUICKSTART.md` - 5-minute tutorial
 
 ---
 
+## 🟡 FEATURE EXPANSION - v1.x
+
+**Build AFTER v1.0 is stable (3-6 months with real users).**
+
+### Document Ingestion 📄
+*Upload docs instead of pre-chunking*
+
+- [ ] Chunking strategies (fixed-size, semantic, recursive)
+- [ ] Document upload endpoint (PDF, DOCX, Markdown, HTML)
+- [ ] Chunk metadata (index, source doc, parent-child)
+
+**Goal:** Upload PDF → auto-chunk → auto-embed → search
+
+---
+
+### MCP Integration 🤖
+*AI agents can use Piramid*
+
+- [ ] MCP server implementation
+- [ ] Tools: search_similar, get_document, list_collections, add_document
+- [ ] Agent-friendly responses (structured JSON-LD)
+
+**Goal:** Claude Desktop can use Piramid out of the box
+
+---
+
+### Hybrid Search 🔍
+*Vector + keyword combined*
+
+- [ ] BM25 keyword search (inverted index, TF-IDF)
+- [ ] Hybrid ranking (RRF, configurable weights)
+- [ ] Full-text search endpoint with Boolean queries
+
+**Goal:** Search "rust programming" → semantic + exact matches
+
+---
+
+## 🚀 ADVANCED FEATURES - v2.0+
+
+**Build based on user demand. Each is independent.**
+
+### GPU Acceleration ⚡
+- [ ] wgpu backend (cross-platform GPU)
+- [ ] Optional CUDA for NVIDIA
+- [ ] Batch search on GPU (10-100x faster)
+- [ ] Local embedding models on GPU
+
+**Goal:** Search 10M vectors in <1ms
+
+---
+
+### Distributed System 🌐
+- [ ] Replication (master-slave, multi-master)
+- [ ] Sharding (horizontal partitioning)
+- [ ] Distributed queries (scatter-gather)
+- [ ] Cluster management
+
+**Goal:** Scale to billions of vectors
+
+---
+
+### Semantic Cache 💰
+- [ ] Semantic matching for LLM responses
+- [ ] TTL and LRU eviction
+- [ ] OpenAI/Anthropic integration
+- [ ] Cost savings dashboard
+
+**Goal:** Save 70%+ on LLM costs
+
+---
+
+### WASM Support 🌍
+- [ ] Compile core to WASM
+- [ ] Client-side vector search
+- [ ] Edge deployment (Cloudflare, Vercel)
+- [ ] Offline-first apps
+
+**Goal:** Vector search in browser
+
+---
+
+### Agent Memory System 🧠
+- [ ] Memory types (working, episodic, semantic, procedural)
+- [ ] Importance scoring & auto-consolidation
+- [ ] LangChain/LlamaIndex integration
+
+**Goal:** Agents that learn across sessions
+
+---
+
+### Other Advanced Features
+- [ ] Temporal Vectors (time-travel queries)
+- [ ] Privacy Mode (GDPR/HIPAA, encryption)
+- [ ] Auto-Pilot (self-tuning, auto-optimization)
+
+---
+
+## 📋 DOCUMENTATION TODO
+
+### Right Now (Before Contributions)
+- [ ] **LICENSE** - Add MIT or Apache-2.0
+- [ ] **CODE_OF_CONDUCT.md** - Use Contributor Covenant template
+
+### GitHub Setup
+- [ ] `.github/workflows/ci.yml` - Run tests on PR
+- [ ] `.github/workflows/release.yml` - Automated releases
+- [ ] `.github/ISSUE_TEMPLATE/bug_report.md`
+- [ ] `.github/ISSUE_TEMPLATE/feature_request.md`
+- [ ] `.github/PULL_REQUEST_TEMPLATE.md`
+
+### After v1.0
+- [ ] `docs/EXAMPLES.md` - Common patterns
+- [ ] `docs/MIGRATION.md` - Version migration
+- [ ] `docs/FAQ.md` - Frequently asked questions
+- [ ] `docs/TROUBLESHOOTING.md` - Common issues
+
+---
+
+## ⚠️ CRITICAL RULES
+
+**DON'T:**
+- ❌ Build Document Ingestion before HNSW (too slow)
+- ❌ Skip WAL/ACID (you'll lose data)
+- ❌ Launch without auth (security disaster)
+- ❌ Write docs before implementing features
+
+**DO:**
+- ✅ Follow build order strictly
+- ✅ Test each phase thoroughly
+- ✅ Get real users after v1.0
+- ✅ Let feedback guide v2.0
+
+---
+
+## 🎯 Current Status
+
+**Focus:** Performance & Indexing (HNSW)  
+**Next:** Data Durability (WAL)  
+**Then:** Production Features (Metrics)  
+**Finally:** Security (Auth)
+
+**Philosophy:** Build foundation first, add features later. Production-ready beats feature-rich.
+
+---
+
+**Let's build something production-ready! 🚀**
