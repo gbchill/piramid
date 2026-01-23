@@ -5,7 +5,7 @@ edition = "2021"
 
 [lib]
 name = "piramid"
-crate-type = ["rlib"]  # Library for Rust
+crate-type = ["rlib"] 
 
 [[bin]]
 name = "piramid-server"
