@@ -2,8 +2,6 @@
 
 These files need to be created/updated as development progresses:
 
-## Roadmap
-
 ### 🎯 Recommended Implementation Order
 
 **Track 1: Production-Ready Core** (Phases 9, 9.5, 10, 10.5)

@@ -60,29 +60,6 @@ cargo build --release
 
 ---
 
-## Features
-
-### ✅ Implemented (Phase 1-5)
-
-- Vector storage with metadata
-- Similarity search (cosine, euclidean, dot product)
-- Metadata filtering
-- REST API + Web Dashboard
-- Built-in embeddings (OpenAI, Ollama)
-- Batch operations
-- Docker deployment
-
-### 🚧 In Development (Phase 9-10.5)
-
-- HNSW indexing for fast search
-- WAL & ACID transactions
-- Observability & metrics
-- Authentication & RBAC
-
-See [docs/ROADMAP.md](docs/ROADMAP.md) for full roadmap.
-
----
-
 ## Usage
 
 ### REST API
@@ -179,29 +156,6 @@ EMBEDDING_BASE_URL=http://localhost:11434
 
 ---
 
-## Architecture
-
-```
-piramid/
-├── src/
-│   ├── lib.rs              # Public API
-│   ├── storage.rs          # Vector storage engine
-│   ├── metrics/            # Similarity metrics
-│   ├── query/              # Filtering
-│   ├── embeddings/         # Embedding providers
-│   ├── server/             # HTTP API
-│   └── bin/server.rs       # Main entry point
-├── dashboard/              # Next.js web UI
-├── docs/                   # Documentation
-└── examples/               # Usage examples
-```
-
-**Storage:** In-memory HashMap with bincode serialization (Phase 9.5 will add WAL)  
-**Search:** Brute-force O(n) (Phase 9 will add HNSW indexing)  
-**Concurrency:** RwLock for read-heavy workloads
-
----
-
 ## Development
 
 ```bash
@@ -227,29 +181,8 @@ cd dashboard && npm install && npm run dev
 
 We welcome contributions! See [docs/TODO.md](docs/TODO.md) for documentation needs.
 
-**Priority contributions:**
-- Phase 9: HNSW indexing
-- Phase 9.5: WAL/ACID transactions
-- Phase 10: Observability & metrics
-- Phase 10.5: Authentication & security
-
-**Guidelines:**
-- Write clean, idiomatic Rust
-- Add tests for new features
-- Update documentation
-- Follow existing code style
-
 ---
 
-## Roadmap
-
-See [docs/ROADMAP.md](docs/ROADMAP.md) for detailed roadmap.
-
-**Current focus:** Phase 9-10.5 (Production-Ready Core)
-
-After v1.0, we'll tackle GPU acceleration, semantic caching, WASM support, and agent memory systems that will differentiate Piramid from existing vector databases.
-
----
 
 ## License
 
@@ -259,6 +192,5 @@ After v1.0, we'll tackle GPU acceleration, semantic caching, WASM support, and a
 
 ## Acknowledgments
 
-Built with ❤️ in Rust. Inspired by Qdrant, Milvus, and the need for better AI agent infrastructure.
+Built with ❤️ in Rust for better AI agent infrastructure.
 
-**Status:** Alpha - Not production-ready yet. Phases 9-10.5 are required for production use.
