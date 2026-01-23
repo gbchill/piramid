@@ -44,29 +44,32 @@ Example search flow:
 -----------------------------------------------------------------------------------------------------------------------------------------
 
 Testing & Debugging:
+
 ```
 ```
-  # Run all tests (27 tests, all should pass)
-  cargo test
-  
-  # See output
-  cargo test -- --nocapture
-  
-  # Run example (best way to understand!)
-  cargo run --example basic
-  
-  # Start server
-  cargo run --bin piramid-server
-  
-  # Test API
-  curl -X POST http://localhost:6333/api/collections \
-    -H "Content-Type: application/json" \
-    -d '{"name": "test"}'
-  
-  curl -X POST http://localhost:6333/api/collections/test/vectors \
-    -d '{"vector": [0.1, 0.2, 0.3], "text": "hello"}'
+# Run all tests (27 tests, all should pass)
+cargo test
+
+# See output
+cargo test -- --nocapture
+
+# Run example (best way to understand!)
+cargo run --example basic
+
+# Start server
+cargo run --bin piramid-server
+
+# Test API
+curl -X POST http://localhost:6333/api/collections \
+  -H "Content-Type: application/json" \
+  -d '{"name": "test"}'
+
+curl -X POST http://localhost:6333/api/collections/test/vectors \
+  -d '{"vector": [0.1, 0.2, 0.3], "text": "hello"}'
 ```
 ```
+
+
 Debug tips:
 
   - Add println!("DEBUG: {:?}", variable); anywhere
