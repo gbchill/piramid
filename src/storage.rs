@@ -41,12 +41,6 @@ impl VectorEntry {
 }
 
 // Vector storage engine
-// 
-// Keeps all vectors in RAM with persistence to disk using bincode serialization.
-// 
-// # Note
-// Current implementation does full file rewrites on each mutation.
-// Phase 9.5 will add WAL for durability and better performance.
 pub struct VectorStorage {
     file: File,
     vectors: HashMap<Uuid, VectorEntry>,
@@ -88,11 +82,7 @@ impl VectorStorage {
         self.vectors.len()
     }
 
-    // Brute-force similarity search
-    // 
-    // # Performance
     // O(n) complexity - compares query against all vectors.
-    // Suitable for <10k vectors. Phase 9 will add HNSW indexing.
     pub fn search(&self, query: &[f32], k: usize, metric: SimilarityMetric) -> Vec<SearchResult> {
         self.search_with_filter(query, k, metric, None)
     }

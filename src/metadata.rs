@@ -46,7 +46,6 @@ impl MetadataValue {
     }
 }
 
-//  `From` trait enables `.into()` conversion
 // impl From<X> for Y means you can do: let y: Y = x.into();
 // This lets us write: metadata([("key", "value".into())])
 impl From<String> for MetadataValue {
@@ -91,12 +90,10 @@ impl From<bool> for MetadataValue {
     }
 }
 
-// Type alias: `Metadata` is just a shorter name for the HashMap
 pub type Metadata = HashMap<String, MetadataValue>;
 
 // Helper to create metadata inline
 //  `const N: usize` is a const generic - array size known at compile time
-// This means metadata([...]) works with any size array!
 pub fn metadata<const N: usize>(pairs: [(&str, MetadataValue); N]) -> Metadata {
     pairs.into_iter()                          // consume array into iterator
         .map(|(k, v)| (k.to_string(), v))      // convert &str keys to String
