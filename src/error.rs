@@ -1,6 +1,4 @@
-//! Error handling in  no exceptions, just Result<T, E>
 //! Functions return Ok(value) on success, Err(error) on failure.
-//! The ? operator propagates errors up the call stack.
 
 use std::io;
 use thiserror::Error;  // makes defining errors easier

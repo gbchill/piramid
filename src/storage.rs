@@ -10,7 +10,7 @@ use crate::metadata::Metadata;
 use crate::query::Filter;
 use crate::search::SearchResult;
 
-/// A single vector entry stored in the database
+// A single vector entry stored in the database
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VectorEntry {
     pub id: Uuid,
@@ -40,13 +40,13 @@ impl VectorEntry {
     }
 }
 
-/// Vector storage engine
-/// 
-/// Keeps all vectors in RAM with persistence to disk using bincode serialization.
-/// 
-/// # Note
-/// Current implementation does full file rewrites on each mutation.
-/// Phase 9.5 will add WAL for durability and better performance.
+// Vector storage engine
+// 
+// Keeps all vectors in RAM with persistence to disk using bincode serialization.
+// 
+// # Note
+// Current implementation does full file rewrites on each mutation.
+// Phase 9.5 will add WAL for durability and better performance.
 pub struct VectorStorage {
     file: File,
     vectors: HashMap<Uuid, VectorEntry>,
@@ -88,16 +88,16 @@ impl VectorStorage {
         self.vectors.len()
     }
 
-    /// Brute-force similarity search
-    /// 
-    /// # Performance
-    /// O(n) complexity - compares query against all vectors.
-    /// Suitable for <10k vectors. Phase 9 will add HNSW indexing.
+    // Brute-force similarity search
+    // 
+    // # Performance
+    // O(n) complexity - compares query against all vectors.
+    // Suitable for <10k vectors. Phase 9 will add HNSW indexing.
     pub fn search(&self, query: &[f32], k: usize, metric: SimilarityMetric) -> Vec<SearchResult> {
         self.search_with_filter(query, k, metric, None)
     }
 
-    /// Similarity search with metadata filtering
+    // Similarity search with metadata filtering
     pub fn search_with_filter(
         &self,
         query: &[f32],

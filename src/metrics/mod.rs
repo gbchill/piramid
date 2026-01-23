@@ -1,5 +1,3 @@
-//! Similarity metrics - how we measure "similarity" between vectors
-//!
 //! This module provides different ways to compare vectors in high-dimensional space.
 //! Each metric has different characteristics and use cases:
 //! - Cosine: Best for text embeddings (direction matters, not magnitude)

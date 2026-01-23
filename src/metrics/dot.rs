@@ -1,7 +1,8 @@
-/// The simplest similarity measure - just multiply and sum.
-/// Fun fact: for normalized vectors (length = 1), dot product = cosine similarity.
-/// Many production systems use dot product because it's faster and embeddings
-/// are often pre-normalized anyway.
+// The simplest similarity measure - just multiply and sum.
+// Fun fact: for normalized vectors (length = 1), dot product = cosine similarity.
+// Many production systems use dot product because it's faster and embeddings
+// are often pre-normalized anyway.
+
 pub fn dot_product(a: &[f32], b: &[f32]) -> f32 {
     assert_eq!(a.len(), b.len(), "Vectors must have same length");
     // Dot product: A · B = Σ(aᵢ × bᵢ)

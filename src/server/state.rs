@@ -4,10 +4,9 @@ use std::sync::{Arc, RwLock};
 use crate::VectorStorage;
 use crate::embeddings::Embedder;
 
-/// Shared application state
-/// 
-/// Each collection is an independent VectorStorage with its own file.
-/// RwLock allows concurrent reads but exclusive writes.
+// Shared application state
+// Each collection is an independent VectorStorage with its own file.
+// RwLock allows concurrent reads but exclusive writes.
 pub struct AppState {
     pub collections: RwLock<HashMap<String, VectorStorage>>,
     pub data_dir: String,
@@ -35,7 +34,7 @@ impl AppState {
         }
     }
 
-    /// Lazily load or create a collection
+    // Lazily load or create a collection
     pub fn get_or_create_collection(&self, name: &str) -> Result<(), String> {
         let mut collections = self.collections.write().unwrap();
         

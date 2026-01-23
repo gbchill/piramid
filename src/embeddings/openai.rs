@@ -1,5 +1,3 @@
-//! OpenAI embedding provider
-//! 
 //! Supports:
 //! - text-embedding-3-small (1536 dimensions)
 //! - text-embedding-3-large (3072 dimensions)
@@ -13,7 +11,7 @@ use super::{Embedder, EmbeddingConfig, EmbeddingError, EmbeddingResponse, Embedd
 
 const DEFAULT_OPENAI_API_URL: &str = "https://api.openai.com/v1/embeddings";
 
-/// OpenAI embedding provider
+// OpenAI embedding provider
 pub struct OpenAIEmbedder {
     client: Client,
     api_key: String,
@@ -22,7 +20,7 @@ pub struct OpenAIEmbedder {
 }
 
 impl OpenAIEmbedder {
-    /// Create a new OpenAI embedder
+    // Create a new OpenAI embedder
     pub fn new(config: &EmbeddingConfig) -> EmbeddingResult<Self> {
         let api_key = config
             .api_key
@@ -47,7 +45,7 @@ impl OpenAIEmbedder {
         })
     }
 
-    /// Get dimensions for known OpenAI models
+    // Get dimensions for known OpenAI models
     fn get_dimensions(&self) -> Option<usize> {
         match self.model.as_str() {
             "text-embedding-3-small" => Some(1536),

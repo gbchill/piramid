@@ -1,9 +1,7 @@
-//! Store embeddings, find similar ones. That's what vector databases do.
-//!
-//! ## Crate organization
-//! - Core: storage, metrics, metadata, query, search
-//! - Server: HTTP API (axum-based, modular)
-//! - Error handling: thiserror-based Result types
+// ## Crate organization
+// - Core: storage, metrics, metadata, query, search
+// - Server: HTTP API (axum-based, modular)
+// - Error handling: thiserror-based Result types
 
 pub mod config;
 pub mod metrics;

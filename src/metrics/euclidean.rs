@@ -1,6 +1,6 @@
-/// The straight-line distance works well when
-/// vector magnitude carries meaning (e.g., importance scores).
-/// Less common for text embeddings, but useful for image/audio.
+// The straight-line distance works well when
+// vector magnitude carries meaning (e.g., importance scores).
+
 pub fn euclidean_distance(a: &[f32], b: &[f32]) -> f32 {
     assert_eq!(a.len(), b.len(), "Vectors must have same length");
     // Euclidean (L2) distance: d = √(Σ(aᵢ - bᵢ)²)
@@ -15,8 +15,8 @@ pub fn euclidean_distance(a: &[f32], b: &[f32]) -> f32 {
     sum_sq.sqrt()
 }
 
-/// Squared distance - skip the sqrt when you only need to compare
-/// (if a² < b², then a < b, so sqrt is unnecessary for ranking)
+// Squared distance - skip the sqrt when you only need to compare
+// (if a² < b², then a < b, so sqrt is unnecessary for ranking)
 pub fn euclidean_distance_squared(a: &[f32], b: &[f32]) -> f32 {
     assert_eq!(a.len(), b.len(), "Vectors must have same length");
     

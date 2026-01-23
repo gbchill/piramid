@@ -1,5 +1,3 @@
-//! Embedding providers module
-//! 
 //! This module provides a unified interface for different embedding providers,
 //! allowing users to generate embeddings from text without needing to handle
 //! the embeddings externally.
@@ -13,10 +11,10 @@ pub mod providers;
 
 pub use providers::EmbeddingProvider;
 
-/// Result type for embedding operations
+// Result type for embedding operations
 pub type EmbeddingResult<T> = Result<T, EmbeddingError>;
 
-/// Errors that can occur during embedding operations
+// Errors that can occur during embedding operations
 #[derive(Debug, thiserror::Error)]
 pub enum EmbeddingError {
     #[error("HTTP request failed: {0}")]
@@ -38,22 +36,22 @@ pub enum EmbeddingError {
     AuthenticationFailed(String),
 }
 
-/// Configuration for embedding providers
+// Configuration for embedding providers
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmbeddingConfig {
-    /// Provider type (openai, ollama, etc.)
+    // Provider type (openai, ollama, etc.)
     pub provider: String,
     
-    /// Model name
+    // Model name
     pub model: String,
     
-    /// API key (for providers that require it)
+    // API key (for providers that require it)
     pub api_key: Option<String>,
     
-    /// Base URL (for self-hosted or custom endpoints)
+    // Base URL (for self-hosted or custom endpoints)
     pub base_url: Option<String>,
     
-    /// Additional provider-specific options
+    // Additional provider-specific options
     #[serde(default)]
     pub options: serde_json::Value,
 }
@@ -70,34 +68,34 @@ impl Default for EmbeddingConfig {
     }
 }
 
-/// Response from an embedding request
+// Response from an embedding request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmbeddingResponse {
-    /// The embedding vector
+    // The embedding vector
     pub embedding: Vec<f32>,
     
-    /// Number of tokens used (if reported by provider)
+    // Number of tokens used (if reported by provider)
     pub tokens: Option<u32>,
     
-    /// Model that generated the embedding
+    // Model that generated the embedding
     pub model: String,
 }
 
-/// Trait for embedding providers
+// Trait for embedding providers
 #[async_trait]
 pub trait Embedder: Send + Sync {
-    /// Generate an embedding for a single text
+    // Generate an embedding for a single text
     async fn embed(&self, text: &str) -> EmbeddingResult<EmbeddingResponse>;
 
-    /// Generate embeddings for multiple texts in a batch
+    // Generate embeddings for multiple texts in a batch
     async fn embed_batch(&self, texts: &[String]) -> EmbeddingResult<Vec<EmbeddingResponse>>;
 
-    /// Get the provider name
+    // Get the provider name
     fn provider_name(&self) -> &str;
 
-    /// Get the model name
+    // Get the model name
     fn model_name(&self) -> &str;
 
-    /// Get the expected dimension of embeddings (if known)
+    // Get the expected dimension of embeddings (if known)
     fn dimensions(&self) -> Option<usize>;
 }

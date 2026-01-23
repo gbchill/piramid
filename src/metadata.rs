@@ -1,9 +1,8 @@
-//! Metadata - extra data you store alongside vectors
-//!
+// Metadata - extra data you store alongside vectors
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-/// Values that can be stored in metadata
+// Values that can be stored in metadata
 // Rust enums with data: each variant can hold different types!
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MetadataValue {
@@ -95,7 +94,7 @@ impl From<bool> for MetadataValue {
 // Type alias: `Metadata` is just a shorter name for the HashMap
 pub type Metadata = HashMap<String, MetadataValue>;
 
-/// Helper to create metadata inline
+// Helper to create metadata inline
 //  `const N: usize` is a const generic - array size known at compile time
 // This means metadata([...]) works with any size array!
 pub fn metadata<const N: usize>(pairs: [(&str, MetadataValue); N]) -> Metadata {

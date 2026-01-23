@@ -38,7 +38,7 @@ pub struct CreateCollectionRequest {
 // VECTORS
 // =============================================================================
 
-/// What the client sends to store a vector
+// What the client sends to store a vector
 #[derive(Deserialize)]
 pub struct StoreVectorRequest {
     pub vector: Vec<f32>,
@@ -47,13 +47,13 @@ pub struct StoreVectorRequest {
     pub metadata: HashMap<String, serde_json::Value>,
 }
 
-/// What we return after storing
+// What we return after storing
 #[derive(Serialize)]
 pub struct StoreVectorResponse {
     pub id: String,
 }
 
-/// Full vector data returned to client
+// Full vector data returned to client
 #[derive(Serialize)]
 pub struct VectorResponse {
     pub id: String,
@@ -62,7 +62,7 @@ pub struct VectorResponse {
     pub metadata: HashMap<String, serde_json::Value>,
 }
 
-/// Query params for listing vectors: ?limit=100&offset=0
+// Query params for listing vectors: ?limit=100&offset=0
 #[derive(Deserialize)]
 pub struct ListVectorsQuery {
     #[serde(default = "default_limit")]
@@ -119,7 +119,7 @@ pub struct CountResponse {
 // EMBEDDINGS
 // =============================================================================
 
-/// Request to embed text and store as a vector
+// Request to embed text and store as a vector
 #[derive(Deserialize)]
 pub struct EmbedRequest {
     pub text: String,
@@ -127,7 +127,7 @@ pub struct EmbedRequest {
     pub metadata: HashMap<String, serde_json::Value>,
 }
 
-/// Response from embedding and storing
+// Response from embedding and storing
 #[derive(Serialize)]
 pub struct EmbedResponse {
     pub id: String,
@@ -135,7 +135,7 @@ pub struct EmbedResponse {
     pub tokens: Option<u32>,
 }
 
-/// Request for batch embedding
+// Request for batch embedding
 #[derive(Deserialize)]
 pub struct EmbedBatchRequest {
     pub texts: Vec<String>,
@@ -143,14 +143,14 @@ pub struct EmbedBatchRequest {
     pub metadata: Vec<HashMap<String, serde_json::Value>>,
 }
 
-/// Response from batch embedding
+// Response from batch embedding
 #[derive(Serialize)]
 pub struct EmbedBatchResponse {
     pub ids: Vec<String>,
     pub total_tokens: Option<u32>,
 }
 
-/// Request to search by text query (auto-embeds)
+// Request to search by text query (auto-embeds)
 #[derive(Deserialize)]
 pub struct TextSearchRequest {
     pub query: String,

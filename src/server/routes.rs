@@ -1,5 +1,4 @@
 //! This is the "routing table" of our API.
-//! axum uses a builder pattern: Router::new().route(...).route(...)
 //! - GET    = read (list, get one)
 //! - POST   = create or action (store, search)
 //! - DELETE = remove
@@ -16,10 +15,10 @@ use tower_http::services::{ServeDir, ServeFile};
 use super::handlers;
 use super::state::SharedState;
 
-/// This function wires everything together:
-/// 1. Creates route definitions
-/// 2. Adds CORS middleware (so browsers can call us)
-/// 3. Attaches shared state
+// This function wires everything together:
+// 1. Creates route definitions
+// 2. Adds CORS middleware 
+// 3. Attaches shared state
 pub fn create_router(state: SharedState) -> Router {
     // CORS = Cross-Origin Resource Sharing
     // Without this, browsers block requests from different domains

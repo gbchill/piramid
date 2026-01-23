@@ -1,10 +1,8 @@
-//! Pure vector search returns the most similar vectors regardless of anything else.
-//! But usually you want: "similar vectors WHERE category='tech' AND year > 2020"
 //! Filters narrow down results by metadata.
 
 use crate::metadata::{Metadata, MetadataValue};
 
-/// Chainable filter builder. All conditions must match (AND logic).
+// Chainable filter builder. All conditions must match (AND logic).
 #[derive(Debug, Clone)]
 pub struct Filter {
     conditions: Vec<FilterCondition>,
@@ -73,7 +71,7 @@ impl Default for Filter {
     }
 }
 
-/// Individual filter operations
+// Individual filter operations
 #[derive(Debug, Clone)]
 pub enum FilterCondition {
     Eq(String, MetadataValue),
@@ -113,7 +111,7 @@ impl FilterCondition {
     }
 }
 
-/// Helper to compare numeric metadata values
+// Helper to compare numeric metadata values
 fn compare_values<F>(actual: Option<&MetadataValue>, expected: &MetadataValue, cmp: F) -> bool
 where
     F: Fn(f64, f64) -> bool,

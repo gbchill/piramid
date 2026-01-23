@@ -1,6 +1,5 @@
 //! This is the "web layer" - it turns our Rust library into a network service.
-//! The pattern: Library (pure logic) → Server (HTTP wrapper) → Clients (SDK, dashboard)
-//!
+//! Library (pure logic) → Server (HTTP wrapper) → Clients (SDK, dashboard)
 //! ## Module structure
 //! - `state.rs` - shared app state (thread-safe collection storage)
 //! - `types.rs` - request/response JSON types

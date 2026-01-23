@@ -6,7 +6,7 @@ use super::{Embedder, EmbeddingConfig, EmbeddingError, EmbeddingResult};
 use super::openai::OpenAIEmbedder;
 use super::ollama::OllamaEmbedder;
 
-/// Enum of supported embedding providers
+// Enum of supported embedding providers
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EmbeddingProvider {
     OpenAI,
@@ -14,7 +14,7 @@ pub enum EmbeddingProvider {
 }
 
 impl EmbeddingProvider {
-    /// Parse provider from string
+    // Parse provider from string
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
             "openai" => Some(Self::OpenAI),
@@ -23,7 +23,7 @@ impl EmbeddingProvider {
         }
     }
 
-    /// Get provider name
+    // Get provider name
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::OpenAI => "openai",
@@ -32,7 +32,7 @@ impl EmbeddingProvider {
     }
 }
 
-/// Create an embedder from configuration
+// Create an embedder from configuration
 pub fn create_embedder(config: &EmbeddingConfig) -> EmbeddingResult<Arc<dyn Embedder>> {
     let provider = EmbeddingProvider::from_str(&config.provider).ok_or_else(|| {
         EmbeddingError::ConfigError(format!("Unknown provider: {}", config.provider))

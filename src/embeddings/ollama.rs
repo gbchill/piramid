@@ -1,5 +1,3 @@
-//! Ollama embedding provider
-//! 
 //! Supports local embedding models via Ollama:
 //! - nomic-embed-text (768 dimensions)
 //! - mxbai-embed-large (1024 dimensions)
@@ -13,7 +11,7 @@ use super::{Embedder, EmbeddingConfig, EmbeddingError, EmbeddingResponse, Embedd
 
 const DEFAULT_OLLAMA_URL: &str = "http://localhost:11434";
 
-/// Ollama embedding provider
+// Ollama embedding provider
 pub struct OllamaEmbedder {
     client: Client,
     model: String,
@@ -21,7 +19,7 @@ pub struct OllamaEmbedder {
 }
 
 impl OllamaEmbedder {
-    /// Create a new Ollama embedder
+    // Create a new Ollama embedder
     pub fn new(config: &EmbeddingConfig) -> EmbeddingResult<Self> {
         let base_url = config
             .base_url
@@ -35,7 +33,7 @@ impl OllamaEmbedder {
         })
     }
 
-    /// Get dimensions for known Ollama models
+    // Get dimensions for known Ollama models
     fn get_dimensions(&self) -> Option<usize> {
         match self.model.as_str() {
             "nomic-embed-text" => Some(768),

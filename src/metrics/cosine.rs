@@ -1,12 +1,11 @@
-/// Cosine similarity between two vectors
-/// 
-/// Measures the cosine of the angle between vectors, ignoring magnitude.
-/// Ideal for normalized embeddings where direction matters more than length.
-/// 
-/// Returns value in range [-1, 1] where:
-/// - 1.0 = identical direction
-/// - 0.0 = orthogonal (perpendicular)
-/// - -1.0 = opposite direction
+// Cosine similarity between two vectors
+// Measures the cosine of the angle between vectors, ignoring magnitude.
+// Ideal for normalized embeddings where direction matters more than length.
+// 
+// Returns value in range [-1, 1] where:
+// - 1.0 = identical direction
+// - 0.0 = orthogonal (perpendicular)
+// - -1.0 = opposite direction
 pub fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
     assert_eq!(a.len(), b.len(), "Vectors must have same length");
     

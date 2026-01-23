@@ -10,7 +10,7 @@ use crate::{SimilarityMetric, MetadataValue, VectorEntry};
 use super::state::SharedState;
 use super::types::*;
 
-/// Convert JSON values to internal Metadata type
+// Convert JSON values to internal Metadata type
 fn json_to_metadata(json: HashMap<String, serde_json::Value>) -> crate::Metadata {
     let mut metadata = crate::Metadata::new();
     
@@ -36,7 +36,7 @@ fn json_to_metadata(json: HashMap<String, serde_json::Value>) -> crate::Metadata
     metadata
 }
 
-/// Convert internal Metadata to JSON for responses
+// Convert internal Metadata to JSON for responses
 fn metadata_to_json(metadata: &crate::Metadata) -> HashMap<String, serde_json::Value> {
     metadata
         .iter()
@@ -62,7 +62,7 @@ fn metadata_to_json(metadata: &crate::Metadata) -> HashMap<String, serde_json::V
         .collect()
 }
 
-/// Parse similarity metric from string
+// Parse similarity metric from string
 fn parse_metric(s: Option<String>) -> SimilarityMetric {
     match s.as_deref() {  // Option<String> → Option<&str>
         Some("euclidean") => SimilarityMetric::Euclidean,
@@ -71,7 +71,7 @@ fn parse_metric(s: Option<String>) -> SimilarityMetric {
     }
 }
 
-/// GET /api/health - simple liveness check
+// GET /api/health - simple liveness check
 pub async fn health() -> Json<HealthResponse> {
     Json(HealthResponse {
         status: "ok",
@@ -79,7 +79,7 @@ pub async fn health() -> Json<HealthResponse> {
     })
 }
 
-/// GET /api/health/embeddings - check if embeddings are available
+// GET /api/health/embeddings - check if embeddings are available
 pub async fn health_embeddings(State(state): State<SharedState>) -> StatusCode {
     match state.embedder {
         Some(_) => StatusCode::OK,
@@ -88,7 +88,7 @@ pub async fn health_embeddings(State(state): State<SharedState>) -> StatusCode {
 }
 
 
-/// GET /api/collections - list all loaded collections
+// GET /api/collections - list all loaded collections
 pub async fn list_collections(State(state): State<SharedState>) -> Json<CollectionsResponse> {
     // read() = shared lock (many readers allowed)
     let collections = state.collections.read().unwrap();
@@ -104,7 +104,7 @@ pub async fn list_collections(State(state): State<SharedState>) -> Json<Collecti
     Json(CollectionsResponse { collections: infos })
 }
 
-/// POST /api/collections - create a new collection
+// POST /api/collections - create a new collection
 pub async fn create_collection(
     State(state): State<SharedState>,
     Json(req): Json<CreateCollectionRequest>,
@@ -118,7 +118,7 @@ pub async fn create_collection(
     Ok(Json(CollectionInfo { name: req.name, count }))
 }
 
-/// GET /api/collections/:name - get info about one collection
+// GET /api/collections/:name - get info about one collection
 pub async fn get_collection(
     State(state): State<SharedState>,
     Path(name): Path<String>,
@@ -132,7 +132,7 @@ pub async fn get_collection(
     Ok(Json(CollectionInfo { name, count }))
 }
 
-/// DELETE /api/collections/:name - remove a collection
+// DELETE /api/collections/:name - remove a collection
 pub async fn delete_collection(
     State(state): State<SharedState>,
     Path(name): Path<String>,
@@ -149,7 +149,7 @@ pub async fn delete_collection(
     Ok(Json(DeleteResponse { deleted: existed }))
 }
 
-/// GET /api/collections/:name/count - just the count
+// GET /api/collections/:name/count - just the count
 pub async fn collection_count(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
@@ -163,7 +163,7 @@ pub async fn collection_count(
     Ok(Json(CountResponse { count }))
 }
 
-/// POST /api/collections/:collection/vectors - store a new vector
+// POST /api/collections/:collection/vectors - store a new vector
 pub async fn store_vector(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
@@ -186,7 +186,7 @@ pub async fn store_vector(
     Ok(Json(StoreVectorResponse { id: id.to_string() }))
 }
 
-/// GET /api/collections/:collection/vectors/:id - get one vector
+// GET /api/collections/:collection/vectors/:id - get one vector
 pub async fn get_vector(
     State(state): State<SharedState>,
     Path((collection, id)): Path<(String, String)>,  // tuple extraction!
@@ -212,7 +212,7 @@ pub async fn get_vector(
     }))
 }
 
-/// GET /api/collections/:collection/vectors?limit=100&offset=0 - list vectors
+// GET /api/collections/:collection/vectors?limit=100&offset=0 - list vectors
 pub async fn list_vectors(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
@@ -241,7 +241,7 @@ pub async fn list_vectors(
     Ok(Json(vectors))
 }
 
-/// DELETE /api/collections/:collection/vectors/:id - delete a vector
+// DELETE /api/collections/:collection/vectors/:id - delete a vector
 pub async fn delete_vector(
     State(state): State<SharedState>,
     Path((collection, id)): Path<(String, String)>,
@@ -262,7 +262,7 @@ pub async fn delete_vector(
     Ok(Json(DeleteResponse { deleted }))
 }
 
-/// POST /api/collections/:collection/search - similarity search
+// POST /api/collections/:collection/search - similarity search
 pub async fn search_vectors(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
@@ -295,7 +295,7 @@ pub async fn search_vectors(
 // EMBEDDING ENDPOINTS
 // =============================================================================
 
-/// POST /api/collections/:collection/embed - embed text and store
+// POST /api/collections/:collection/embed - embed text and store
 pub async fn embed_text(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
@@ -334,7 +334,7 @@ pub async fn embed_text(
     }))
 }
 
-/// POST /api/collections/:collection/embed/batch - batch embed texts
+// POST /api/collections/:collection/embed/batch - batch embed texts
 pub async fn embed_batch(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
@@ -391,7 +391,7 @@ pub async fn embed_batch(
     }))
 }
 
-/// POST /api/collections/:collection/search/text - search by text query
+// POST /api/collections/:collection/search/text - search by text query
 pub async fn search_by_text(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
