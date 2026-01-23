@@ -8,10 +8,6 @@
 
 **Follow this exact order. Each step depends on the previous.**
 
----
-
-## ✅ COMPLETED
-
 ### Core Foundation
 - [x] Vector storage (HashMap + bincode persistence)
 - [x] UUID-based IDs, error handling
@@ -28,13 +24,7 @@
 - [x] Embedding providers (OpenAI, Ollama)
 - [x] Batch embedding endpoints
 
----
-
-## 🔴 CRITICAL PATH - v1.0 Production
-
-**Build these in order. Don't skip ahead.**
-
-### 1️⃣ Performance & Indexing ⚡ **START HERE**
+### 1️⃣ Performance & Indexing 
 
 **Why first:** Without HNSW, everything else is unusably slow at scale.
 
@@ -59,15 +49,9 @@
 
 **Goal:** Search 1M vectors in <10ms
 
-**Documentation after completion:**
-- [ ] `docs/ARCHITECTURE.md` - HNSW implementation details
-- [ ] `docs/PERFORMANCE.md` - Real benchmarks
-
 ---
 
-### 2️⃣ Data Durability & Integrity 🛡️ **DO IMMEDIATELY AFTER #1**
-
-**Why second:** Phase 1 gives speed, this makes it production-safe. Without this, you WILL lose user data.
+### 2️⃣ Data Durability & Integrity 
 
 **Implementation:**
 - [ ] **Write-Ahead Log (WAL)**
@@ -103,12 +87,9 @@
 
 **Goal:** Zero data loss on crashes. Pass chaos engineering tests.
 
-**Documentation after completion:**
-- [ ] `docs/RECOVERY.md` - WAL recovery troubleshooting
-
 ---
 
-### 3️⃣ Production Features 📊 **THIRD - OBSERVABILITY**
+### 3️⃣ Production Features 
 
 **Why third:** Can't run #1+#2 in production without knowing what's happening.
 
@@ -135,15 +116,9 @@
   - [ ] Streaming inserts
   - [ ] Bi-directional streaming
 
-**Goal:** Observable system with clear metrics and errors.
-
-**Documentation after completion:**
-- [ ] `docs/OBSERVABILITY.md` - Using metrics/logging
-- [ ] `docs/DEPLOYMENT.md` - Production deployment
-
 ---
 
-### 4️⃣ Security & Authentication 🔒 **FOURTH - LOCK IT DOWN**
+### 4️⃣ Security & Authentication 
 
 **Why fourth:** Now that it works and is observable, prevent abuse.
 
@@ -170,21 +145,7 @@
   - [ ] Security headers (CORS, CSP, HSTS)
   - [ ] Audit logging
 
-**Goal:** Production-safe, multi-tenant ready.
-
-**Documentation after completion:**
-- [ ] `docs/SECURITY.md` - Security policy
-- [ ] `docs/AUTH.md` - Auth/authorization guide
-
 ---
-
-## 🎉 v1.0 PRODUCTION READY
-
-**After completing steps 1-4:**
-- ✅ Fast (HNSW)
-- ✅ Reliable (WAL/ACID)
-- ✅ Observable (metrics)
-- ✅ Secure (auth/RBAC)
 
 **→ Deploy to production, get real users, gather feedback**
 
@@ -196,11 +157,7 @@
 
 ---
 
-## 🟡 FEATURE EXPANSION - v1.x
-
-**Build AFTER v1.0 is stable (3-6 months with real users).**
-
-### Document Ingestion 📄
+### Document Ingestion 
 *Upload docs instead of pre-chunking*
 
 - [ ] Chunking strategies (fixed-size, semantic, recursive)
@@ -211,7 +168,7 @@
 
 ---
 
-### MCP Integration 🤖
+### MCP Integration 
 *AI agents can use Piramid*
 
 - [ ] MCP server implementation
@@ -222,7 +179,7 @@
 
 ---
 
-### Hybrid Search 🔍
+### Hybrid Search 
 *Vector + keyword combined*
 
 - [ ] BM25 keyword search (inverted index, TF-IDF)
@@ -233,11 +190,7 @@
 
 ---
 
-## 🚀 ADVANCED FEATURES - v2.0+
-
-**Build based on user demand. Each is independent.**
-
-### GPU Acceleration ⚡
+### GPU Acceleration 
 - [ ] wgpu backend (cross-platform GPU)
 - [ ] Optional CUDA for NVIDIA
 - [ ] Batch search on GPU (10-100x faster)
@@ -247,7 +200,7 @@
 
 ---
 
-### Distributed System 🌐
+### Distributed System 
 - [ ] Replication (master-slave, multi-master)
 - [ ] Sharding (horizontal partitioning)
 - [ ] Distributed queries (scatter-gather)
@@ -257,7 +210,7 @@
 
 ---
 
-### Semantic Cache 💰
+### Semantic Cache 
 - [ ] Semantic matching for LLM responses
 - [ ] TTL and LRU eviction
 - [ ] OpenAI/Anthropic integration
@@ -267,7 +220,7 @@
 
 ---
 
-### WASM Support 🌍
+### WASM Support 
 - [ ] Compile core to WASM
 - [ ] Client-side vector search
 - [ ] Edge deployment (Cloudflare, Vercel)
@@ -277,7 +230,7 @@
 
 ---
 
-### Agent Memory System 🧠
+### Agent Memory System 
 - [ ] Memory types (working, episodic, semantic, procedural)
 - [ ] Importance scoring & auto-consolidation
 - [ ] LangChain/LlamaIndex integration
@@ -293,44 +246,7 @@
 
 ---
 
-## 📋 DOCUMENTATION TODO
-
-### Right Now (Before Contributions)
-- [ ] **LICENSE** - Add MIT or Apache-2.0
-- [ ] **CODE_OF_CONDUCT.md** - Use Contributor Covenant template
-
-### GitHub Setup
-- [ ] `.github/workflows/ci.yml` - Run tests on PR
-- [ ] `.github/workflows/release.yml` - Automated releases
-- [ ] `.github/ISSUE_TEMPLATE/bug_report.md`
-- [ ] `.github/ISSUE_TEMPLATE/feature_request.md`
-- [ ] `.github/PULL_REQUEST_TEMPLATE.md`
-
-### After v1.0
-- [ ] `docs/EXAMPLES.md` - Common patterns
-- [ ] `docs/MIGRATION.md` - Version migration
-- [ ] `docs/FAQ.md` - Frequently asked questions
-- [ ] `docs/TROUBLESHOOTING.md` - Common issues
-
----
-
-## ⚠️ CRITICAL RULES
-
-**DON'T:**
-- ❌ Build Document Ingestion before HNSW (too slow)
-- ❌ Skip WAL/ACID (you'll lose data)
-- ❌ Launch without auth (security disaster)
-- ❌ Write docs before implementing features
-
-**DO:**
-- ✅ Follow build order strictly
-- ✅ Test each phase thoroughly
-- ✅ Get real users after v1.0
-- ✅ Let feedback guide v2.0
-
----
-
-## 🎯 Current Status
+## Current Status
 
 **Focus:** Performance & Indexing (HNSW)  
 **Next:** Data Durability (WAL)  
@@ -339,6 +255,3 @@
 
 **Philosophy:** Build foundation first, add features later. Production-ready beats feature-rich.
 
----
-
-**Let's build something production-ready! 🚀**
