@@ -171,20 +171,14 @@ cargo run --bin piramid-server
 cd dashboard && npm install && npm run dev
 ```
 
----
-
 ## Contributing
 
 We welcome contributions! See [docs/TODO.md](docs/TODO.md) for documentation.
-
----
 
 
 ## License
 
 Soon
-
----
 
 ## Acknowledgments
 
