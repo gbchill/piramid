@@ -1,6 +1,6 @@
-//! This module provides a unified interface for different embedding providers,
-//! allowing users to generate embeddings from text without needing to handle
-//! the embeddings externally.
+// This module provides a unified interface for different embedding providers,
+// allowing users to generate embeddings from text without needing to handle
+// the embeddings externally.
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};

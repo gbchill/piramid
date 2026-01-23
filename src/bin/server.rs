@@ -1,4 +1,4 @@
-//! All the real logic lives in the `server` module.
+// All the real logic lives in the `server` module.
 
 use std::sync::Arc;
 use piramid::server::{AppState, create_router};

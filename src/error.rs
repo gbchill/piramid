@@ -1,4 +1,4 @@
-//! Functions return Ok(value) on success, Err(error) on failure.
+// Functions return Ok(value) on success, Err(error) on failure.
 
 use std::io;
 use thiserror::Error;  // makes defining errors easier

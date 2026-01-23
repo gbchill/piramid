@@ -1,7 +1,7 @@
-//! Supports:
-//! - text-embedding-3-small (1536 dimensions)
-//! - text-embedding-3-large (3072 dimensions)
-//! - text-embedding-ada-002 (1536 dimensions, legacy)
+// Supports:
+// - text-embedding-3-small (1536 dimensions)
+// - text-embedding-3-large (3072 dimensions)
+// - text-embedding-ada-002 (1536 dimensions, legacy)
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};

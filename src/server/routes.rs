@@ -1,9 +1,9 @@
-//! This is the "routing table" of our API.
-//! - GET    = read (list, get one)
-//! - POST   = create or action (store, search)
-//! - DELETE = remove
-//! - PUT    = replace (not used yet)
-//! - PATCH  = partial update (not used yet)
+// This is the "routing table" of our API.
+// - GET    = read (list, get one)
+// - POST   = create or action (store, search)
+// - DELETE = remove
+// - PUT    = replace (not used yet)
+// - PATCH  = partial update (not used yet)
 
 use axum::{
     routing::{delete, get, post},

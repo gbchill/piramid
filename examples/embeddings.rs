@@ -1,9 +1,9 @@
-//! Example demonstrating embedding functionality with Piramid
-//! 
-//! This example shows how to:
-//! 1. Create an embedder (OpenAI or Ollama)
-//! 2. Embed text to vectors
-//! 3. Store and search by text
+// Example demonstrating embedding functionality with Piramid
+// 
+// This example shows how to:
+// 1. Create an embedder (OpenAI or Ollama)
+// 2. Embed text to vectors
+// 3. Store and search by text
 
 use piramid::{
     VectorStorage, VectorEntry, SimilarityMetric,

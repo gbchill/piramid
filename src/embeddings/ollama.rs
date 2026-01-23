@@ -1,7 +1,7 @@
-//! Supports local embedding models via Ollama:
-//! - nomic-embed-text (768 dimensions)
-//! - mxbai-embed-large (1024 dimensions)
-//! - all-minilm (384 dimensions)
+// Supports local embedding models via Ollama:
+// - nomic-embed-text (768 dimensions)
+// - mxbai-embed-large (1024 dimensions)
+// - all-minilm (384 dimensions)
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};

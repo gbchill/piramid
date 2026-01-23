@@ -1,4 +1,4 @@
-//! Provider factory and utilities
+// Provider factory and utilities
 
 use std::sync::Arc;
 

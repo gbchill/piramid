@@ -1,8 +1,8 @@
-//! This module provides different ways to compare vectors in high-dimensional space.
-//! Each metric has different characteristics and use cases:
-//! - Cosine: Best for text embeddings (direction matters, not magnitude)
-//! - Euclidean: Physical distance in space (magnitude matters)
-//! - Dot Product: Fast, good for normalized vectors
+// This module provides different ways to compare vectors in high-dimensional space.
+// Each metric has different characteristics and use cases:
+// - Cosine: Best for text embeddings (direction matters, not magnitude)
+// - Euclidean: Physical distance in space (magnitude matters)
+// - Dot Product: Fast, good for normalized vectors
 
 // each file is a module. `mod x` says "include x.rs"
 mod cosine;

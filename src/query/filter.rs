@@ -1,4 +1,4 @@
-//! Filters narrow down results by metadata.
+// Filters narrow down results by metadata.
 
 use crate::metadata::{Metadata, MetadataValue};
 
