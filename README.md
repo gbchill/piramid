@@ -173,7 +173,7 @@ cd dashboard && npm install && npm run dev
 
 ## Contributing
 
-We welcome contributions! See [docs/TODO.md](docs/TODO.md) for documentation.
+We welcome contributions! See [docs/get-started.md](docs/GET_STARTED.md) & [docs/TODO.md](docs/TODO.md) for documentation.
 
 
 ## License
