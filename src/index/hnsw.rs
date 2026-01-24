@@ -23,11 +23,11 @@ pub struct HnswConfig{
 impl Default for HnswConfig {
     fn default() -> Self {
         HnswConfig {
-            ml: 16,
-            ef_construction: 200,
-            ef_search: 50,
-            distance_metric: "cosine".to_string(),
-            id: Uuid::new_v4(),
+            ml: 16, // max number of connections per nodes
+            ef_construction: 200, // size of the dynamic list for the construction phase
+            ef_search: 50, // size of the dynamic list for the search phase
+            distance_metric: "cosine".to_string(), // distance metric to use
+            id: Uuid::new_v4(), // unique identifier for the index
         }
     }
 }
@@ -56,6 +56,48 @@ impl HnswIndex{
         }
     }
 }
+
+
+fn random_layer(&self) -> usize{
+    // exponential decay probability 
+    // floor(-ln(uniform_random) * max_level)
+    let r: f64 = rand::random();
+    let level = (-r.ln() * (1.0 / self.config.ml as f64)).floor() as usize;
+    level
+}
+
+
+fn insert(&mut self, id: Uuid, vector: Vec<f32>){
+    // determine the layer for the new node 
+    let layer = self.random_layer();
+
+    // if first node, make it entry point and return 
+    if self.start_node.is_none(){
+        self.start_node = Some(id);
+        self.max_level = layer as isize;
+        let node = HnswNode{
+            id,
+            vector,
+            level: layer as isize,
+        };
+        self.nodes.insert(id, node);
+        return;
+    }
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
