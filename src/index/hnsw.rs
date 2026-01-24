@@ -68,6 +68,8 @@ fn random_layer(&self) -> usize{
 
 
 fn insert(&mut self, id: Uuid, vector: Vec<f32>){
+    // in hnsw, we add nodes one at a time, connecting them to existing nodes
+    // first, we need to create the node and determine its level
     // determine the layer for the new node 
     let layer = self.random_layer(); // this gives us a layer based on exponential decay
 
@@ -86,11 +88,14 @@ fn insert(&mut self, id: Uuid, vector: Vec<f32>){
     }
 
     // otherwise, we need to find the best entry point for each layer down to 0
+    // we do this by greedy search
     // start from the highest layer of the current entry point
     let mut current_entry = self.start_node.unwrap();
     let mut current_level = self.max_level;
     while current_level >= layer as isize {
         // search for the closest node at this level
+        // this will be our new entry point for the next lower level
+        // we use the search_layer function to find the closest node at the current level
         let closest = self.search_layer(&current_entry, &vector, current_level as usize);
         current_entry = closest;
         current_level -= 1;
@@ -102,9 +107,6 @@ fn insert(&mut self, id: Uuid, vector: Vec<f32>){
         level: layer as isize,
     };
     self.nodes.insert(id, new_node);
-
-
-
 }
 
 
