@@ -87,6 +87,22 @@ fn insert(&mut self, id: Uuid, vector: Vec<f32>){
 
     // otherwise, we need to find the best entry point for each layer down to 0
     // start from the highest layer of the current entry point
+    let mut current_entry = self.start_node.unwrap();
+    let mut current_level = self.max_level;
+    while current_level >= layer as isize {
+        // search for the closest node at this level
+        let closest = self.search_layer(&current_entry, &vector, current_level as usize);
+        current_entry = closest;
+        current_level -= 1;
+    }
+    // now we are at the layer of the new node, we can insert it
+    let new_node = HnswNode{
+        id,
+        vector,
+        level: layer as isize,
+    };
+    self.nodes.insert(id, new_node);
+
 
 
 }
