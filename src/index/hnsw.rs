@@ -112,6 +112,31 @@ fn insert(&mut self, id: Uuid, vector: Vec<f32>){
 
 
 
+fn search_layer(&self, entry_id: &Uuid, query_vector: &Vec<f32>, level: usize) -> Uuid{
+    // perform a greedy search at the given layer to find the closest node to the query_vector
+    // starting from the entry_id node
+    let mut current_node_id = *entry_id; // we dereference because entry_id is a reference and we
+                                         // need the value, if we don't get a copy error
+    let mut improved = true; // flag to track if we found a closer node
+
+    while improved {
+        improved = false;
+        let current_node = self.nodes.get(&current_node_id).unwrap();
+        // get neighbors at the current level
+        let neighbors = self.get_neighbors_at_level(&current_node.id, level);
+        for neighbor_id in neighbors {
+            let neighbor_node = self.nodes.get(&neighbor_id).unwrap();
+            let dist_current = self.distance(&current_node.vector, query_vector);
+            let dist_neighbor = self.distance(&neighbor_node.vector, query_vector);
+            if dist_neighbor < dist_current {
+                current_node_id = neighbor_id;
+                improved = true;
+            }
+        }
+    }
+    current_node_id
+}
+
 
 
 
