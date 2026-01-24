@@ -4,11 +4,14 @@ use serde::{Serialize, Deserialize};
 // HNSW (Hierarchical Navigable Small World) index configuration
 // Derived from the original HNSW paper by Malkov and Yashunin
 // https://arxiv.org/abs/1603.09320
+// https://www.pinecone.io/learn/series/faiss/hnsw/
 // HNSW is an efficient algorithm for approximate nearest neighbor search in high-dimensional
 // spaces, it wokrs by building a multi-layer graph structure where each layer is a navigable small
 // world graph. The top layers contain fewer nodes and provide long-range connections, while the lower layers contain more nodes and provide local connections.
 // During search, the algorithm starts at the top layer and traverses down to the lower layers,
 // using the connections to quickly find approximate nearest neighbors
+
+
 pub struct HnswConfig{
     pub ml: usize,
     pub ef_construction: usize,
@@ -53,6 +56,7 @@ impl HnswIndex{
         }
     }
 }
+
 
 
 
