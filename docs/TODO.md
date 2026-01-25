@@ -1,5 +1,3 @@
-**Use this as your single source of truth for what to build and when.**
-
 **Follow this exact order. Each step depends on the previous.**
 
 ### Core Foundation
@@ -18,9 +16,7 @@
 - [x] Embedding providers (OpenAI, Ollama)
 - [x] Batch embedding endpoints
 
-### 1️⃣ Performance & Indexing 
-
-**Why first:** Without HNSW, everything else is unusably slow at scale.
+### Performance & Indexing 
 
 **Implementation:**
 - [x] **HNSW indexing**
@@ -55,7 +51,7 @@
 
 ---
 
-### 2️⃣ Data Durability & Integrity 
+### Data Durability & Integrity 
 
 **Implementation:**
 - [ ] **Write-Ahead Log (WAL)**
@@ -93,9 +89,7 @@
 
 ---
 
-### 3️⃣ Production Features 
-
-**Why third:** Can't run #1+#2 in production without knowing what's happening.
+### Production Features 
 
 **Implementation:**
 - [ ] **Advanced Search Methods**
@@ -130,9 +124,7 @@
 
 ---
 
-### 4️⃣ Security & Authentication 
-
-**Why fourth:** Now that it works and is observable, prevent abuse.
+### Security & Authentication 
 
 **Implementation:**
 - [ ] **Authentication**
@@ -169,10 +161,7 @@
 
 ---
 
-### 5️⃣ Alternative Index Algorithms 
-*Differentiate from competitors with multiple index options*
-
-**Why:** Give users choice based on their specific needs (memory, speed, accuracy trade-offs)
+### Alternative Index Algorithms 
 
 **Implementation:**
 - [x] **HNSW** (current default)
@@ -187,7 +176,6 @@
 ---
 
 ### Document Ingestion 
-*Upload docs instead of pre-chunking*
 
 - [ ] Chunking strategies (fixed-size, semantic, recursive)
 - [ ] Document upload endpoint (PDF, DOCX, Markdown, HTML)
@@ -198,7 +186,6 @@
 ---
 
 ### MCP Integration 
-*AI agents can use Piramid*
 
 - [ ] MCP server implementation
 - [ ] Tools: search_similar, get_document, list_collections, add_document
@@ -209,7 +196,6 @@
 ---
 
 ### Hybrid Search 
-*Vector + keyword combined*
 
 - [ ] BM25 keyword search (inverted index, TF-IDF)
 - [ ] Hybrid ranking (RRF, configurable weights)
