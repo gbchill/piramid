@@ -49,6 +49,15 @@ pub struct VectorStorage {
 }
 
 impl VectorStorage {
+    // Get reference to the HNSW index
+    pub fn index(&self) -> &HnswIndex {
+        &self.hnsw_index
+    }
+
+    // Get reference to all vectors
+    pub fn get_vectors(&self) -> &HashMap<Uuid, VectorEntry> {
+        &self.vectors
+    }
     // Create storage with default HNSW configuration
     pub fn open(path: &str) -> Result<Self> {
         Self::with_hnsw(path, HnswConfig::default())
@@ -124,13 +133,15 @@ impl VectorStorage {
 
     // Search for k nearest neighbors using HNSW index
     // Time complexity: O(log n) approximate search
+    // 
+    // Convenience wrapper around `search::vector_search()`
     pub fn search(&self, query: &[f32], k: usize, metric: Metric) -> Vec<SearchResult> {
-        self.search_with_filter(query, k, metric, None)
+        crate::search::vector_search(self, query, k, metric)
     }
 
     // Search with metadata filtering
-    // Note: Filtering is applied post-HNSW search, so we search for more candidates (ef = k * 10)
-    // to ensure we get k results after filtering
+    // 
+    // Convenience wrapper around `search::filtered_search()`
     pub fn search_with_filter(
         &self,
         query: &[f32],
@@ -138,46 +149,10 @@ impl VectorStorage {
         metric: Metric,
         filter: Option<&Filter>,
     ) -> Vec<SearchResult> {
-        // Create vector map for HNSW
-        let vector_map: HashMap<Uuid, Vec<f32>> = self.vectors
-            .iter()
-            .map(|(id, entry)| (*id, entry.vector.clone()))
-            .collect();
-
-        // If filtering, search for more candidates to compensate for filtered-out results
-        let search_k = if filter.is_some() { k * 10 } else { k };
-        let ef = (search_k * 2).max(50); // ef should be >= k for good recall
-        
-        let result_ids = self.hnsw_index.search(query, search_k, ef, &vector_map);
-
-        // Convert IDs to SearchResults and apply filter
-        let mut results: Vec<SearchResult> = result_ids
-            .into_iter()
-            .filter_map(|id| {
-                self.vectors.get(&id).and_then(|entry| {
-                    // Apply filter if present
-                    if let Some(f) = filter {
-                        if !f.matches(&entry.metadata) {
-                            return None;
-                        }
-                    }
-                    
-                    let score = metric.calculate(query, &entry.vector);
-                    Some(SearchResult::new(
-                        entry.id,
-                        score,
-                        entry.text.clone(),
-                        entry.vector.clone(),
-                        entry.metadata.clone(),
-                    ))
-                })
-            })
-            .collect();
-
-        // Sort by score (HNSW returns by distance, but we want by similarity score)
-        results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
-        results.truncate(k);
-        results
+        match filter {
+            Some(f) => crate::search::filtered_search(self, query, k, metric, f),
+            None => crate::search::vector_search(self, query, k, metric),
+        }
     }
 
     pub fn delete(&mut self, id: &Uuid) -> Result<bool> {

@@ -1,9 +1,9 @@
-// What you get back from a search query
+// Search result type - what you get back from a search query
 
 use uuid::Uuid;
 use crate::metadata::Metadata;
 
-// A search result - the vector entry plus its similarity score
+// A search result containing the vector entry plus its similarity score
 #[derive(Debug, Clone)]
 pub struct SearchResult {
     pub id: Uuid,
