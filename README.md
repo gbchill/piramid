@@ -17,26 +17,20 @@
 
 Piramid is a vector database built in Rust, designed specifically for AI agent applications. Store embeddings, search by similarity, and let agents discover and walk your data.
 
-### Why Piramid?
-
-- **🦀 Rust Performance** - Memory-safe, zero-cost abstractions
-- **🔌 Built-in Embeddings** - OpenAI, Ollama (local) support
-- **🎯 Agent-First Design** - Purpose-built for LLM applications
-- **🚀 Simple API** - REST API + Rust library
-- **📊 Web Dashboard** - Visual interface for management
-
-### Upcoming Features
-
-- **GPU Acceleration** - 10-100x faster search (Phase 11)
-- **Semantic Cache** - Save 70%+ on LLM API costs (Phase 13)
-- **WASM Support** - Run in browser/edge/mobile (Phase 14)
-- **Agent Memory** - Purpose-built memory system (Phase 15)
+- REST API + Rust library
+- Memory-safe, zero-cost abstractions
+- OpenAI, Ollama (local) support
+- Purpose-built with MCPs for LLM applications
+- Visual interface for management
+- GPU Acceleration for faster search
+- Semantic Caching on LLM API costs
+- WASM support for running in browser/edge/mobile
 
 ---
 
 ## Quick Start
 
-### Docker (Recommended)
+### Docker
 
 ```bash
 git clone https://github.com/ashworks1706/piramid
@@ -80,8 +74,22 @@ curl -X POST http://localhost:6333/api/collections/docs/search \
   -H "Content-Type: application/json" \
   -d '{"vector": [0.1, 0.2, 0.3, 0.4], "k": 5}'
 ```
+---
 
-### With Embeddings
+## Configuration
+
+Configure via environment variables:
+
+```bash
+PORT=6333              # HTTP server port
+DATA_DIR=/app/data     # Data storage directory
+
+# Optional: Embedding provider
+EMBEDDING_PROVIDER=openai|ollama
+EMBEDDING_MODEL=text-embedding-3-small
+OPENAI_API_KEY=sk-...
+EMBEDDING_BASE_URL=http://localhost:11434
+```
 
 ```bash
 # Configure embedding provider
@@ -105,22 +113,6 @@ curl -X POST http://localhost:6333/api/collections/docs/search/text \
   -d '{"query": "fast animals", "k": 5}'
 ```
 
----
-
-## Configuration
-
-Configure via environment variables:
-
-```bash
-PORT=6333              # HTTP server port
-DATA_DIR=/app/data     # Data storage directory
-
-# Optional: Embedding provider
-EMBEDDING_PROVIDER=openai|ollama
-EMBEDDING_MODEL=text-embedding-3-small
-OPENAI_API_KEY=sk-...
-EMBEDDING_BASE_URL=http://localhost:11434
-```
 
 ---
 
@@ -145,14 +137,14 @@ cd dashboard && npm install && npm run dev
 
 ## Contributing
 
-We welcome contributions! See [docs/get-started.md](docs/GET_STARTED.md) & [docs/TODO.md](docs/TODO.md) for documentation.
+See [docs/TODO.md](docs/TODO.md) for documentation.
 
 
 ## License
 
-Soon
+[Apache 2.0 License](LICENSE)
 
 ## Acknowledgments
 
-Built with ❤️ in Rust for better AI agent infrastructure.
+built by @ashworks1706 for educational purposes
 
