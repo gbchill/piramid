@@ -23,7 +23,16 @@ pub struct HnswConfig{
     pub ml: f32,  // layer multiplier: 1/ln(M)
     pub metric: SimilarityMetric,  // distance metric to use
 }
-
+// impl means we are implementing methods for the struct where each method has &self as first
+// parameter, meaning it operates on an instance of the struct, similar to classes in other
+// languages, all the content in that impl block are methods for HnswConfig, a user can use them
+// by creating an instance of HnswConfig and calling the methods on it for example:
+// let config = HnswConfig::default(); <- this creates a default config instance
+// let m = config.m; <- this accesses the m field of the config instance
+// but you might wonder where did 'Default' from impl Default for HnswConfig come from? 
+// Default is a trait in Rust that provides a way to create default values for types,
+// by implementing Default for HnswConfig, we are saying that HnswConfig can have a default value
+// and we provide the implementation of how to create that default value in the fn default() method
 impl Default for HnswConfig {
     fn default() -> Self {
         let m = 16;
@@ -51,30 +60,47 @@ struct SearchCandidate {
     id: Uuid,
     distance: f32,
 }
-
+// partial_eq means we can compare two SearchCandidate for equality based on distance
+// PartialEq is a trait in Rust that allows you to define how two instances of a type
+// are compared for equality, by implementing PartialEq for SearchCandidate, we are saying
+// that SearchCandidate can be compared for equality and we provide the implementation of
+// how to compare them in the fn eq() method
 impl PartialEq for SearchCandidate {
     fn eq(&self, other: &Self) -> bool {
-        self.distance == other.distance
+        self.distance == other.distance // equality based on distance
     }
 }
 
 impl Eq for SearchCandidate {}
 
+// partial_ord means we can compare two SearchCandidate for ordering based on distance
+// PartialOrd is a trait in Rust that allows you to define how two instances of a type
+// are compared for ordering (less than, greater than, etc.), by implementing PartialOrd
+// for SearchCandidate, we are saying that SearchCandidate can be compared for ordering
+// and we provide the implementation of how to compare them in the fn partial_cmp() method
 impl PartialOrd for SearchCandidate {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
+        Some(self.cmp(other)) // we order using the Ord implementation below
     }
 }
 
+// Ord is a trait in Rust that allows you to define a total ordering for a type,
+// by implementing Ord for SearchCandidate, we are saying that SearchCandidate has a
+// total ordering and we provide the implementation of how to compare them in the fn cmp() method
 impl Ord for SearchCandidate {
     fn cmp(&self, other: &Self) -> Ordering {
         // For max heap, reverse ordering so closest (smallest distance) comes first
-        other.distance.partial_cmp(&self.distance).unwrap_or(Ordering::Equal)
+        other.distance.partial_cmp(&self.distance).unwrap_or(Ordering::Equal) 
+        // Ordering::Equal means the two distances are equal
+        // by doing this, we order SearchCandidate in descending order of distance. how? by 
+        // comparing other to self instead of self to other, so the one with smaller distance
+        // is considered "greater" in the context of a max-heap, thus it will be popped first
     }
 }
 
+// Main HNSW index structure
 pub struct HnswIndex{
-    config: HnswConfig,
+    config: HnswConfig, // configuration parameters, for example: m, ef_construction, ml, metric
     nodes: HashMap<Uuid, HnswNode>,
     max_level: isize,
     start_node: Option<Uuid>,
@@ -89,12 +115,15 @@ impl HnswIndex{
             start_node: None,
         }
     }
-
+    // Generate a random layer for a new node based on exponential decay why? because 
+    // in HNSW, higher layers have exponentially fewer nodes, so we want to assign layers
+    // to new nodes in a way that reflects this distribution
     fn random_layer(&self) -> usize{
         // exponential decay probability 
         // floor(-ln(uniform_random) * ml)
         let r: f32 = rand::random();
-        (-r.ln() * self.config.ml).floor() as usize
+        (-r.ln() * self.config.ml).floor() as usize // this basically gives us a layer based on
+                                                    // exponential decay
     }
 
     // Insert a node with access to vector storage for distance calculations
@@ -107,11 +136,11 @@ impl HnswIndex{
         // if first node, make it entry point and return 
         if self.start_node.is_none(){
             self.start_node = Some(id); // set entry point
-            self.max_level = layer as isize; // we do this because levels are 0-indexed and this makes
-                                             // sure max_level is always the highest level
+            self.max_level = layer as isize; // this makes sure max_level is always the highest level
             let node = HnswNode{ 
                 id,
-                connections: vec![Vec::new(); layer + 1],
+                connections: vec![Vec::new(); layer + 1], // this creates empty connections for
+                                                          // each layer
             }; // create the node
             self.nodes.insert(id, node); // insert into the index
             return;
@@ -128,9 +157,11 @@ impl HnswIndex{
         }
 
         // Insert and connect at each layer from target down to 0
-        for lc in (0..=layer).rev() {
+        for lc in (0..=layer).rev() { // 0..=layer means we go from layer down to 0 since we are
+                                      // doing rev()
             // Search for ef_construction nearest neighbors at this layer
-            current_entry = self.search_layer(
+            current_entry = self.search_layer( // ef_construction means we want to find this many
+                                               // neighbors
                 vector,
                 &current_entry,
                 self.config.ef_construction,
@@ -143,6 +174,9 @@ impl HnswIndex{
             let neighbors = self.select_neighbors(&current_entry, m, vectors, vector);
 
             // Add bidirectional connections
+            // we do this by adding edges in both directions between the new node and its neighbors
+            // at the current layer since HNSW uses undirected edges, undirectec edges mean that if node A
+            // is connected to node B, then node B is also connected to node A
             for &neighbor_id in &neighbors {
                 // Add edge from new node to neighbor
                 if let Some(node) = self.nodes.get_mut(&id) {
@@ -152,11 +186,16 @@ impl HnswIndex{
                 }
 
                 // Add edge from neighbor to new node
-                if let Some(neighbor) = self.nodes.get_mut(&neighbor_id) {
+                if let Some(neighbor) = self.nodes.get_mut(&neighbor_id) { // get mutable reference
+                                                                           // to neighbor why?
+                                                                           // because we want to
+                                                                           // modify its
+                                                                           // connections
                     if lc < neighbor.connections.len() {
                         neighbor.connections[lc].push(id);
 
-                        // Prune connections if neighbor exceeds max
+                        // Prune connections if neighbor exceeds max why? because HNSW limits the
+                        // number of connections per node to maintain efficiency
                         if neighbor.connections[lc].len() > m {
                             // Clone the connections and neighbor vector to avoid borrow issues
                             let neighbor_connections = neighbor.connections[lc].clone();
@@ -195,6 +234,14 @@ impl HnswIndex{
     }
 
     // Public search function - returns k nearest neighbor IDs
+    // how do we even search in hnsw, what is the core condition for determining nearest neighbour?
+    // the core condition is based on distance metric, we want to find nodes that are closest
+    // to the query vector based on the configured distance metric (e.g., cosine, euclidean, dot
+    // product)
+    // searching is done in two phases:
+    // 1. Greedy search from top layer down to layer 1 to find entry point for layer 0
+    // 2. Search layer 0 with ef parameter to find k nearest neighbors
+    // ef is a parameter that controls the accuracy/speed tradeoff during search
     pub fn search(&self, query: &[f32], k: usize, ef: usize, vectors: &HashMap<Uuid, Vec<f32>>) -> Vec<Uuid> {
         if self.start_node.is_none() {
             return Vec::new();
@@ -239,30 +286,35 @@ impl HnswIndex{
             }
         }
 
+        // we track furthest distance by looking at the top of the nearest heap (since it's a
+        // max-heap)
         let mut furthest_distance = nearest.peek().map(|c| c.distance).unwrap_or(f32::INFINITY);
 
-        // Greedy search
+        // Greedy search within the layer basically, greedy search means we always explore the
+        // closest candidate first
         while let Some(candidate) = candidates.pop() {
             if candidate.distance > furthest_distance {
                 break;
             }
 
-            // Explore neighbors
+            // Explore neighbors at this level
             if let Some(node) = self.nodes.get(&candidate.id) {
                 if level < node.connections.len() {
                     for &neighbor_id in &node.connections[level] {
-                        if visited.insert(neighbor_id) {
-                            if let Some(neighbor_vector) = vectors.get(&neighbor_id) {
+                        if visited.insert(neighbor_id) { // only proceed if not visited
+                            if let Some(neighbor_vector) = vectors.get(&neighbor_id) { 
                                 let dist = self.distance(query, neighbor_vector);
                                 
+                                // If this neighbor is closer than the furthest in nearest, add it
                                 if dist < furthest_distance || nearest.len() < num_closest {
                                     candidates.push(SearchCandidate { id: neighbor_id, distance: dist });
                                     nearest.push(SearchCandidate { id: neighbor_id, distance: dist });
                                     
                                     if nearest.len() > num_closest {
-                                        nearest.pop();
+                                        nearest.pop(); // remove furthest
                                     }
                                     
+                                    // Update furthest distance
                                     furthest_distance = nearest.peek().map(|c| c.distance).unwrap_or(f32::INFINITY);
                                 }
                             }
@@ -274,8 +326,11 @@ impl HnswIndex{
 
         // Convert heap to sorted vector (closest first)
         let mut result: Vec<_> = nearest.into_iter().collect();
-        result.sort_by(|a, b| a.distance.partial_cmp(&b.distance).unwrap_or(Ordering::Equal));
-        result.into_iter().map(|c| c.id).collect()
+        result.sort_by(|a, b| a.distance.partial_cmp(&b.distance).unwrap_or(Ordering::Equal)); // sort
+                                                                                               // ascending
+                                                                                               // by
+                                                                                               // distance
+        result.into_iter().map(|c| c.id).collect() // return only IDs
     }
 
     // Select M best neighbors using simple heuristic
@@ -332,6 +387,9 @@ impl HnswIndex{
     pub fn remove(&mut self, id: &Uuid) {
         if let Some(node) = self.nodes.remove(id) {
             // Remove all connections to this node from other nodes
+            // we do this by iterating through all layers and removing any references
+            // to the node being removed and updating the connections of neighboring nodes
+            // accordingly
             for layer in 0..node.connections.len() {
                 for &neighbor_id in &node.connections[layer] {
                     if let Some(neighbor) = self.nodes.get_mut(&neighbor_id) {
@@ -354,6 +412,8 @@ impl HnswIndex{
     }
 
     // Get statistics about the index
+    // we do this by iterating through all nodes and collecting data such as
+    // total number of nodes, max layer, size of each layer, average connections per node
     pub fn stats(&self) -> HnswStats {
         let total_nodes = self.nodes.len();
         let mut layer_sizes = vec![0; (self.max_level + 1) as usize];
