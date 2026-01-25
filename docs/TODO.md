@@ -1,6 +1,6 @@
 **Follow this exact order. Each step depends on the previous.**
 
-### Core Foundation
+### Foundation
 - [x] Vector storage (HashMap + bincode persistence)
 - [x] UUID-based IDs, error handling
 - [x] Store, retrieve, get all, delete, update
@@ -89,7 +89,7 @@
 
 ---
 
-### Production Features 
+### Production 
 
 **Implementation:**
 - [ ] **Advanced Search Methods**
@@ -161,7 +161,7 @@
 
 ---
 
-### Alternative Index Algorithms 
+### Index Algorithms 
 
 **Implementation:**
 - [x] **HNSW** (current default)
