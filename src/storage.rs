@@ -44,6 +44,7 @@ impl VectorEntry {
 // Vector storage engine with HNSW indexing for fast approximate nearest neighbor search.
 pub struct VectorStorage {
     file: File,
+    path: String, // store the file path for index file naming 
     vectors: HashMap<Uuid, VectorEntry>,
     hnsw_index: HnswIndex, // HNSW index (required)
 }
@@ -66,6 +67,12 @@ impl VectorStorage {
             .collect()
     }
 
+    // get the hnsw index file path from the database file path 
+    fn index_path(&self) -> String {
+        // right now only hnsw
+        format!("{}.hnsw", self.path)
+    }
+
     // Create storage with default HNSW configuration
     pub fn open(path: &str) -> Result<Self> {
         Self::with_hnsw(path, HnswConfig::default())
@@ -81,14 +88,33 @@ impl VectorStorage {
 
         let mut storage = Self {
             file,
+            path: path.to_string(),
             vectors: HashMap::new(),
             hnsw_index: HnswIndex::new(config),
         };
 
         storage.load()?;
+
+        // try to load index from disk 
+        let index_path = storage.index_path();
+        let index_loaded = if let Ok(mut index_file) = File::open(&index_path){
+            let mut index_data = Vec::new();
+            if index_file.read_to_end(&mut index_data).is_ok(){
+                if let Ok(loaded_index) = bincode::deserialize::<HnswIndex>(&index_data){
+                    storage.hnsw_index = loaded_index;
+                    true
+                } else {
+                    false // corrupted index file 
+                }
+            } else {
+                false // can't read the file 
+            }
+        } else {
+            false // file doesn't exist 
+        };
         
-        // Build HNSW index from loaded vectors
-        if !storage.vectors.is_empty() {
+        // if index not loaded, rebuild from vectors
+        if !index_loaded && !storage.vectors.is_empty(){
             storage.rebuild_index();
         }
         
@@ -213,6 +239,16 @@ impl VectorStorage {
         self.file.seek(SeekFrom::Start(0))?;
         self.file.set_len(0)?;
         self.file.write_all(&data)?;
+        self.file.sync_all()?;
+
+        // Save index to seperate .db.* file 
+        if let Ok(index_data) = bincode::serialize(&self.hnsw_index){
+            if let Ok(mut index_file) = File::create(&self.index_path()){
+                let _ = index_file.write_all(&index_data);
+                let _ = index_file.sync_all();
+            }
+        }
+        // if index save fails, we continue (index can be rebuilt on load)
         Ok(())
     }
 }
@@ -265,6 +301,7 @@ mod tests {
     #[test]
     fn test_hnsw_search() {
         let _ = std::fs::remove_file("test_hnsw.db");
+        let _ = std::fs::remove_file("test_hnsw.db.hnsw");
         
         // Create storage with default HNSW config
         let mut storage = VectorStorage::open("test_hnsw.db").unwrap();
@@ -290,11 +327,13 @@ mod tests {
         assert!(results[0].text == "vec0" || results[0].text == "vec3"); // Should find similar vectors
 
         std::fs::remove_file("test_hnsw.db").unwrap();
+        let _ = std::fs::remove_file("test_hnsw.db.hnsw");
     }
 
     #[test]
     fn test_hnsw_with_filter() {
         let _ = std::fs::remove_file("test_filter.db");
+        let _ = std::fs::remove_file("test_filter.db.hnsw");
         
         let mut storage = VectorStorage::open("test_filter.db").unwrap();
 
@@ -322,5 +361,6 @@ mod tests {
         assert_eq!(results[0].text, "doc1");
 
         std::fs::remove_file("test_filter.db").unwrap();
+        let _ = std::fs::remove_file("test_filter.db.hnsw");
     }
 }

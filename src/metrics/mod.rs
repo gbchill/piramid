@@ -20,7 +20,7 @@ pub use dot::dot_product;
 // Different metrics have different semantics:
 // - Similarity metrics (Cosine, DotProduct): higher = more similar
 // - Distance metrics (Euclidean): lower = more similar
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 pub enum Metric {
     #[default]  // used when you call Metric::default()
     Cosine,

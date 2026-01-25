@@ -2,6 +2,7 @@ use uuid::Uuid;
 use std::collections::{HashMap, HashSet, BinaryHeap};
 use std::cmp::Ordering;
 use crate::metrics::Metric;
+use serde::{Serialize, Deserialize};
 
 
 // HNSW (Hierarchical Navigable Small World) index configuration
@@ -15,6 +16,7 @@ use crate::metrics::Metric;
 // using the connections to quickly find approximate nearest neighbors
 
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HnswConfig{
     pub m: usize,  // max number of connections per node
     pub m_max: usize,  // max connections for layer 0 (typically 2*M)
@@ -45,7 +47,7 @@ impl Default for HnswConfig {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct HnswNode{
     // connections[layer] = Vec of neighbor IDs at that layer
     // Layer 0 is at index 0
@@ -97,6 +99,7 @@ impl Ord for SearchCandidate {
 }
 
 // Main HNSW index structure
+#[derive(Serialize, Deserialize)]
 pub struct HnswIndex{
     config: HnswConfig, // configuration parameters, for example: m, ef_construction, ml, metric
     nodes: HashMap<Uuid, HnswNode>,

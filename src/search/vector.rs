@@ -53,6 +53,7 @@ mod tests {
     #[test]
     fn test_vector_search() {
         let _ = std::fs::remove_file("test_vector_search.db");
+        let _ = std::fs::remove_file("test_vector_search.db.hnsw");
         let mut storage = VectorStorage::open("test_vector_search.db").unwrap();
 
         // Insert test vectors
@@ -75,5 +76,6 @@ mod tests {
         assert!(results[0].text == "doc0" || results[0].text == "doc2");
 
         std::fs::remove_file("test_vector_search.db").unwrap();
+        let _ = std::fs::remove_file("test_vector_search.db.hnsw");
     }
 }
