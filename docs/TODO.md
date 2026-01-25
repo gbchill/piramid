@@ -30,8 +30,8 @@
   - [x] Integrated into VectorStorage (production-grade, no brute-force fallback)
   - [x] Post-search filtering support
   - [x] Tests: insert, search, filter, delete, update
-  - [ ] Benchmark: 1M vectors in <10ms (TODO: create benchmark suite)
-  - [ ] HNSW index persistence to disk (TODO: save/load from file)
+  - [ ] Benchmark suite (4-6 hours)
+  - [ ] HNSW index persistence to disk (save/load graph structure - 3-5 hours) 
 - [ ] **SIMD acceleration**
   - [ ] SIMD distance calculations (AVX2/AVX-512)
   - [ ] Portable SIMD fallback
@@ -104,6 +104,14 @@
 **Why third:** Can't run #1+#2 in production without knowing what's happening.
 
 **Implementation:**
+- [ ] **Advanced Search Methods**
+  - [x] Vector similarity search (HNSW - approximate k-NN)
+  - [x] Filtered search (post-filtering with metadata)
+  - [ ] Batch search (multiple queries in one request - 2hrs)
+  - [ ] Range search (distance threshold instead of top-k - 2hrs)
+  - [ ] Recommendation API (similar to these IDs, not those - 4hrs)
+  - [ ] Grouped/diverse search (max results per category - 4hrs)
+  - [ ] Scroll/pagination (iterate through large result sets - 2hrs)
 - [ ] **Observability**
   - [ ] Metrics (insert/search latency, index size, memory)
   - [ ] Structured logging (tracing crate)
@@ -111,7 +119,7 @@
   - [ ] Enhanced health checks
 - [ ] **Batch operations**
   - [ ] Batch insert (10k inserts in <1s)
-  - [ ] Batch search
+  - [ ] Batch search (covered above)
   - [ ] Bulk delete
 - [ ] **Validation**
   - [ ] Dimension consistency checks
@@ -164,6 +172,47 @@
 - [ ] `CHANGELOG.md` - Start version tracking
 - [ ] `docs/API.md` - Complete REST API reference
 - [ ] `docs/QUICKSTART.md` - 5-minute tutorial
+
+---
+
+### 5️⃣ Alternative Index Algorithms 
+*Differentiate from competitors with multiple index options*
+
+**Why:** Give users choice based on their specific needs (memory, speed, accuracy trade-offs)
+
+**Implementation:**
+- [x] **HNSW** (current default)
+  - Best general-purpose (speed + accuracy)
+  - Works 1k to 100M vectors
+  - High memory usage
+- [ ] **Flat/Brute Force** (2-3 hours)
+  - 100% accuracy
+  - Best for <10k vectors
+  - No index overhead
+  - Use case: Small datasets, exact search required
+- [ ] **IVF (Inverted File Index)** (8-12 hours)
+  - Medium memory usage
+  - Good for 10M+ vectors
+  - Configurable speed/accuracy trade-off
+  - Use case: Memory-constrained environments
+- [ ] **Product Quantization (PQ)** (12-16 hours)
+  - 4x-8x memory reduction
+  - Lower accuracy (~85%)
+  - Best for 100M+ vectors
+  - Use case: Massive scale, limited RAM
+- [ ] **Annoy (Spotify's algorithm)** (6-8 hours)
+  - Memory-mapped, disk-based
+  - Good for read-heavy workloads
+  - Static index (rebuild for updates)
+  - Use case: Infrequent updates, large datasets
+- [ ] **ScaNN (Google's algorithm)** (16-20 hours)
+  - State-of-art speed/accuracy
+  - Complex implementation
+  - Best overall performance
+  - Use case: Maximum performance needs
+
+
+**Goal:** Be the most flexible vector DB - let users choose the right tool
 
 ---
 
