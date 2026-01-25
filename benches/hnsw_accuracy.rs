@@ -24,7 +24,7 @@ fn bench_recall(c: &mut Criterion) {
     println!("Preparing dataset for recall test...");
 
     let dim = 128;
-    let dataset_size = 10_000;
+    let dataset_size = 5_000;  // Reduced for faster benchmarking
 
     for i in 0..dataset_size {
         let vec = random_vector(dim);
@@ -35,7 +35,7 @@ fn bench_recall(c: &mut Criterion) {
     // Test recall on multiple queries
     println!("Testing recall@10...");
     let mut total_recall = 0.0;
-    let num_queries = 100;
+    let num_queries = 50;  // Reduced for faster benchmarking
 
     for _ in 0..num_queries {
         let query = random_vector(dim);

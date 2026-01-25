@@ -11,7 +11,7 @@ fn random_vector(dim: usize) -> Vec<f32> {
 fn bench_insert(c: &mut Criterion) {
     let mut group = c.benchmark_group("insert");
 
-    for size in [1_000, 10_000, 100_000].iter() {
+    for size in [1_000, 5_000, 10_000].iter() {
         group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &size| {
             b.iter(|| {
                 let _ = std::fs::remove_file("bench_insert.db");
@@ -35,7 +35,7 @@ fn bench_insert(c: &mut Criterion) {
 fn bench_search(c: &mut Criterion) {
     let mut group = c.benchmark_group("search");
 
-    for size in [1_000, 10_000, 100_000].iter() {
+    for size in [1_000, 5_000, 10_000].iter() {
         // setup storage with size vectors
         let _ = std::fs::remove_file("bench_search.db");
         let _ = std::fs::remove_file(".hnsw.db");
