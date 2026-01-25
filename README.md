@@ -13,7 +13,6 @@
 
 ---
 
-## What is Piramid?
 
 Piramid is a vector database built in Rust, designed specifically for AI agent applications. Store embeddings, search by similarity, and let agents discover and walk your data.
 
