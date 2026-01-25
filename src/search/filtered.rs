@@ -1,28 +1,26 @@
 // Filtered search - vector similarity search with metadata filtering
 
-use std::collections::HashMap;
-use uuid::Uuid;
-
 use crate::storage::VectorStorage;
 use crate::metrics::Metric;
 use crate::query::Filter;
 use crate::search::SearchResult;
+use super::utils::{create_vector_map, entry_to_result, sort_and_truncate};
 
-// Perform filtered vector similarity search
-// 
-// Combines vector similarity search with metadata filtering.
-// Note: Filtering is applied post-search, so we search for more candidates
-// (k * 10) to ensure we get k results after filtering.
-// 
-// # Arguments
-// * `storage` - The vector storage to search in
-// * `query` - Query vector
-// * `k` - Number of results to return (after filtering)
-// * `metric` - Distance/similarity metric to use
-// * `filter` - Metadata filter to apply
-// 
-// # Returns
-// Vector of k most similar results matching the filter, sorted by score
+/// Perform filtered vector similarity search
+/// 
+/// Combines vector similarity search with metadata filtering.
+/// Note: Filtering is applied post-search, so we search for more candidates
+/// (k * 10) to ensure we get k results after filtering.
+/// 
+/// # Arguments
+/// * `storage` - The vector storage to search in
+/// * `query` - Query vector
+/// * `k` - Number of results to return (after filtering)
+/// * `metric` - Distance/similarity metric to use
+/// * `filter` - Metadata filter to apply
+/// 
+/// # Returns
+/// Vector of k most similar results matching the filter, sorted by score
 pub fn filtered_search(
     storage: &VectorStorage,
     query: &[f32],
@@ -31,11 +29,7 @@ pub fn filtered_search(
     filter: &Filter,
 ) -> Vec<SearchResult> {
     // Create vector map for index
-    let vector_map: HashMap<Uuid, Vec<f32>> = storage
-        .get_vectors()
-        .iter()
-        .map(|(id, entry)| (*id, entry.vector.clone()))
-        .collect();
+    let vector_map = create_vector_map(storage);
 
     // Search for more candidates to compensate for filtered-out results
     let search_k = k * 10;
@@ -53,21 +47,13 @@ pub fn filtered_search(
                     return None;
                 }
                 
-                let score = metric.calculate(query, &entry.vector);
-                Some(SearchResult::new(
-                    entry.id,
-                    score,
-                    entry.text.clone(),
-                    entry.vector.clone(),
-                    entry.metadata.clone(),
-                ))
+                Some(entry_to_result(&entry, query, metric))
             })
         })
         .collect();
 
-    // Sort by score
-    results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
-    results.truncate(k);
+    // Sort and truncate
+    sort_and_truncate(&mut results, k);
     results
 }
 

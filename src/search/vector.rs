@@ -1,23 +1,21 @@
 // Vector similarity search (k-NN)
 // Find the k most similar vectors to a query vector
 
-use std::collections::HashMap;
-use uuid::Uuid;
-
 use crate::storage::VectorStorage;
 use crate::metrics::Metric;
 use crate::search::SearchResult;
+use super::utils::{create_vector_map, entry_to_result, sort_and_truncate};
 
-// Perform k-nearest neighbor vector similarity search
-// 
-// # Arguments
-// * `storage` - The vector storage to search in
-// * `query` - Query vector
-// * `k` - Number of results to return
-// * `metric` - Distance/similarity metric to use
-// 
-// # Returns
-// Vector of k most similar results, sorted by score (highest first)
+/// Perform k-nearest neighbor vector similarity search
+/// 
+/// # Arguments
+/// * `storage` - The vector storage to search in
+/// * `query` - Query vector
+/// * `k` - Number of results to return
+/// * `metric` - Distance/similarity metric to use
+/// 
+/// # Returns
+/// Vector of k most similar results, sorted by score (highest first)
 pub fn vector_search(
     storage: &VectorStorage,
     query: &[f32],
@@ -25,11 +23,7 @@ pub fn vector_search(
     metric: Metric,
 ) -> Vec<SearchResult> {
     // Create vector map for index
-    let vector_map: HashMap<Uuid, Vec<f32>> = storage
-        .get_vectors()
-        .iter()
-        .map(|(id, entry)| (*id, entry.vector.clone()))
-        .collect();
+    let vector_map = create_vector_map(storage);
 
     // Use index to find k nearest neighbors
     // ef = 2*k for better recall (HNSW parameter)
@@ -41,21 +35,13 @@ pub fn vector_search(
         .into_iter()
         .filter_map(|id| {
             storage.get(&id).map(|entry| {
-                let score = metric.calculate(query, &entry.vector);
-                SearchResult::new(
-                    entry.id,
-                    score,
-                    entry.text.clone(),
-                    entry.vector.clone(),
-                    entry.metadata.clone(),
-                )
+                entry_to_result(&entry, query, metric)
             })
         })
         .collect();
 
-    // Sort by score (HNSW returns by distance, we want by similarity)
-    results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
-    results.truncate(k);
+    // Sort and truncate
+    sort_and_truncate(&mut results, k);
     results
 }
 
@@ -63,7 +49,6 @@ pub fn vector_search(
 mod tests {
     use super::*;
     use crate::storage::VectorEntry;
-    use crate::index::HnswConfig;
 
     #[test]
     fn test_vector_search() {

@@ -13,6 +13,7 @@
 mod result;
 mod vector;
 mod filtered;
+mod utils;
 
 pub use result::SearchResult;
 pub use vector::vector_search;
