@@ -28,10 +28,10 @@
   - [x] Tests: insert, search, filter, delete, update
   - [x] HNSW index persistence to disk (save/load graph structure - 3-5 hours) 
   - [x] Benchmark suite (4-6 hours)
-- [ ] **SIMD acceleration**
-  - [ ] SIMD distance calculations (AVX2/AVX-512)
-  - [ ] Portable SIMD fallback
-  - [ ] 3-5x speedup target
+- [x] **SIMD acceleration**
+  - [x] SIMD distance calculations (using wide crate for portability)
+  - [x] Implemented for dot product, cosine similarity, euclidean distance
+  - [ ] Benchmark to verify 3-5x speedup target
 - [ ] **Memory optimization**
   - [ ] Memory-mapped files (mmap)
   - [ ] Scalar quantization (int8) - 4x memory reduction

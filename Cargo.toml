@@ -32,6 +32,9 @@ reqwest = { version = "0.12", features = ["json"] }
 async-trait = "0.1"
 rand = "0.8"
 
+# SIMD acceleration
+wide = "0.7"
+
 [dev-dependencies]
 # Logging
 log = "0.4"
