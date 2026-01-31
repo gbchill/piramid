@@ -32,10 +32,10 @@
   - [x] SIMD distance calculations (using wide crate for portability)
   - [x] Implemented for dot product, cosine similarity, euclidean distance
   - [ ] Benchmark to verify 3-5x speedup target
-- [ ] **Memory optimization**
-  - [ ] Memory-mapped files (mmap)
-  - [ ] Scalar quantization (int8) - 4x memory reduction
-  - [ ] Handle 10M vectors on 32GB RAM
+- [x] **Memory optimization**
+  - [x] Memory-mapped files (mmap) 
+  - [ ] Scalar quantization (int8)
+  - [ ] Handle 10M vectors on 32GB RAM (requires quantization)
 - [ ] **Parallel processing**
   - [ ] Parallel search with rayon
   - [ ] Concurrent inserts

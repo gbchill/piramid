@@ -10,11 +10,7 @@ use crate::search::SearchResult;
 // Create a vector map from storage (used by index for searching)
 // This is a common operation needed by all search types
 pub(crate) fn create_vector_map(storage: &VectorStorage) -> HashMap<Uuid, Vec<f32>> {
-    storage
-        .get_vectors()
-        .iter()
-        .map(|(id, entry)| (*id, entry.vector.clone()))
-        .collect()
+    storage.get_vectors()
 }
 
 // Convert a VectorEntry to SearchResult with calculated score

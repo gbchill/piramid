@@ -35,6 +35,9 @@ rand = "0.8"
 # SIMD acceleration
 wide = "0.7"
 
+# Memory optimization
+memmap2 = "0.9"
+
 [dev-dependencies]
 # Logging
 log = "0.4"
