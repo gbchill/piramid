@@ -8,20 +8,43 @@ use serde::{Deserialize, Serialize};
 use reqwest::Client;
 
 use super::{Embedder, EmbeddingConfig, EmbeddingError, EmbeddingResponse, EmbeddingResult};
+use super::cache::CachedEmbedder;
 
 const DEFAULT_OPENAI_API_URL: &str = "https://api.openai.com/v1/embeddings";
+const DEFAULT_CACHE_SIZE: usize = 10000;
 
-// OpenAI embedding provider
-pub struct OpenAIEmbedder {
+// OpenAI embedding provider (with built-in LRU cache)
+struct OpenAIEmbedderInner {
     client: Client,
     api_key: String,
     model: String,
     base_url: String,
 }
 
+pub struct OpenAIEmbedder {
+    cached: CachedEmbedder<OpenAIEmbedderInner>,
+}
+
 impl OpenAIEmbedder {
-    // Create a new OpenAI embedder
+    /// Create a new OpenAI embedder with automatic caching (10K embeddings)
     pub fn new(config: &EmbeddingConfig) -> EmbeddingResult<Self> {
+        let inner = OpenAIEmbedderInner::new(config)?;
+        Ok(Self {
+            cached: CachedEmbedder::new(inner, DEFAULT_CACHE_SIZE),
+        })
+    }
+
+    /// Create with custom cache size
+    pub fn with_cache_size(config: &EmbeddingConfig, cache_size: usize) -> EmbeddingResult<Self> {
+        let inner = OpenAIEmbedderInner::new(config)?;
+        Ok(Self {
+            cached: CachedEmbedder::new(inner, cache_size),
+        })
+    }
+}
+
+impl OpenAIEmbedderInner {
+    fn new(config: &EmbeddingConfig) -> EmbeddingResult<Self> {
         let api_key = config
             .api_key
             .clone()
@@ -57,7 +80,7 @@ impl OpenAIEmbedder {
 }
 
 #[async_trait]
-impl Embedder for OpenAIEmbedder {
+impl Embedder for OpenAIEmbedderInner {
     async fn embed(&self, text: &str) -> EmbeddingResult<EmbeddingResponse> {
         let request = OpenAIEmbeddingRequest {
             model: self.model.clone(),
@@ -173,6 +196,30 @@ impl Embedder for OpenAIEmbedder {
 
     fn dimensions(&self) -> Option<usize> {
         self.get_dimensions()
+    }
+}
+
+// Delegate Embedder trait to the cached inner embedder
+#[async_trait]
+impl Embedder for OpenAIEmbedder {
+    async fn embed(&self, text: &str) -> EmbeddingResult<EmbeddingResponse> {
+        self.cached.embed(text).await
+    }
+
+    async fn embed_batch(&self, texts: &[String]) -> EmbeddingResult<Vec<EmbeddingResponse>> {
+        self.cached.embed_batch(texts).await
+    }
+
+    fn provider_name(&self) -> &str {
+        self.cached.provider_name()
+    }
+
+    fn model_name(&self) -> &str {
+        self.cached.model_name()
+    }
+
+    fn dimensions(&self) -> Option<usize> {
+        self.cached.dimensions()
     }
 }
 

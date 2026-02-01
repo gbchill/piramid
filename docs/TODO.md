@@ -41,9 +41,8 @@
   - [x] Single storage type (no fake concurrent write wrappers)
   - [x] Linear scaling with CPU cores (via rayon thread pool)
 - [ ] **Embeddings optimization** (Before Phase 3)
-  - [ ] LRU cache for repeated embeddings (save 50-90% API costs)
+  - [x] LRU cache for repeated embeddings (save 50-90% API costs)
   - [ ] Native batch API support (OpenAI/Ollama - 2x-10x speedup)
-  - [ ] Retry with exponential backoff (production reliability)
   - [ ] Request metrics (count, latency, tokens, cost)
   - [ ] Type-safe config (enum-based instead of strings)
 

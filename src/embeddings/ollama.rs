@@ -8,19 +8,42 @@ use serde::{Deserialize, Serialize};
 use reqwest::Client;
 
 use super::{Embedder, EmbeddingConfig, EmbeddingError, EmbeddingResponse, EmbeddingResult};
+use super::cache::CachedEmbedder;
 
 const DEFAULT_OLLAMA_URL: &str = "http://localhost:11434";
+const DEFAULT_CACHE_SIZE: usize = 10000;
 
-// Ollama embedding provider
-pub struct OllamaEmbedder {
+// Ollama embedding provider (with built-in LRU cache)
+struct OllamaEmbedderInner {
     client: Client,
     model: String,
     base_url: String,
 }
 
+pub struct OllamaEmbedder {
+    cached: CachedEmbedder<OllamaEmbedderInner>,
+}
+
 impl OllamaEmbedder {
-    // Create a new Ollama embedder
+    /// Create a new Ollama embedder with automatic caching (10K embeddings)
     pub fn new(config: &EmbeddingConfig) -> EmbeddingResult<Self> {
+        let inner = OllamaEmbedderInner::new(config)?;
+        Ok(Self {
+            cached: CachedEmbedder::new(inner, DEFAULT_CACHE_SIZE),
+        })
+    }
+
+    /// Create with custom cache size
+    pub fn with_cache_size(config: &EmbeddingConfig, cache_size: usize) -> EmbeddingResult<Self> {
+        let inner = OllamaEmbedderInner::new(config)?;
+        Ok(Self {
+            cached: CachedEmbedder::new(inner, cache_size),
+        })
+    }
+}
+
+impl OllamaEmbedderInner {
+    fn new(config: &EmbeddingConfig) -> EmbeddingResult<Self> {
         let base_url = config
             .base_url
             .clone()
@@ -45,8 +68,12 @@ impl OllamaEmbedder {
 }
 
 #[async_trait]
-impl Embedder for OllamaEmbedder {
+impl Embedder for OllamaEmbedderInner {
     async fn embed(&self, text: &str) -> EmbeddingResult<EmbeddingResponse> {
+
+        // check the LRU cache 
+        
+
         let request = OllamaEmbeddingRequest {
             model: self.model.clone(),
             prompt: text.to_string(),
@@ -78,6 +105,9 @@ impl Embedder for OllamaEmbedder {
             .await
             .map_err(|e| EmbeddingError::InvalidResponse(e.to_string()))?;
 
+        // put in LRU 
+
+
         Ok(EmbeddingResponse {
             embedding: api_response.embedding,
             tokens: None, // Ollama doesn't report token usage
@@ -107,6 +137,30 @@ impl Embedder for OllamaEmbedder {
 
     fn dimensions(&self) -> Option<usize> {
         self.get_dimensions()
+    }
+}
+
+// Delegate Embedder trait to the cached inner embedder
+#[async_trait]
+impl Embedder for OllamaEmbedder {
+    async fn embed(&self, text: &str) -> EmbeddingResult<EmbeddingResponse> {
+        self.cached.embed(text).await
+    }
+
+    async fn embed_batch(&self, texts: &[String]) -> EmbeddingResult<Vec<EmbeddingResponse>> {
+        self.cached.embed_batch(texts).await
+    }
+
+    fn provider_name(&self) -> &str {
+        self.cached.provider_name()
+    }
+
+    fn model_name(&self) -> &str {
+        self.cached.model_name()
+    }
+
+    fn dimensions(&self) -> Option<usize> {
+        self.cached.dimensions()
     }
 }
 

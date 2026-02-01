@@ -6,10 +6,10 @@ use uuid::Uuid;
 use crate::metadata::Metadata;
 use crate::quantization::QuantizedVector;
 
-/// A single vector entry stored in the database
-/// 
-/// Vectors are stored as quantized int8 for 4x memory efficiency.
-/// Users work with Vec<f32>, conversion happens automatically.
+// A single vector entry stored in the database
+// 
+// Vectors are stored as quantized int8 for 4x memory efficiency.
+// Users work with Vec<f32>, conversion happens automatically.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VectorEntry {
     pub id: Uuid,
@@ -20,7 +20,7 @@ pub struct VectorEntry {
 }
 
 impl VectorEntry {
-    /// Create new entry from f32 vector (will be quantized)
+    // Create new entry from f32 vector (will be quantized)
     pub fn new(vector: Vec<f32>, text: String) -> Self {
         Self {
             id: Uuid::new_v4(),
@@ -30,7 +30,7 @@ impl VectorEntry {
         }
     }
 
-    /// Create new entry with metadata (will be quantized)
+    // Create new entry with metadata (will be quantized)
     pub fn with_metadata(vector: Vec<f32>, text: String, metadata: Metadata) -> Self {
         Self {
             id: Uuid::new_v4(),
@@ -40,7 +40,7 @@ impl VectorEntry {
         }
     }
 
-    /// Get the vector as f32 (dequantizes on demand)
+    // Get the vector as f32 (dequantizes on demand)
     pub fn get_vector(&self) -> Vec<f32> {
         self.vector.to_f32()
     }

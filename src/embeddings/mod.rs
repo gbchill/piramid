@@ -8,8 +8,10 @@ use serde::{Deserialize, Serialize};
 pub mod openai;
 pub mod ollama;
 pub mod providers;
+pub mod cache;
 
 pub use providers::EmbeddingProvider;
+pub use cache::{CachedEmbedder, CacheStats};
 
 // Result type for embedding operations
 pub type EmbeddingResult<T> = Result<T, EmbeddingError>;
