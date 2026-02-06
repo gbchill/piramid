@@ -149,7 +149,6 @@
 - [ ] `docs/API.md` - Complete REST API reference
 - [ ] `docs/QUICKSTART.md` - 5-minute tutorial
 - [ ] `CHANGELOG.md` - Version tracking
-- [ ] `SECURITY.md` - Security policy
 - [ ] Update README with production features
 - [ ] OpenAPI/Swagger spec generation
 - [ ] Interactive API docs (Swagger UI)
@@ -161,18 +160,13 @@
 - [ ] Integration test suite
 - [ ] Load testing (verify 1M vectors in <10ms)
 - [ ] Stress testing (memory limits, concurrent requests)
-- [ ] Docker production configuration
 
 **CI/CD**
 - [ ] GitHub Actions CI pipeline
-- [ ] Automated testing on PR
 - [ ] Docker image publishing
-- [ ] Release automation
-- [ ] Benchmark tracking over time
 
 **Launch Prep**
 - [ ] Performance tuning based on benchmarks
-- [ ] Bug fixes from testing
 - [ ] Production deployment guide
 - [ ] Monitoring setup
 - [ ] Basic CLI tool for admin operations
