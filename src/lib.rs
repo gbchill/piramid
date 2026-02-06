@@ -17,7 +17,7 @@ pub mod quantization;
 
 pub use config::Config;
 pub use metrics::Metric;
-pub use error::{PiramidError, Result};
+pub use error::{PiramidError, Result, ErrorContext};
 pub use metadata::{Metadata, MetadataValue, metadata};
 pub use query::{Filter, FilterCondition};
 pub use search::SearchResult;

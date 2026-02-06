@@ -12,31 +12,9 @@ pub mod cache;
 
 pub use providers::EmbeddingProvider;
 pub use cache::{CachedEmbedder, CacheStats};
+pub use crate::error::embedding::EmbeddingError;
 
-// Result type for embedding operations
 pub type EmbeddingResult<T> = Result<T, EmbeddingError>;
-
-// Errors that can occur during embedding operations
-#[derive(Debug, thiserror::Error)]
-pub enum EmbeddingError {
-    #[error("HTTP request failed: {0}")]
-    RequestFailed(String),
-
-    #[error("API error: {0}")]
-    ApiError(String),
-
-    #[error("Invalid response: {0}")]
-    InvalidResponse(String),
-
-    #[error("Configuration error: {0}")]
-    ConfigError(String),
-
-    #[error("Rate limit exceeded")]
-    RateLimitExceeded,
-
-    #[error("Authentication failed: {0}")]
-    AuthenticationFailed(String),
-}
 
 // Configuration for embedding providers
 #[derive(Debug, Clone, Serialize, Deserialize)]

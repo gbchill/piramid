@@ -44,7 +44,7 @@ impl VectorStorage {
     }
 
     pub fn with_hnsw(path: &str, config: HnswConfig) -> Result<Self> {
-        let mut file = OpenOptions::new()
+        let file = OpenOptions::new()
             .read(true)
             .write(true)
             .create(true)
@@ -296,7 +296,7 @@ mod tests {
         
         let retrieved = storage.get(&id).unwrap();
         assert_eq!(retrieved.text, "test");
-        assert_eq!(retrieved.vector, vec![1.0, 2.0, 3.0]);
+        assert_eq!(retrieved.get_vector(), vec![1.0, 2.0, 3.0]);
         
         std::fs::remove_file("test.db").unwrap();
         std::fs::remove_file("test.db.index").unwrap();

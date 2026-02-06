@@ -6,6 +6,7 @@ use uuid::Uuid;
 use crate::storage::{VectorStorage, VectorEntry};
 use crate::metrics::Metric;
 use crate::search::SearchResult;
+use crate::quantization::QuantizedVector;
 
 // Create a vector map from storage (used by index for searching)
 // This is a common operation needed by all search types
@@ -49,7 +50,7 @@ mod tests {
     fn test_entry_to_result() {
         let entry = VectorEntry {
             id: Uuid::new_v4(),
-            vector: vec![1.0, 0.0],
+            vector: QuantizedVector::from_f32(&vec![1.0, 0.0]),
             text: "test".to_string(),
             metadata: Metadata::new(),
         };
