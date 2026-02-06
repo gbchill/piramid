@@ -1,4 +1,3 @@
-
 ### Foundation
 - [x] Vector storage (HashMap + bincode persistence)
 - [x] UUID-based IDs, error handling
@@ -46,6 +45,13 @@
 - [ ] Flush all pending writes to disk
 - [ ] Clean lock release
 - [ ] Save HNSW index state
+- [ ] Drain connections before shutdown
+- [ ] Pre-shutdown warning to active clients
+
+**Concurrent Safety**
+- [ ] Lock-free or fine-grained locking for writes
+- [ ] Deadlock detection/prevention
+- [ ] Write conflict resolution strategy
 
 ---
 
@@ -54,18 +60,24 @@
 **Batch Operations**
 - [ ] Batch insert API (10k inserts in <1s)
 - [ ] Batch search (multiple queries in one request)
+- [ ] Batch get vectors by IDs
 - [ ] Bulk delete
 
 **Collection Management**
 - [ ] Delete collection (cascade remove all data)
 - [ ] Collection metadata (created_at, updated_at, dimensions)
 - [ ] List collections with stats
+- [ ] Per-collection config override
+- [ ] Storage usage per collection
 
 **Vector Operations**
 - [ ] Upsert (insert or update)
 - [ ] Update vector only (keep metadata)
 - [ ] Update metadata only (keep vector)
 - [ ] Atomic update (vector + metadata together)
+- [ ] Check vector existence by ID
+- [ ] List vector IDs only (without full data)
+- [ ] Duplicate detection (find similar vectors in collection)
 
 **Validation & Safety**
 - [ ] Dimension consistency checks per collection
@@ -74,6 +86,7 @@
 - [ ] Request size limits
 - [ ] Input validation & sanitization
 - [ ] Request timeout configuration
+- [ ] Runtime config validation
 
 **Embeddings Optimization**
 - [ ] Native batch API support (OpenAI/Ollama - 2x-10x speedup)
@@ -88,18 +101,37 @@
 - [ ] Index compaction (remove deleted vectors)
 - [ ] Index statistics endpoint
 - [ ] Startup validation (check integrity on boot)
+- [ ] Startup health check (validate all collections load)
 
 **Observability**
 - [ ] Metrics: insert/search latency, index size, memory usage
 - [ ] Structured logging with tracing crate
+- [ ] Request ID for tracing
 - [ ] Enhanced health checks (storage status, index health, disk space)
+- [ ] Ready endpoint (vs alive endpoint)
+- [ ] Server version endpoint
 - [ ] Basic `/metrics` endpoint
+- [ ] Slow query logging
 
 **Resource Management**
 - [ ] Max vectors per collection
+- [ ] Storage size limits per collection
 - [ ] Disk space monitoring
 - [ ] Memory pressure handling
 - [ ] Read-only mode when disk full
+- [ ] Automatic cleanup of orphaned files
+- [ ] Data compaction (reclaim space from deletes)
+
+**Configuration**
+- [ ] Config file support (YAML/TOML)
+- [ ] Config hot reload (limited subset)
+- [ ] Environment variable documentation
+
+**HTTP & Networking**
+- [ ] HTTP/2 support
+- [ ] Compression (gzip/brotli) for responses
+- [ ] Keep-alive connection management
+- [ ] Configurable max request body size
 
 **Security Basics**
 - [ ] API key authentication
@@ -114,7 +146,13 @@
 - [ ] `docs/API.md` - Complete REST API reference
 - [ ] `docs/QUICKSTART.md` - 5-minute tutorial
 - [ ] `CHANGELOG.md` - Version tracking
+- [ ] `SECURITY.md` - Security policy
 - [ ] Update README with production features
+- [ ] OpenAPI/Swagger spec generation
+- [ ] Interactive API docs (Swagger UI)
+- [ ] Client SDK examples
+- [ ] License headers in source files
+- [ ] Third-party license audit
 
 **Testing**
 - [ ] Integration test suite
@@ -122,12 +160,20 @@
 - [ ] Stress testing (memory limits, concurrent requests)
 - [ ] Docker production configuration
 
+**CI/CD**
+- [ ] GitHub Actions CI pipeline
+- [ ] Automated testing on PR
+- [ ] Docker image publishing
+- [ ] Release automation
+- [ ] Benchmark tracking over time
+
 **Launch Prep**
 - [ ] Performance tuning based on benchmarks
 - [ ] Bug fixes from testing
 - [ ] Production deployment guide
 - [ ] Monitoring setup
 - [ ] Basic CLI tool for admin operations
+- [ ] Example collection generator (demo data)
 
 ---
 
@@ -138,7 +184,36 @@
 - [ ] Recommendation API (similar to these IDs, not those)
 - [ ] Grouped/diverse search (max results per category)
 - [ ] Scroll/pagination for large result sets
-- [ ] Export/import for collections
+- [ ] Metadata-only search (no vector similarity)
+- [ ] Vector similarity between two stored vectors
+- [ ] Vector count per metadata filter
+
+**Query Optimization**
+- [ ] Query result caching
+- [ ] Query planning/optimization
+- [ ] Query timeout enforcement
+- [ ] Query complexity limits
+
+**Metadata Improvements**
+- [ ] Complex filters (AND/OR/NOT combinations)
+- [ ] Metadata indexing for fast filtering
+- [ ] Range queries on numeric metadata
+- [ ] Regex/pattern matching on string metadata
+- [ ] Date range filters
+- [ ] Array membership checks
+
+**Data Import/Export**
+- [ ] Import from JSON/CSV/Parquet
+- [ ] Export to JSON/CSV/Parquet
+- [ ] Streaming import for large datasets
+- [ ] Import progress tracking
+- [ ] Format validation on import
+
+**Client SDKs**
+- [ ] Official Python SDK
+- [ ] Official JavaScript/TypeScript SDK
+- [ ] SDK documentation
+- [ ] SDK examples
 
 **Backup & Restore**
 - [ ] Snapshot API (copy-on-write)
@@ -149,11 +224,16 @@
 - [ ] Atomic batch operations (all-or-nothing)
 - [ ] Rollback on failure
 - [ ] Isolation (at least serializable)
+- [ ] Idempotency keys
+- [ ] Request deduplication
 
 **Async Storage I/O**
 - [ ] Non-blocking writes (tokio-fs)
 - [ ] Background flush worker
 - [ ] Write batching/coalescing
+- [ ] Prefetching for sequential reads
+- [ ] Write buffering optimization
+- [ ] Background job queue for long operations
 
 **Schema Support**
 - [ ] Define expected dimensions per collection
@@ -167,6 +247,19 @@
 - [ ] Collection-level permissions
 - [ ] Rate limiting & quotas
 - [ ] Audit logging
+
+**API Versioning**
+- [ ] API version in URLs or headers
+- [ ] Backward compatibility strategy
+- [ ] Deprecation warnings for old endpoints
+- [ ] API changelog tracking
+
+**Monitoring & Alerting**
+- [ ] Email/webhook alerts for errors
+- [ ] Disk space alerts
+- [ ] Memory usage alerts
+- [ ] Index corruption alerts
+- [ ] Slow query alerts
 
 **gRPC API**
 - [ ] Alternative to REST
@@ -187,6 +280,14 @@
 - [ ] Collection aliases
 - [ ] Per-collection HNSW configuration
 - [ ] Hot reload configuration
+- [ ] Move collection between directories
+- [ ] Development mode with auto-reload
+- [ ] Verbose debug logging mode
+
+**Telemetry & Analytics**
+- [ ] Usage telemetry (opt-in)
+- [ ] Error reporting (opt-in)
+- [ ] Feature usage tracking
 
 ---
 
