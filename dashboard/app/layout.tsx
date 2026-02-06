@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Piramid Dashboard",
-  description: "Admin console for Piramid vector database",
+  title: "Piramid Dashboard - Coming Soon",
+  description: "Vector database for agentic applications",
 };
 
 export default function RootLayout({
