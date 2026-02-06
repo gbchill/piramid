@@ -1,4 +1,3 @@
-**Follow this exact order. Each step depends on the previous.**
 
 ### Foundation
 - [x] Vector storage (HashMap + bincode persistence)
@@ -12,248 +11,226 @@
 
 ### HTTP Server & Embeddings
 - [x] REST API (axum), Collections/Vectors CRUD
-- [x] Dashboard (Next.js)
+- [x] Dashboard (Next.js - placeholder)
 - [x] Embedding providers (OpenAI, Ollama)
 - [x] Batch embedding endpoints
 
-### Performance & Indexing 
-
-**Implementation:**
-- [x] **HNSW indexing**
-  - [x] Build HNSW graph on insert
-  - [x] Approximate nearest neighbor search (O(log n))
-  - [x] Configurable ef_construction and M parameters
-  - [x] Integrated into VectorStorage (production-grade, no brute-force fallback)
-  - [x] Post-search filtering support
-  - [x] Tests: insert, search, filter, delete, update
-  - [x] HNSW index persistence to disk (save/load graph structure - 3-5 hours) 
-  - [x] Benchmark suite (4-6 hours)
-- [x] **SIMD acceleration**
-  - [x] SIMD distance calculations (using wide crate for portability)
-  - [x] Implemented for dot product, cosine similarity, euclidean distance
-  - [ ] Benchmark to verify 3-5x speedup target
-- [x] **Memory optimization**
-  - [x] Memory-mapped files (mmap) - Production-grade single implementation
-  - [x] Scalar quantization (int8) - All vectors quantized, 4x memory reduction
-  - [x] Handle 10M vectors on 32GB RAM (61GB → 15GB with quantization)
-- [x] **Parallel processing**
-  - [x] Parallel search with rayon (search_batch for truly parallel reads)
-  - [x] Single storage type (no fake concurrent write wrappers)
-  - [x] Linear scaling with CPU cores (via rayon thread pool)
-- [ ] **Embeddings optimization** (Before Phase 3)
-  - [x] LRU cache for repeated embeddings (save 50-90% API costs)
-  - [ ] Native batch API support (OpenAI/Ollama - 2x-10x speedup)
-  - [ ] Request metrics (count, latency, tokens, cost)
-  - [ ] Type-safe config (enum-based instead of strings)
-
-**Goal:** Search 1M vectors in <10ms
+### Performance & Indexing
+- [x] HNSW indexing (production-grade approximate k-NN)
+- [x] HNSW index persistence to disk
+- [x] Benchmark suite
+- [x] SIMD acceleration (dot product, cosine, euclidean)
+- [x] Memory-mapped files (mmap)
+- [x] Scalar quantization (int8) - 4x memory reduction
+- [x] Parallel search with rayon
+- [x] LRU cache for embeddings (50-90% cost savings)
 
 ---
 
-### Data Durability & Integrity 
+### Data Durability & Reliability
 
-**Implementation:**
-- [ ] **Write-Ahead Log (WAL)**
-  - [ ] Append-only log for all mutations
-  - [ ] Recovery from WAL on crash/restart
-  - [ ] Periodic checkpointing
-  - [ ] Configurable fsync strategies
-  - [ ] Test: Kill process mid-write, verify no data loss
-- [ ] **ACID Transactions**
-  - [ ] Atomic batch operations (all-or-nothing)
-  - [ ] Rollback on failure
-  - [ ] Isolation (at least serializable)
-  - [ ] Transaction log
-- [ ] **Graceful shutdown & recovery**
-  - [ ] Flush on SIGTERM/SIGINT
-  - [ ] Clean lock release
-  - [ ] Corrupted file detection + auto-repair
-  - [ ] Emergency read-only mode
-- [ ] **Backup & Restore**
-  - [ ] Snapshot API (copy-on-write)
-  - [ ] Point-in-time recovery (PITR)
-  - [ ] Export/import (portable format)
-  - [ ] Incremental backups
-- [ ] **Error handling hardening**
-  - [ ] Replace ALL `.unwrap()` with proper errors
-  - [ ] Graceful degradation
-  - [ ] Poison-free lock handling
-  - [ ] Retry logic with exponential backoff
-- [ ] **Async storage I/O**
-  - [ ] Non-blocking writes (tokio-fs)
-  - [ ] Background flush worker
-  - [ ] Write batching/coalescing
+**Error Handling**
+- [ ] Replace ALL `.unwrap()` with proper error handling
+- [ ] Graceful degradation for failures
+- [ ] Poison-free lock handling
+- [ ] Clear, actionable error messages
 
-**Goal:** Zero data loss on crashes. Pass chaos engineering tests.
+**Write-Ahead Log (WAL)**
+- [ ] Append-only log for all mutations (insert/update/delete)
+- [ ] Recovery from WAL on crash/restart
+- [ ] Periodic checkpointing to reduce replay time
+- [ ] Test: Kill process mid-write, verify no data loss
+
+**Graceful Shutdown**
+- [ ] Handle SIGTERM/SIGINT signals
+- [ ] Flush all pending writes to disk
+- [ ] Clean lock release
+- [ ] Save HNSW index state
 
 ---
 
-### Production 
+### Production Essentials
 
-**Implementation:**
-- [ ] **Advanced Search Methods**
-  - [x] Vector similarity search (HNSW - approximate k-NN)
-  - [x] Filtered search (post-filtering with metadata)
-  - [ ] Batch search (multiple queries in one request - 2hrs)
-  - [ ] Range search (distance threshold instead of top-k - 2hrs)
-  - [ ] Recommendation API (similar to these IDs, not those - 4hrs)
-  - [ ] Grouped/diverse search (max results per category - 4hrs)
-  - [ ] Scroll/pagination (iterate through large result sets - 2hrs)
-- [ ] **Observability**
-  - [ ] Metrics (insert/search latency, index size, memory)
-  - [ ] Structured logging (tracing crate)
-  - [ ] Prometheus endpoint (`/metrics`)
-  - [ ] Enhanced health checks
-- [ ] **Batch operations**
-  - [ ] Batch insert (10k inserts in <1s)
-  - [ ] Batch search (covered above)
-  - [ ] Bulk delete
-- [ ] **Validation**
-  - [ ] Dimension consistency checks
-  - [ ] Vector normalization option
-  - [ ] Clear error messages
-- [ ] **Schema support**
-  - [ ] Define expected dimensions per collection
-  - [ ] Metadata schema validation
-  - [ ] Schema versioning
-- [ ] **gRPC API** (optional but recommended)
-  - [ ] Alternative to REST
-  - [ ] Streaming inserts
-  - [ ] Bi-directional streaming
+**Batch Operations**
+- [ ] Batch insert API (10k inserts in <1s)
+- [ ] Batch search (multiple queries in one request)
+- [ ] Bulk delete
 
----
+**Collection Management**
+- [ ] Delete collection (cascade remove all data)
+- [ ] Collection metadata (created_at, updated_at, dimensions)
+- [ ] List collections with stats
 
-### Index Algorithms 
+**Vector Operations**
+- [ ] Upsert (insert or update)
+- [ ] Update vector only (keep metadata)
+- [ ] Update metadata only (keep vector)
+- [ ] Atomic update (vector + metadata together)
 
-**Implementation:**
-- [x] **HNSW** (current default)
-- [ ] **Flat/Brute Force** (2-3 hours)
-- [ ] **IVF (Inverted File Index)** (8-12 hours)
-- [ ] **Product Quantization (PQ)** (12-16 hours)
-- [ ] **Annoy (Spotify's algorithm)** (6-8 hours)
-- [ ] **ScaNN (Google's algorithm)** (16-20 hours)
+**Validation & Safety**
+- [ ] Dimension consistency checks per collection
+- [ ] Vector normalization option
+- [ ] Vector format validation (NaN, infinity checks)
+- [ ] Request size limits
+- [ ] Input validation & sanitization
+- [ ] Request timeout configuration
 
-**Goal:** Be the most flexible vector DB - let users choose the right tool
+**Embeddings Optimization**
+- [ ] Native batch API support (OpenAI/Ollama - 2x-10x speedup)
+- [ ] Request metrics (count, latency, tokens, cost)
+- [ ] Type-safe config (enum-based instead of strings)
+- [ ] Retry with exponential backoff
+- [ ] Provider timeout configuration
+- [ ] Benchmark to verify 3-5x SIMD speedup target
 
----
+**Index Management**
+- [ ] Rebuild index command
+- [ ] Index compaction (remove deleted vectors)
+- [ ] Index statistics endpoint
+- [ ] Startup validation (check integrity on boot)
 
-### Hybrid Search 
+**Observability**
+- [ ] Metrics: insert/search latency, index size, memory usage
+- [ ] Structured logging with tracing crate
+- [ ] Enhanced health checks (storage status, index health, disk space)
+- [ ] Basic `/metrics` endpoint
 
-- [ ] BM25 keyword search (inverted index, TF-IDF)
-- [ ] Hybrid ranking (RRF, configurable weights)
-- [ ] Full-text search endpoint with Boolean queries
+**Resource Management**
+- [ ] Max vectors per collection
+- [ ] Disk space monitoring
+- [ ] Memory pressure handling
+- [ ] Read-only mode when disk full
 
-**Goal:** Search "rust programming" → semantic + exact matches
-
----
-
-### GPU Acceleration 
-- [ ] wgpu backend (cross-platform GPU)
-- [ ] Optional CUDA for NVIDIA
-- [ ] Batch search on GPU (10-100x faster)
-- [ ] Local embedding models on GPU
-
-**Goal:** Search 10M vectors in <1ms
+**Security Basics**
+- [ ] API key authentication
+- [ ] Security headers (CORS, CSP, HSTS)
+- [ ] TLS/SSL support
 
 ---
 
-### Distributed System 
-- [ ] Replication (master-slave, multi-master)
-- [ ] Sharding (horizontal partitioning)
-- [ ] Distributed queries (scatter-gather)
-- [ ] Cluster management
+### Documentation & Testing
 
-**Goal:** Scale to billions of vectors
-
----
-
-### WASM Support 
-- [ ] Compile core to WASM
-- [ ] Client-side vector search
-- [ ] Edge deployment (Cloudflare, Vercel)
-- [ ] Offline-first apps
-
-**Goal:** Vector search in browser
-
----
-
-### Security & Authentication 
-
-**Implementation:**
-- [ ] **Authentication**
-  - [ ] API key authentication
-  - [ ] JWT token support
-  - [ ] Multi-tenant isolation
-  - [ ] Service-to-service auth (mTLS)
-- [ ] **Authorization**
-  - [ ] Role-based access control (RBAC)
-  - [ ] Collection-level permissions
-  - [ ] Read-only vs read-write users
-  - [ ] Admin APIs
-- [ ] **Rate limiting & quotas**
-  - [ ] Per-client rate limits (requests/second)
-  - [ ] Per-collection quotas
-  - [ ] DDoS protection
-  - [ ] Slow-query throttling
-- [ ] **Security hardening**
-  - [ ] Input validation & sanitization
-  - [ ] Request size limits
-  - [ ] TLS/SSL enforcement
-  - [ ] Security headers (CORS, CSP, HSTS)
-  - [ ] Audit logging
-
-**→ Deploy to production, get real users, gather feedback**
-
-**General v1.0 documentation:**
-- [ ] `CONTRIBUTING.md` - Contribution guidelines
-- [ ] `CHANGELOG.md` - Start version tracking
+**Documentation**
 - [ ] `docs/API.md` - Complete REST API reference
 - [ ] `docs/QUICKSTART.md` - 5-minute tutorial
+- [ ] `CHANGELOG.md` - Version tracking
+- [ ] Update README with production features
+
+**Testing**
+- [ ] Integration test suite
+- [ ] Load testing (verify 1M vectors in <10ms)
+- [ ] Stress testing (memory limits, concurrent requests)
+- [ ] Docker production configuration
+
+**Launch Prep**
+- [ ] Performance tuning based on benchmarks
+- [ ] Bug fixes from testing
+- [ ] Production deployment guide
+- [ ] Monitoring setup
+- [ ] Basic CLI tool for admin operations
 
 ---
 
+### Post-Launch Features
 
-### Document Ingestion 
+**Advanced Search**
+- [ ] Range search (distance threshold instead of top-k)
+- [ ] Recommendation API (similar to these IDs, not those)
+- [ ] Grouped/diverse search (max results per category)
+- [ ] Scroll/pagination for large result sets
+- [ ] Export/import for collections
 
-- [ ] Chunking strategies (fixed-size, semantic, recursive)
-- [ ] Document upload endpoint (PDF, DOCX, Markdown, HTML)
-- [ ] Chunk metadata (index, source doc, parent-child)
+**Backup & Restore**
+- [ ] Snapshot API (copy-on-write)
+- [ ] Point-in-time recovery (PITR)
+- [ ] Incremental backups
 
-**Goal:** Upload PDF → auto-chunk → auto-embed → search
+**ACID Transactions**
+- [ ] Atomic batch operations (all-or-nothing)
+- [ ] Rollback on failure
+- [ ] Isolation (at least serializable)
+
+**Async Storage I/O**
+- [ ] Non-blocking writes (tokio-fs)
+- [ ] Background flush worker
+- [ ] Write batching/coalescing
+
+**Schema Support**
+- [ ] Define expected dimensions per collection
+- [ ] Metadata schema validation
+- [ ] Schema versioning
+
+**Advanced Security**
+- [ ] JWT token support
+- [ ] Multi-tenant isolation
+- [ ] Role-based access control (RBAC)
+- [ ] Collection-level permissions
+- [ ] Rate limiting & quotas
+- [ ] Audit logging
+
+**gRPC API**
+- [ ] Alternative to REST
+- [ ] Streaming inserts
+- [ ] Bi-directional streaming
+
+**Prometheus Integration**
+- [ ] Full Prometheus endpoint
+- [ ] Custom metrics export
+- [ ] Grafana dashboard templates
+
+**Additional Features**
+- [ ] Corrupted file detection + auto-repair
+- [ ] Automatic index rebuild on corruption
+- [ ] Fallback to brute-force search if HNSW fails
+- [ ] Circuit breaker for embedding API failures
+- [ ] Soft delete with cleanup
+- [ ] Collection aliases
+- [ ] Per-collection HNSW configuration
+- [ ] Hot reload configuration
 
 ---
 
-### Semantic Cache 
+### Future Considerations
+
+**Index Algorithms**
+- [x] HNSW (current default)
+- [ ] Flat/Brute Force (for small collections <10k vectors)
+- [ ] IVF (Inverted File Index)
+- [ ] Product Quantization (PQ)
+- [ ] Annoy (Spotify's algorithm)
+- [ ] ScaNN (Google's algorithm)
+
+**Semantic Cache**
 - [ ] Semantic matching for LLM responses
 - [ ] TTL and LRU eviction
 - [ ] OpenAI/Anthropic integration
 - [ ] Cost savings dashboard
 
-**Goal:** Save 70%+ on LLM costs
-
----
-
-### MCP Integration 
-
+**MCP Integration**
 - [ ] MCP server implementation
 - [ ] Tools: search_similar, get_document, list_collections, add_document
 - [ ] Agent-friendly responses (structured JSON-LD)
 
-**Goal:** Claude Desktop can use Piramid out of the box
+**GPU Acceleration**
+- [ ] wgpu backend (cross-platform GPU)
+- [ ] Optional CUDA for NVIDIA
+- [ ] Batch search on GPU (10-100x faster)
+- [ ] Local embedding models on GPU
 
----
+**Distributed System**
+- [ ] Replication (master-slave, multi-master)
+- [ ] Sharding (horizontal partitioning)
+- [ ] Distributed queries (scatter-gather)
+- [ ] Cluster management
 
-### Agent Memory System 
-- [ ] Memory types (working, episodic, semantic, procedural)
-- [ ] Importance scoring & auto-consolidation
-- [ ] LangChain/LlamaIndex integration
+**WASM Support**
+- [ ] Compile core to WASM
+- [ ] Client-side vector search
+- [ ] Edge deployment (Cloudflare, Vercel)
+- [ ] Offline-first apps
 
-**Goal:** Agents that learn across sessions
-
----
-
-### Other Advanced Features
+**Other**
 - [ ] Temporal Vectors (time-travel queries)
 - [ ] Privacy Mode (GDPR/HIPAA, encryption)
 - [ ] Auto-Pilot (self-tuning, auto-optimization)
-
+- [ ] Contributing guidelines
