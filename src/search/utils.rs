@@ -6,7 +6,6 @@ use uuid::Uuid;
 use crate::storage::{VectorStorage, VectorEntry};
 use crate::metrics::Metric;
 use crate::search::SearchResult;
-use crate::quantization::QuantizedVector;
 
 // Create a vector map from storage (used by index for searching)
 // This is a common operation needed by all search types

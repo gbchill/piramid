@@ -62,7 +62,7 @@ async fn main() {
     };
     
     // Build router with all our routes
-    let app = create_router(state);
+    let app = create_router(state.clone());
     
     // Start listening
     let addr = format!("0.0.0.0:{}", port);
@@ -74,16 +74,19 @@ async fn main() {
     println!("Press Ctrl+C to stop");
     
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-    let state_for_shutdown = state.clone();
-    axum::Server::from_tcp(listener).unwrap()
-        .serve(app.into_make_service())
-        .with_graceful_shutdown(async move {
-            tokio::signal::ctrl_c().await.expect("Failed to listen for Ctrl+C");
-            if let Err(e) = state_for_shutdown.checkpoint_all() {
-                eprintln!("Error saving data during shutdown: {}", e);
-            }
-            println!("\nShutting down gracefully...");
-        })
+    
+    // Graceful shutdown signal
+    let shutdown_signal = async move {
+        tokio::signal::ctrl_c().await.expect("Failed to listen for Ctrl+C");
+        println!("\n⚡ Received shutdown signal, flushing collections...");
+        if let Err(e) = state.checkpoint_all() {
+            eprintln!("Error saving data during shutdown: {}", e);
+        }
+        println!("Shutting down gracefully...");
+    };
+    
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal)
         .await
         .unwrap();
 }
