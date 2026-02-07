@@ -46,7 +46,8 @@ fn main() {
     let filter = Filter::new().eq("active", true);
     let results = storage.search_with_filter(&query, 10, Metric::Cosine, Some(&filter));
     for r in &results {
-        println!("   {} (age: {})", r.text, r.metadata.get("age").unwrap());
+        let age = r.metadata.get("age").and_then(|v| v.as_integer()).unwrap_or(0);
+        println!("   {} (age: {})", r.text, age);
     }
     
     // Filter 2: Greater than
@@ -54,7 +55,8 @@ fn main() {
     let filter = Filter::new().gt("age", 28i64);
     let results = storage.search_with_filter(&query, 10, Metric::Cosine, Some(&filter));
     for r in &results {
-        println!("   {} (age: {})", r.text, r.metadata.get("age").unwrap());
+        let age = r.metadata.get("age").and_then(|v| v.as_integer()).unwrap_or(0);
+        println!("   {} (age: {})", r.text, age);
     }
     
     // Filter 3: Less than
@@ -62,7 +64,8 @@ fn main() {
     let filter = Filter::new().lt("age", 30i64);
     let results = storage.search_with_filter(&query, 10, Metric::Cosine, Some(&filter));
     for r in &results {
-        println!("   {} (age: {})", r.text, r.metadata.get("age").unwrap());
+        let age = r.metadata.get("age").and_then(|v| v.as_integer()).unwrap_or(0);
+        println!("   {} (age: {})", r.text, age);
     }
     
     // Filter 4: Greater than or equal
@@ -70,7 +73,8 @@ fn main() {
     let filter = Filter::new().gte("age", 28i64);
     let results = storage.search_with_filter(&query, 10, Metric::Cosine, Some(&filter));
     for r in &results {
-        println!("   {} (age: {})", r.text, r.metadata.get("age").unwrap());
+        let age = r.metadata.get("age").and_then(|v| v.as_integer()).unwrap_or(0);
+        println!("   {} (age: {})", r.text, age);
     }
     
     // Filter 5: Less than or equal
@@ -78,7 +82,8 @@ fn main() {
     let filter = Filter::new().lte("age", 28i64);
     let results = storage.search_with_filter(&query, 10, Metric::Cosine, Some(&filter));
     for r in &results {
-        println!("   {} (age: {})", r.text, r.metadata.get("age").unwrap());
+        let age = r.metadata.get("age").and_then(|v| v.as_integer()).unwrap_or(0);
+        println!("   {} (age: {})", r.text, age);
     }
     
     // Filter 6: Combined conditions (chained)
@@ -89,11 +94,9 @@ fn main() {
         .lte("age", 30i64);
     let results = storage.search_with_filter(&query, 10, Metric::Cosine, Some(&filter));
     for r in &results {
-        println!("   {} (age: {}, active: {})", 
-            r.text, 
-            r.metadata.get("age").unwrap(),
-            r.metadata.get("active").unwrap()
-        );
+        let age = r.metadata.get("age").and_then(|v| v.as_integer()).unwrap_or(0);
+        let active = r.metadata.get("active").and_then(|v| v.as_boolean()).unwrap_or(false);
+        println!("   {} (age: {}, active: {})", r.text, age, active);
     }
     
     // Filter 7: String equality

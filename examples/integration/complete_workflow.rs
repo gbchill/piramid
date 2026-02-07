@@ -89,11 +89,9 @@ async fn main() -> piramid::Result<()> {
     
     println!("   Results:");
     for (i, r) in results.iter().enumerate() {
-        println!("      {}. {} (${}, stock: {})", 
-            i + 1, r.text,
-            r.metadata.get("price").unwrap(),
-            r.metadata.get("stock").unwrap()
-        );
+        let price = r.metadata.get("price").and_then(|v| v.as_integer()).unwrap_or(0);
+        let stock = r.metadata.get("stock").and_then(|v| v.as_integer()).unwrap_or(0);
+        println!("      {}. {} (${}, stock: {})", i + 1, r.text, price, stock);
     }
     
     // Step 3: Filtered search
@@ -112,11 +110,9 @@ async fn main() -> piramid::Result<()> {
     
     println!("   Results:");
     for (i, r) in results.iter().enumerate() {
-        println!("      {}. {} (${}, stock: {})", 
-            i + 1, r.text,
-            r.metadata.get("price").unwrap(),
-            r.metadata.get("stock").unwrap()
-        );
+        let price = r.metadata.get("price").and_then(|v| v.as_integer()).unwrap_or(0);
+        let stock = r.metadata.get("stock").and_then(|v| v.as_integer()).unwrap_or(0);
+        println!("      {}. {} (${}, stock: {})", i + 1, r.text, price, stock);
     }
     
     // Step 4: Recommendations (similar products)
@@ -129,11 +125,8 @@ async fn main() -> piramid::Result<()> {
     
     println!("   You might also like:");
     for (i, r) in similar.iter().skip(1).enumerate() { // Skip first (itself)
-        println!("      {}. {} (${}, score: {:.3})", 
-            i + 1, r.text,
-            r.metadata.get("price").unwrap(),
-            r.score
-        );
+        let price = r.metadata.get("price").and_then(|v| v.as_integer()).unwrap_or(0);
+        println!("      {}. {} (${}, score: {:.3})", i + 1, r.text, price, r.score);
     }
     
     // Step 5: Update inventory

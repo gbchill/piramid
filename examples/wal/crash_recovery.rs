@@ -2,8 +2,6 @@
 // Shows crash recovery capabilities
 
 use piramid::{VectorStorage, VectorEntry};
-use std::process::{Command, Stdio};
-use std::io::Write;
 
 fn main() {
     println!("=== Write-Ahead Log (WAL) Demo ===\n");

@@ -33,7 +33,7 @@ fn main() {
         
         let stats = storage.index().stats();
         println!("   Max layer: {}", stats.max_layer);
-        println!("   Total connections: {}", stats.total_connections);
+        println!("   Total nodes: {}", stats.total_nodes);
         
         // Do a search
         let start = Instant::now();
@@ -56,7 +56,7 @@ fn main() {
         
         let stats = storage.index().stats();
         println!("   Max layer: {}", stats.max_layer);
-        println!("   Total connections: {}", stats.total_connections);
+        println!("   Total nodes: {}", stats.total_nodes);
         
         // Search should be fast (index already built)
         let start = Instant::now();

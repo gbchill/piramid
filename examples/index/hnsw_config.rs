@@ -22,13 +22,17 @@ fn main() {
         ("Default (m=16, ef=200)", HnswConfig::default()),
         ("High recall (m=32, ef=400)", HnswConfig {
             m: 32,
+            m_max: 64,
             ef_construction: 400,
-            ml: 1.0 / (16.0_f32).ln(),
+            ml: 1.0 / (32.0_f32).ln(),
+            metric: Metric::Cosine,
         }),
         ("Fast insert (m=8, ef=100)", HnswConfig {
             m: 8,
+            m_max: 16,
             ef_construction: 100,
-            ml: 1.0 / (16.0_f32).ln(),
+            ml: 1.0 / (8.0_f32).ln(),
+            metric: Metric::Cosine,
         }),
     ];
     
@@ -59,7 +63,7 @@ fn main() {
         
         // Index stats
         let stats = storage.index().stats();
-        println!("   Nodes: {}", stats.num_nodes);
+        println!("   Nodes: {}", stats.total_nodes);
         println!("   Max layer: {}", stats.max_layer);
         println!("   Avg connections: {:.2}", stats.avg_connections);
         println!();

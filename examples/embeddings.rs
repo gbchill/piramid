@@ -13,7 +13,7 @@ use piramid::{
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    println!("🔺 Piramid Embedding Example\n");
+    println!("Piramid Embedding Example\n");
 
     // Configuration - choose your provider
     let use_ollama = std::env::var("USE_OLLAMA").is_ok();
