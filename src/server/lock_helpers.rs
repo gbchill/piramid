@@ -1,23 +1,23 @@
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard, PoisonError};
-use axum::http::StatusCode;
+use crate::error::{Result, ServerError};
 
 pub trait LockHelper<T> {
-    fn read_or_err(&self) -> Result<RwLockReadGuard<'_, T>, (StatusCode, String)>;
-    fn write_or_err(&self) -> Result<RwLockWriteGuard<'_, T>, (StatusCode, String)>;
+    fn read_or_err(&self) -> Result<RwLockReadGuard<'_, T>>;
+    fn write_or_err(&self) -> Result<RwLockWriteGuard<'_, T>>;
 }
 
 impl<T> LockHelper<T> for RwLock<T> {
-    fn read_or_err(&self) -> Result<RwLockReadGuard<'_, T>, (StatusCode, String)> {
+    fn read_or_err(&self) -> Result<RwLockReadGuard<'_, T>> {
         self.read()
             .map_err(|e: PoisonError<_>| {
-                (StatusCode::INTERNAL_SERVER_ERROR, format!("Lock poisoned: {}", e))
+                ServerError::Internal(format!("Lock poisoned: {}", e)).into()
             })
     }
 
-    fn write_or_err(&self) -> Result<RwLockWriteGuard<'_, T>, (StatusCode, String)> {
+    fn write_or_err(&self) -> Result<RwLockWriteGuard<'_, T>> {
         self.write()
             .map_err(|e: PoisonError<_>| {
-                (StatusCode::INTERNAL_SERVER_ERROR, format!("Lock poisoned: {}", e))
+                ServerError::Internal(format!("Lock poisoned: {}", e)).into()
             })
     }
 }

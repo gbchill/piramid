@@ -58,7 +58,7 @@
 
 ---
 
-### Production Essentials
+### Production 
 
 **Batch Operations**
 - [x] Batch insert API (10k inserts in <1s)

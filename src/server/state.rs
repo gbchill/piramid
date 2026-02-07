@@ -3,6 +3,7 @@ use std::sync::{Arc, RwLock};
 
 use crate::VectorStorage;
 use crate::embeddings::Embedder;
+use crate::error::{Result, ServerError};
 
 // Shared application state
 // Each collection is an independent VectorStorage with its own file.
@@ -35,14 +36,13 @@ impl AppState {
     }
 
     // Lazily load or create a collection
-    pub fn get_or_create_collection(&self, name: &str) -> Result<(), String> {
+    pub fn get_or_create_collection(&self, name: &str) -> Result<()> {
         let mut collections = self.collections.write()
-            .map_err(|e| format!("Lock poisoned: {}", e))?;
+            .map_err(|e| ServerError::Internal(format!("Lock poisoned: {}", e)))?;
         
         if !collections.contains_key(name) {
             let path = format!("{}/{}.db", self.data_dir, name);
-            let storage = VectorStorage::open(&path)
-                .map_err(|e| format!("Failed to open collection: {}", e))?;
+            let storage = VectorStorage::open(&path)?;
             collections.insert(name.to_string(), storage);
         }
         

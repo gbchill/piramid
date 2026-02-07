@@ -1,5 +1,7 @@
 use thiserror::Error;
 use std::io;
+use axum::response::{IntoResponse, Response};
+use axum::http::StatusCode;
 
 pub type Result<T> = std::result::Result<T, PiramidError>;
 
@@ -48,6 +50,34 @@ impl PiramidError {
             Self::Io(_) => false,
             Self::Serialization(_) => false,
             Self::Other(_) => false,
+        }
+    }
+
+    pub fn status_code(&self) -> StatusCode {
+        match self {
+            Self::Server(e) => e.status_code(),
+            Self::Storage(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::Index(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::Embedding(_) => StatusCode::BAD_GATEWAY,
+            Self::Io(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::Serialization(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::Other(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+
+impl IntoResponse for PiramidError {
+    fn into_response(self) -> Response {
+        match self {
+            Self::Server(e) => e.into_response(),
+            _ => {
+                let status = self.status_code();
+                let body = axum::Json(serde_json::json!({
+                    "error": self.to_string(),
+                    "code": status.as_u16(),
+                }));
+                (status, body).into_response()
+            }
         }
     }
 }

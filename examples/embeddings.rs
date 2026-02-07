@@ -8,10 +8,11 @@
 use piramid::{
     VectorStorage, VectorEntry, Metric,
     embeddings::{EmbeddingConfig, providers::create_embedder},
+    Result,
 };
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<()> {
     println!("🔺 Piramid Embedding Example\n");
 
     // Configuration - choose your provider

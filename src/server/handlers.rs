@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::{Metric, MetadataValue, VectorEntry};
+use crate::error::{Result, ServerError};
 use super::state::SharedState;
 use super::types::*;
 use super::lock_helpers::LockHelper;
@@ -90,7 +91,7 @@ pub async fn health_embeddings(State(state): State<SharedState>) -> StatusCode {
 
 
 // GET /api/collections - list all loaded collections
-pub async fn list_collections(State(state): State<SharedState>) -> Result<Json<CollectionsResponse>, (StatusCode, String)> {
+pub async fn list_collections(State(state): State<SharedState>) -> Result<Json<CollectionsResponse>> {
     // read() = shared lock (many readers allowed)
     let collections = state.collections.read_or_err()?;
     
@@ -109,9 +110,9 @@ pub async fn list_collections(State(state): State<SharedState>) -> Result<Json<C
 pub async fn create_collection(
     State(state): State<SharedState>,
     Json(req): Json<CreateCollectionRequest>,
-) -> Result<Json<CollectionInfo>, (StatusCode, String)> {
+) -> Result<Json<CollectionInfo>> {
     state.get_or_create_collection(&req.name)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+        ?;
     
     let collections = state.collections.read_or_err()?;
     let count = collections.get(&req.name).map(|s| s.count()).unwrap_or(0);
@@ -123,9 +124,9 @@ pub async fn create_collection(
 pub async fn get_collection(
     State(state): State<SharedState>,
     Path(name): Path<String>,
-) -> Result<Json<CollectionInfo>, (StatusCode, String)> {
+) -> Result<Json<CollectionInfo>> {
     state.get_or_create_collection(&name)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+        ?;
     
     let collections = state.collections.read_or_err()?;
     let count = collections.get(&name).map(|s| s.count()).unwrap_or(0);
@@ -137,7 +138,7 @@ pub async fn get_collection(
 pub async fn delete_collection(
     State(state): State<SharedState>,
     Path(name): Path<String>,
-) -> Result<Json<DeleteResponse>, (StatusCode, String)> {
+) -> Result<Json<DeleteResponse>> {
     let mut collections = state.collections.write_or_err()?;
     let existed = collections.remove(&name).is_some();
     
@@ -154,9 +155,9 @@ pub async fn delete_collection(
 pub async fn collection_count(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
-) -> Result<Json<CountResponse>, (StatusCode, String)> {
+) -> Result<Json<CountResponse>> {
     state.get_or_create_collection(&collection)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+        ?;
     
     let collections = state.collections.read_or_err()?;
     let count = collections.get(&collection).map(|s| s.count()).unwrap_or(0);
@@ -169,9 +170,9 @@ pub async fn store_vector(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
     Json(req): Json<StoreVectorRequest>,
-) -> Result<Json<StoreVectorResponse>, (StatusCode, String)> {
+) -> Result<Json<StoreVectorResponse>> {
     state.get_or_create_collection(&collection)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+        ?;
     
     let metadata = json_to_metadata(req.metadata);
     let entry = VectorEntry::with_metadata(req.vector, req.text, metadata);
@@ -179,10 +180,10 @@ pub async fn store_vector(
     // write() = exclusive lock (we're modifying)
     let mut collections = state.collections.write_or_err()?;
     let storage = collections.get_mut(&collection)
-        .ok_or((StatusCode::NOT_FOUND, "Collection not found".to_string()))?;
+        .ok_or(ServerError::NotFound("Collection not found".to_string()))?;
     
     let id = storage.store(entry)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        ?;
     
     Ok(Json(StoreVectorResponse { id: id.to_string() }))
 }
@@ -192,17 +193,16 @@ pub async fn store_vectors_batch(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
     Json(req): Json<BatchStoreVectorRequest>,
-) -> Result<Json<BatchStoreVectorResponse>, (StatusCode, String)> {
+) -> Result<Json<BatchStoreVectorResponse>> {
     if req.vectors.is_empty() {
-        return Err((StatusCode::BAD_REQUEST, "No vectors provided".to_string()));
+        return Err(ServerError::InvalidRequest("No vectors provided".to_string()).into());
     }
 
     if req.texts.len() != req.vectors.len() {
-        return Err((StatusCode::BAD_REQUEST, "vectors and texts length mismatch".to_string()));
+        return Err(ServerError::InvalidRequest("vectors and texts length mismatch".to_string()).into());
     }
 
-    state.get_or_create_collection(&collection)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+    state.get_or_create_collection(&collection)?;
 
     // Build entries
     let mut entries = Vec::with_capacity(req.vectors.len());
@@ -224,13 +224,12 @@ pub async fn store_vectors_batch(
     // Store in batch
     let mut collections = state.collections.write_or_err()?;
     let storage = collections.get_mut(&collection)
-        .ok_or((StatusCode::NOT_FOUND, "Collection not found".to_string()))?;
+        .ok_or(ServerError::NotFound("Collection not found".to_string()))?;
 
-    let ids = storage.store_batch(entries)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let ids: Vec<Uuid> = storage.store_batch(entries)?;
 
     let count = ids.len();
-    let ids_str: Vec<String> = ids.into_iter().map(|id| id.to_string()).collect();
+    let ids_str: Vec<String> = ids.into_iter().map(|id: Uuid| id.to_string()).collect();
 
     Ok(Json(BatchStoreVectorResponse { ids: ids_str, count }))
 }
@@ -239,19 +238,19 @@ pub async fn store_vectors_batch(
 pub async fn get_vector(
     State(state): State<SharedState>,
     Path((collection, id)): Path<(String, String)>,  // tuple extraction!
-) -> Result<Json<VectorResponse>, (StatusCode, String)> {
+) -> Result<Json<VectorResponse>> {
     state.get_or_create_collection(&collection)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+        ?;
     
     let uuid = Uuid::parse_str(&id)
-        .map_err(|_| (StatusCode::BAD_REQUEST, "Invalid UUID".to_string()))?;
+        .map_err(|_| ServerError::InvalidRequest("Invalid UUID".to_string()))?;
     
     let collections = state.collections.read_or_err()?;
     let storage = collections.get(&collection)
-        .ok_or((StatusCode::NOT_FOUND, "Collection not found".to_string()))?;
+        .ok_or(ServerError::NotFound("Collection not found".to_string()))?;
     
     let entry = storage.get(&uuid)
-        .ok_or((StatusCode::NOT_FOUND, "Vector not found".to_string()))?;
+        .ok_or(ServerError::NotFound("Vector not found".to_string()))?;
     
     Ok(Json(VectorResponse {
         id: entry.id.to_string(),
@@ -266,13 +265,12 @@ pub async fn list_vectors(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
     Query(params): Query<ListVectorsQuery>,
-) -> Result<Json<Vec<VectorResponse>>, (StatusCode, String)> {
-    state.get_or_create_collection(&collection)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+) -> Result<Json<Vec<VectorResponse>>> {
+    state.get_or_create_collection(&collection)?;
     
     let collections = state.collections.read_or_err()?;
     let storage = collections.get(&collection)
-        .ok_or((StatusCode::NOT_FOUND, "Collection not found".to_string()))?;
+        .ok_or(ServerError::NotFound("Collection not found".to_string()))?;
     
     // skip() and take() for pagination
     let vectors: Vec<VectorResponse> = storage.get_all()
@@ -294,19 +292,19 @@ pub async fn list_vectors(
 pub async fn delete_vector(
     State(state): State<SharedState>,
     Path((collection, id)): Path<(String, String)>,
-) -> Result<Json<DeleteResponse>, (StatusCode, String)> {
+) -> Result<Json<DeleteResponse>> {
     state.get_or_create_collection(&collection)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+        ?;
     
     let uuid = Uuid::parse_str(&id)
-        .map_err(|_| (StatusCode::BAD_REQUEST, "Invalid UUID".to_string()))?;
+        .map_err(|_| ServerError::InvalidRequest("Invalid UUID".to_string()))?;
     
     let mut collections = state.collections.write_or_err()?;
     let storage = collections.get_mut(&collection)
-        .ok_or((StatusCode::NOT_FOUND, "Collection not found".to_string()))?;
+        .ok_or(ServerError::NotFound("Collection not found".to_string()))?;
     
     let deleted = storage.delete(&uuid)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        ?;
     
     Ok(Json(DeleteResponse { deleted }))
 }
@@ -316,15 +314,15 @@ pub async fn search_vectors(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
     Json(req): Json<SearchRequest>,
-) -> Result<Json<SearchResponse>, (StatusCode, String)> {
+) -> Result<Json<SearchResponse>> {
     state.get_or_create_collection(&collection)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+        ?;
     
     let metric = parse_metric(req.metric);
     
     let collections = state.collections.read_or_err()?;
     let storage = collections.get(&collection)
-        .ok_or((StatusCode::NOT_FOUND, "Collection not found".to_string()))?;
+        .ok_or(ServerError::NotFound("Collection not found".to_string()))?;
     
     let results: Vec<SearchResultResponse> = storage
         .search(&req.vector, req.k, metric)
@@ -349,17 +347,17 @@ pub async fn embed_text(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
     Json(req): Json<EmbedRequest>,
-) -> Result<Json<EmbedResponse>, (StatusCode, String)> {
+) -> Result<Json<EmbedResponse>> {
     state.get_or_create_collection(&collection)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+        ?;
 
     // Get embedder from state
     let embedder = state.embedder.as_ref()
-        .ok_or((StatusCode::SERVICE_UNAVAILABLE, "Embedding service not configured".to_string()))?;
+        .ok_or(ServerError::ServiceUnavailable("Embedding service not configured".to_string()))?;
 
     // Generate embedding
     let response = embedder.embed(&req.text).await
-        .map_err(|e| (StatusCode::BAD_REQUEST, format!("Embedding failed: {}", e)))?;
+        ?;
 
     // Store the vector
     let metadata = json_to_metadata(req.metadata);
@@ -371,10 +369,10 @@ pub async fn embed_text(
 
     let mut collections = state.collections.write_or_err()?;
     let storage = collections.get_mut(&collection)
-        .ok_or((StatusCode::NOT_FOUND, "Collection not found".to_string()))?;
+        .ok_or(ServerError::NotFound("Collection not found".to_string()))?;
 
     let id = storage.store(entry)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        ?;
 
     Ok(Json(EmbedResponse {
         id: id.to_string(),
@@ -388,26 +386,24 @@ pub async fn embed_batch(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
     Json(req): Json<EmbedBatchRequest>,
-) -> Result<Json<EmbedBatchResponse>, (StatusCode, String)> {
+) -> Result<Json<EmbedBatchResponse>> {
     if req.texts.is_empty() {
-        return Err((StatusCode::BAD_REQUEST, "No texts provided".to_string()));
+        return Err(ServerError::InvalidRequest("No texts provided".to_string()).into());
     }
 
-    state.get_or_create_collection(&collection)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+    state.get_or_create_collection(&collection)?;
 
     // Get embedder from state
     let embedder = state.embedder.as_ref()
-        .ok_or((StatusCode::SERVICE_UNAVAILABLE, "Embedding service not configured".to_string()))?;
+        .ok_or(ServerError::ServiceUnavailable("Embedding service not configured".to_string()))?;
 
     // Generate embeddings in batch
-    let responses = embedder.embed_batch(&req.texts).await
-        .map_err(|e| (StatusCode::BAD_REQUEST, format!("Batch embedding failed: {}", e)))?;
+    let responses: Vec<crate::embeddings::EmbeddingResponse> = embedder.embed_batch(&req.texts).await?;
 
     // Store all vectors
     let mut collections = state.collections.write_or_err()?;
     let storage = collections.get_mut(&collection)
-        .ok_or((StatusCode::NOT_FOUND, "Collection not found".to_string()))?;
+        .ok_or(ServerError::NotFound("Collection not found".to_string()))?;
 
     let mut ids = Vec::with_capacity(responses.len());
     let mut total_tokens = 0u32;
@@ -425,8 +421,7 @@ pub async fn embed_batch(
             metadata,
         );
 
-        let id = storage.store(entry)
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        let id = storage.store(entry)?;
 
         ids.push(id.to_string());
         if let Some(tokens) = response.tokens {
@@ -445,24 +440,24 @@ pub async fn search_by_text(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
     Json(req): Json<TextSearchRequest>,
-) -> Result<Json<SearchResponse>, (StatusCode, String)> {
+) -> Result<Json<SearchResponse>> {
     state.get_or_create_collection(&collection)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+        ?;
 
     // Get embedder from state
     let embedder = state.embedder.as_ref()
-        .ok_or((StatusCode::SERVICE_UNAVAILABLE, "Embedding service not configured".to_string()))?;
+        .ok_or(ServerError::ServiceUnavailable("Embedding service not configured".to_string()))?;
 
     // Generate embedding for query
     let response = embedder.embed(&req.query).await
-        .map_err(|e| (StatusCode::BAD_REQUEST, format!("Embedding failed: {}", e)))?;
+        ?;
 
     // Search with the embedding
     let metric = parse_metric(req.metric);
 
     let collections = state.collections.read_or_err()?;
     let storage = collections.get(&collection)
-        .ok_or((StatusCode::NOT_FOUND, "Collection not found".to_string()))?;
+        .ok_or(ServerError::NotFound("Collection not found".to_string()))?;
 
     let results: Vec<SearchResultResponse> = storage
         .search(&response.embedding, req.k, metric)
