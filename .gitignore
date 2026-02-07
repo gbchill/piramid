@@ -10,7 +10,7 @@ debug/
 # test artifacts
 *.db
 test*.db
-*.val
+*.wal
 
 # ide
 .idea/
