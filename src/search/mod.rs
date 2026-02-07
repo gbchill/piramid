@@ -10,12 +10,12 @@
 // - hybrid_search: Combine vector + keyword search
 // - recommendation_search: Find similar to these, not like those
 
-mod result;
+mod types;
 mod vector;
 mod filtered;
-mod utils;
+mod helpers;
 
-pub use result::SearchResult;
+pub use types::SearchResult;
 pub use vector::vector_search;
 pub use filtered::filtered_search;
 

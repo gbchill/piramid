@@ -4,7 +4,7 @@ use crate::storage::VectorStorage;
 use crate::metrics::Metric;
 use crate::query::Filter;
 use crate::search::SearchResult;
-use super::utils::{create_vector_map, entry_to_result, sort_and_truncate};
+use super::helpers::{create_vector_map, entry_to_result, sort_and_truncate};
 
 // Perform filtered vector similarity search
 // 

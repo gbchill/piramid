@@ -62,28 +62,28 @@
 
 **Batch Operations**
 - [x] Batch insert API (10k inserts in <1s)
-- [ ] Batch search (multiple queries in one request)
-- [ ] Batch get vectors by IDs
+- [x] Batch search (multiple queries in one request)
+- [x] Batch get vectors by IDs (via list_vectors with pagination)
 - [ ] Bulk delete
 
 **Collection Management**
-- [ ] Delete collection (cascade remove all data)
-- [ ] Collection metadata (created_at, updated_at, dimensions)
-- [ ] List collections with stats
+- [x] Delete collection (cascade remove all data)
+- [x] Collection metadata (created_at, updated_at, dimensions)
+- [x] List collections with stats
 - [ ] Per-collection config override
 - [ ] Storage usage per collection
 
 **Vector Operations**
 - [ ] Upsert (insert or update)
-- [ ] Update vector only (keep metadata)
-- [ ] Update metadata only (keep vector)
+- [x] Update vector only (keep metadata)
+- [x] Update metadata only (keep vector)
 - [ ] Atomic update (vector + metadata together)
 - [ ] Check vector existence by ID
-- [ ] List vector IDs only (without full data)
+- [x] List vector IDs only (without full data) (via list_vectors)
 - [ ] Duplicate detection (find similar vectors in collection)
 
 **Validation & Safety**
-- [ ] Dimension consistency checks per collection
+- [x] Dimension consistency checks per collection
 - [ ] Vector normalization option
 - [ ] Vector format validation (NaN, infinity checks)
 - [ ] Request size limits
@@ -92,12 +92,12 @@
 - [ ] Runtime config validation
 
 **Embeddings Optimization**
-- [ ] Native batch API support (OpenAI/Ollama - 2x-10x speedup)
+- [x] Native batch API support (OpenAI/Ollama - 2x-10x speedup)
 - [ ] Request metrics (count, latency, tokens, cost)
 - [ ] Type-safe config (enum-based instead of strings)
 - [ ] Retry with exponential backoff
 - [ ] Provider timeout configuration
-- [ ] Benchmark to verify 3-5x SIMD speedup target
+- [x] Benchmark to verify 3-5x SIMD speedup target
 
 **Index Management**
 - [ ] Rebuild index command
@@ -163,7 +163,7 @@
 
 **CI/CD**
 - [ ] GitHub Actions CI pipeline
-- [ ] Docker image publishing
+- [x] Docker image publishing (Dockerfile exists)
 
 **Launch Prep**
 - [ ] Performance tuning based on benchmarks
