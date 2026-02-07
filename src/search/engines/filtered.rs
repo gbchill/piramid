@@ -65,9 +65,9 @@ mod tests {
 
     #[test]
     fn test_filtered_search() {
-        let _ = std::fs::remove_file("test_filtered_search.db");
+        let _ = std::fs::remove_file("piramid_data/tests/test_filtered_search.db");
         let _ = std::fs::remove_file(".hnsw.db");
-        let mut storage = VectorStorage::open("test_filtered_search.db").unwrap();
+        let mut storage = VectorStorage::open("piramid_data/tests/test_filtered_search.db").unwrap();
 
         // Insert vectors with metadata
         let e1 = VectorEntry::with_metadata(
@@ -92,7 +92,7 @@ mod tests {
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].text, "rust doc");
 
-        std::fs::remove_file("test_filtered_search.db").unwrap();
+        std::fs::remove_file("piramid_data/tests/test_filtered_search.db").unwrap();
         let _ = std::fs::remove_file(".hnsw.db");
     }
 }

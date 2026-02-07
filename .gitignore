@@ -7,10 +7,10 @@ target/
 debug/
 *.pdb
 
-# test artifacts
-*.db
-test*.db
-*.wal
+# test artifacts (root level only)
+/*.db
+/*.wal
+/*.index.db
 
 # ide
 .idea/
