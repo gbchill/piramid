@@ -15,7 +15,7 @@ use uuid::Uuid;
 
 use crate::error::Result;
 use crate::index::{HnswIndex, HnswConfig};
-use crate::wal::Wal;
+use super::wal::{Wal, WalEntry};
 use crate::metadata::Metadata;
 use crate::metrics::Metric;
 use crate::search::SearchResult;
@@ -78,6 +78,72 @@ impl VectorStorage {
 
         let mut hnsw_index = HnswIndex::new(config);
         
+        // Initialize WAL
+        let wal_path = if path.ends_with(".db") {
+            format!("{}.wal", &path[..path.len()-3])
+        } else {
+            format!("{}.wal", path)
+        };
+        let mut wal = Wal::new(wal_path.into())?;
+        
+        // Replay WAL for crash recovery
+        let wal_entries = wal.replay()?;
+        if !wal_entries.is_empty() {
+            // Create temporary storage to apply WAL entries
+            let mut temp_storage = Self {
+                data_file: file,
+                mmap: Some(mmap),
+                index,
+                hnsw_index,
+                path: path.to_string(),
+                wal,
+            };
+            
+            // Apply each WAL entry
+            for entry in wal_entries {
+                match entry {
+                    WalEntry::Insert { id, vector, text, metadata } => {
+                        let vec_entry = VectorEntry {
+                            id,
+                            vector: QuantizedVector::from_f32(&vector),
+                            text,
+                            metadata,
+                        };
+                        // Store without logging (already in WAL)
+                        let _ = temp_storage.store_internal(vec_entry);
+                    }
+                    WalEntry::Update { id, vector, text, metadata } => {
+                        // Delete old version and insert new
+                        temp_storage.delete_internal(&id);
+                        let vec_entry = VectorEntry {
+                            id,
+                            vector: QuantizedVector::from_f32(&vector),
+                            text,
+                            metadata,
+                        };
+                        let _ = temp_storage.store_internal(vec_entry);
+                    }
+                    WalEntry::Delete { id } => {
+                        temp_storage.delete_internal(&id);
+                    }
+                    WalEntry::Checkpoint { .. } => {
+                        // Skip checkpoints during recovery
+                    }
+                }
+            }
+            
+            // Checkpoint after recovery to clear WAL
+            let timestamp = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
+            temp_storage.wal.checkpoint(timestamp)?;
+            temp_storage.save_index()?;
+            temp_storage.wal.truncate()?;
+            
+            return Ok(temp_storage);
+        }
+        
         // Rebuild HNSW from existing vectors
         if !index.is_empty() {
             let mut vectors: HashMap<Uuid, Vec<f32>> = HashMap::new();
@@ -103,12 +169,13 @@ impl VectorStorage {
             index,
             hnsw_index,
             path: path.to_string(),
+            wal,
         })
     }
 
-    pub fn store(&mut self, entry: VectorEntry) -> Result<Uuid> {
+    // Internal store without WAL logging (for recovery)
+    fn store_internal(&mut self, entry: VectorEntry) -> Result<Uuid> {
         let id = entry.id;
-        
         let bytes = bincode::serialize(&entry)?;
 
         let offset = self.index.values()
@@ -134,14 +201,11 @@ impl VectorStorage {
         };
         self.index.insert(id, index_entry);
         
-        // Persist index to disk
-        self.save_index()?;
-        
-        let vec_f32 = entry.get_vector();  // Dequantize for HNSW
+        let vec_f32 = entry.get_vector();
         let mut vectors: HashMap<Uuid, Vec<f32>> = HashMap::new();
         for (vec_id, _) in &self.index {
             if let Some(vec_entry) = self.get(vec_id) {
-                vectors.insert(*vec_id, vec_entry.get_vector());  // Dequantize
+                vectors.insert(*vec_id, vec_entry.get_vector());
             }
         }
         self.hnsw_index.insert(id, &vec_f32, &vectors);
@@ -149,8 +213,41 @@ impl VectorStorage {
         Ok(id)
     }
 
+    // Internal delete without WAL logging (for recovery)
+    fn delete_internal(&mut self, id: &Uuid) {
+        self.index.remove(id);
+        self.hnsw_index.remove(id);
+    }
+
+    pub fn store(&mut self, entry: VectorEntry) -> Result<Uuid> {
+        // Log to WAL first
+        let vector = entry.get_vector();
+        self.wal.log(&WalEntry::Insert { 
+            id: entry.id, 
+            vector,
+            text: entry.text.clone(),
+            metadata: entry.metadata.clone() 
+        })?;
+        
+        // Persist index to disk
+        self.save_index()?;
+        
+        self.store_internal(entry)
+    }
+
     pub fn store_batch(&mut self, entries: Vec<VectorEntry>) -> Result<Vec<Uuid>> {
         let mut ids = Vec::with_capacity(entries.len());
+        
+        // Log to WAL first
+        for entry in &entries {
+            let vector = entry.get_vector();
+            self.wal.log(&WalEntry::Insert {
+                id: entry.id,
+                vector,
+                text: entry.text.clone(),
+                metadata: entry.metadata.clone()
+            })?;
+        }
         
         // Serialize all entries first
         let mut serialized: Vec<(Uuid, Vec<u8>)> = Vec::with_capacity(entries.len());
@@ -305,8 +402,11 @@ impl VectorStorage {
     }
 
     pub fn delete(&mut self, id: &Uuid) -> Result<bool> {
-        if self.index.remove(id).is_some() {
-            self.hnsw_index.remove(id);
+        if self.index.contains_key(id) {
+            // Log to WAL
+            self.wal.log(&WalEntry::Delete { id: *id })?;
+            
+            self.delete_internal(id);
             self.save_index()?;
             Ok(true)
         } else {
@@ -315,7 +415,18 @@ impl VectorStorage {
     }
     
     pub fn update_metadata(&mut self, id: &Uuid, metadata: Metadata) -> Result<bool> {
-        if let Some(mut entry) = self.get(id) {
+        if let Some(entry) = self.get(id) {
+            let vector = entry.get_vector();
+            
+            // Log to WAL
+            self.wal.log(&WalEntry::Update {
+                id: *id,
+                vector,
+                text: entry.text.clone(),
+                metadata: metadata.clone()
+            })?;
+            
+            let mut entry = entry;
             entry.metadata = metadata;
             self.delete(id)?;
             self.store(entry)?;
@@ -326,7 +437,16 @@ impl VectorStorage {
     }
     
     pub fn update_vector(&mut self, id: &Uuid, vector: Vec<f32>) -> Result<bool> {
-        if let Some(mut entry) = self.get(id) {
+        if let Some(entry) = self.get(id) {
+            // Log to WAL
+            self.wal.log(&WalEntry::Update {
+                id: *id,
+                vector: vector.clone(),
+                text: entry.text.clone(),
+                metadata: entry.metadata.clone()
+            })?;
+            
+            let mut entry = entry;
             entry.vector = QuantizedVector::from_f32(&vector);  // Quantize new vector
             self.delete(id)?;
             
@@ -353,6 +473,24 @@ impl VectorStorage {
             }
         }
         all_entries
+    }
+
+    pub fn checkpoint(&mut self) -> Result<()> {
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        
+        self.wal.checkpoint(timestamp)?;
+        self.save_index()?;
+        self.wal.truncate()?;
+        
+        Ok(())
+    }
+
+    pub fn flush(&mut self) -> Result<()> {
+        self.wal.flush()?;
+        Ok(())
     }
 }
 

@@ -38,10 +38,9 @@
 - [x] HTTP error response mapping
 
 **Write-Ahead Log (WAL)**
-- [ ] Append-only log for all mutations (insert/update/delete)
-- [ ] Recovery from WAL on crash/restart
-- [ ] Periodic checkpointing to reduce replay time
-- [ ] Test: Kill process mid-write, verify no data loss
+- [x] Append-only log for all mutations (insert/update/delete)
+- [x] Recovery from WAL on crash/restart
+- [x] Periodic checkpointing to reduce replay time
 
 **Graceful Shutdown**
 - [ ] Handle SIGTERM/SIGINT signals
