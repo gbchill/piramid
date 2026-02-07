@@ -4,7 +4,7 @@
 use crate::storage::VectorStorage;
 use crate::metrics::Metric;
 use crate::search::SearchResult;
-use super::helpers::{create_vector_map, entry_to_result, sort_and_truncate};
+use crate::search::utils::{create_vector_map, entry_to_result, sort_and_truncate};
 
 // Perform k-nearest neighbor vector similarity search
 // 

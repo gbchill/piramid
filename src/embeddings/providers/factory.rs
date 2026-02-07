@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use super::{Embedder, EmbeddingConfig, EmbeddingError, EmbeddingResult};
+use crate::embeddings::types::{Embedder, EmbeddingConfig, EmbeddingError, EmbeddingResult};
 use super::openai::OpenAIEmbedder;
 use super::ollama::OllamaEmbedder;
 

@@ -8,7 +8,7 @@ use lru::LruCache;
 use std::num::NonZeroUsize;
 use std::sync::Mutex;
 
-use super::{Embedder, EmbeddingResponse, EmbeddingResult};
+use super::types::{Embedder, EmbeddingResponse, EmbeddingResult};
 
 pub struct CachedEmbedder<E: Embedder> {
     inner: E,

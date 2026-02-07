@@ -11,13 +11,11 @@
 // - recommendation_search: Find similar to these, not like those
 
 mod types;
-mod vector;
-mod filtered;
-mod helpers;
+mod engines;
+mod utils;
 
 pub use types::SearchResult;
-pub use vector::vector_search;
-pub use filtered::filtered_search;
+pub use engines::{vector_search, filtered_search};
 
 // Re-export for convenience
 pub use crate::metrics::Metric;

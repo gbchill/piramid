@@ -7,8 +7,8 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use reqwest::Client;
 
-use super::{Embedder, EmbeddingConfig, EmbeddingError, EmbeddingResponse, EmbeddingResult};
-use super::cache::CachedEmbedder;
+use crate::embeddings::types::{Embedder, EmbeddingConfig, EmbeddingError, EmbeddingResponse, EmbeddingResult};
+use crate::embeddings::cache::CachedEmbedder;
 
 const DEFAULT_OPENAI_API_URL: &str = "https://api.openai.com/v1/embeddings";
 const DEFAULT_CACHE_SIZE: usize = 10000;

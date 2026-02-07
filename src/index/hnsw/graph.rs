@@ -4,48 +4,7 @@ use std::cmp::Ordering;
 use crate::metrics::Metric;
 use serde::{Serialize, Deserialize};
 
-
-// HNSW (Hierarchical Navigable Small World) index configuration
-// Derived from the original HNSW paper by Malkov and Yashunin
-// https://arxiv.org/abs/1603.09320
-// https://www.pinecone.io/learn/series/faiss/hnsw/
-// HNSW is an efficient algorithm for approximate nearest neighbor search in high-dimensional
-// spaces, it wokrs by building a multi-layer graph structure where each layer is a navigable small
-// world graph. The top layers contain fewer nodes and provide long-range connections, while the lower layers contain more nodes and provide local connections.
-// During search, the algorithm starts at the top layer and traverses down to the lower layers,
-// using the connections to quickly find approximate nearest neighbors
-
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HnswConfig{
-    pub m: usize,  // max number of connections per node
-    pub m_max: usize,  // max connections for layer 0 (typically 2*M)
-    pub ef_construction: usize,  // size of the dynamic list for the construction phase
-    pub ml: f32,  // layer multiplier: 1/ln(M)
-    pub metric: Metric,  // similarity metric (converted to distance internally for HNSW)
-}
-// impl means we are implementing methods for the struct where each method has &self as first
-// parameter, meaning it operates on an instance of the struct, similar to classes in other
-// languages, all the content in that impl block are methods for HnswConfig, a user can use them
-// by creating an instance of HnswConfig and calling the methods on it for example:
-// let config = HnswConfig::default(); <- this creates a default config instance
-// let m = config.m; <- this accesses the m field of the config instance
-// but you might wonder where did 'Default' from impl Default for HnswConfig come from? 
-// Default is a trait in Rust that provides a way to create default values for types,
-// by implementing Default for HnswConfig, we are saying that HnswConfig can have a default value
-// and we provide the implementation of how to create that default value in the fn default() method
-impl Default for HnswConfig {
-    fn default() -> Self {
-        let m = 16;
-        HnswConfig {
-            m,
-            m_max: m * 2,
-            ef_construction: 200, // size of the dynamic list for the construction phase
-            ml: 1.0 / (m as f32).ln(),  // layer multiplier: 1/ln(M)
-            metric: Metric::Cosine,  // default to cosine similarity
-        }
-    }
-}
+use super::config::{HnswConfig, HnswStats};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct HnswNode{
@@ -434,15 +393,6 @@ impl HnswIndex{
             },
         }
     }
-}
-
-// Statistics about the HNSW index
-#[derive(Debug)]
-pub struct HnswStats {
-    pub total_nodes: usize,
-    pub max_layer: isize,
-    pub layer_sizes: Vec<usize>,
-    pub avg_connections: f32,
 }
 
 #[cfg(test)]
