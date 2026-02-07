@@ -48,7 +48,7 @@ fn bench_recall(c: &mut Criterion) {
         let mut all_results = storage.get_all()
             .into_iter()
             .map(|entry| {
-                let score = Metric::Cosine.calculate(&query, &entry.vector);
+                let score = Metric::Cosine.calculate(&query, &entry.get_vector());
                 (entry.id, score)
             })
             .collect::<Vec<_>>();
