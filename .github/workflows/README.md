@@ -4,7 +4,7 @@ This directory contains CI/CD workflows for the Piramid project.
 
 ## Workflows
 
-### 🦀 `rust.yml` - Rust CI Pipeline
+###  `rust.yml` - Rust CI Pipeline
 **Triggers:** Push/PR to `main` and `dev` branches
 
 **Jobs:**
@@ -24,7 +24,7 @@ This directory contains CI/CD workflows for the Piramid project.
 - **Benchmark** - Runs performance benchmarks on main branch
   - Stores benchmark history
 
-### 📊 `dashboard.yml` - Dashboard CI Pipeline
+###  `dashboard.yml` - Dashboard CI Pipeline
 **Triggers:** Push/PR to `main` and `dev` branches (only when dashboard files change)
 
 **Jobs:**
@@ -33,7 +33,7 @@ This directory contains CI/CD workflows for the Piramid project.
   - Uploads build artifacts
 - **Test** - Unit tests (disabled until tests are added)
 
-### 🐳 `docker.yml` - Docker Build & Publish
+###  `docker.yml` - Docker Build & Publish
 **Triggers:** 
 - Push to `main` branch
 - Version tags (`v*`)
@@ -53,7 +53,7 @@ This directory contains CI/CD workflows for the Piramid project.
 - `v1` - Major version tags
 - `main-abc1234` - Commit SHA tags
 
-### 🔒 `security.yml` - Security Audits
+###  `security.yml` - Security Audits
 **Triggers:**
 - Push/PR to `main` branch
 - Weekly schedule (Mondays at 9 AM UTC)
@@ -63,7 +63,7 @@ This directory contains CI/CD workflows for the Piramid project.
 - **NPM Audit** - JavaScript dependency vulnerability scanning
 - **Dependency Review** - GitHub's dependency review (PR only)
 
-### 🚀 `release.yml` - Release Automation
+###  `release.yml` - Release Automation
 **Triggers:** Version tags (`v*`)
 
 **Jobs:**
