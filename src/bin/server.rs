@@ -3,7 +3,6 @@
 use std::sync::Arc;
 use piramid::server::{AppState, create_router};
 use piramid::{EmbeddingConfig, embeddings};
-use std::time::Duration;
 
 #[tokio::main]
 async fn main() {
@@ -101,16 +100,9 @@ async fn main() {
     let server = axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal);
 
-    // Give in-flight requests 10 seconds to complete
-    tokio::select! {
-        result = server => {
-            if let Err(e) = result {
-                eprintln!("Server error: {}", e);
-            }
-        }
-        _ = tokio::time::sleep(std::time::Duration::from_secs(10)) => {
-            println!("   ⚠️  Force shutdown after 10s timeout");
-        }
+    // Run server until shutdown signal
+    if let Err(e) = server.await {
+        eprintln!("Server error: {}", e);
     }
     
     println!("👋 Goodbye!");

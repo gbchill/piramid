@@ -4,7 +4,7 @@ use crate::storage::Collection;
 use crate::metrics::Metric;
 use crate::query::Filter;
 use crate::search::Hit;
-use crate::search::utils::{create_vector_map, entry_to_result, sort_and_truncate};
+use crate::search::utils::sort_and_truncate;
 
 // Perform filtered vector similarity search
 // 
@@ -28,33 +28,28 @@ pub fn filtered_search(
     metric: Metric,
     filter: &Filter,
 ) -> Vec<Hit> {
-    // Create vector map for index
-    let vector_map = create_vector_map(storage);
-
     // Search for more candidates to compensate for filtered-out results
     let search_k = k * 10;
-    let ef = (search_k * 2).max(50);
     
-    let result_ids = storage.index().search(query, search_k, ef, &vector_map);
+    let results = storage.search(query, search_k, metric);
 
-    // Convert IDs to Hits and apply filter
-    let mut results: Vec<Hit> = result_ids
+    // Apply filter
+    let mut filtered: Vec<Hit> = results
         .into_iter()
-        .filter_map(|id| {
-            storage.get(&id).and_then(|entry| {
-                // Apply filter
+        .filter_map(|hit| {
+            // Get entry to check metadata
+            storage.get(&hit.id).and_then(|entry| {
                 if !filter.matches(&entry.metadata) {
                     return None;
                 }
-                
-                Some(entry_to_result(&entry, query, metric))
+                Some(hit)
             })
         })
         .collect();
 
     // Sort and truncate
-    sort_and_truncate(&mut results, k);
-    results
+    sort_and_truncate(&mut filtered, k);
+    filtered
 }
 
 #[cfg(test)]

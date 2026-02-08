@@ -10,7 +10,7 @@ use super::config::IvfConfig;
 use crate::index::traits::{VectorIndex, IndexStats, IndexDetails, IndexType};
 
 // IVF index structure
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct IvfIndex {
     config: IvfConfig,
     centroids: Vec<Vec<f32>>,                    // Cluster centroids

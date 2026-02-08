@@ -8,7 +8,7 @@ pub mod flat;
 pub mod ivf;
 
 // Re-export trait and types
-pub use traits::{VectorIndex, IndexStats, IndexDetails, IndexType};
+pub use traits::{VectorIndex, IndexStats, IndexDetails, IndexType, SerializableIndex};
 pub use selector::IndexConfig;
 
 // Re-export index implementations

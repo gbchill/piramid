@@ -16,7 +16,9 @@
 
 ### Performance & Indexing
 - [x] HNSW indexing (production-grade approximate k-NN)
-- [ ] HNSW index persistence to disk
+- [x] HNSW index persistence to disk
+- [x] IVF index persistence to disk
+- [x] Flat index persistence to disk
 - [x] Benchmark suite
 - [x] SIMD acceleration (dot product, cosine, euclidean)
 - [x] Memory-mapped files (mmap)
@@ -57,7 +59,7 @@
 
 **Batch Operations**
 - [x] Batch insert API (10k inserts in <1s)
-- [ ] Batch search (multiple queries in one request)
+- [x] Batch search (multiple queries in one request)
 - [x] Batch get vectors by IDs (via list_vectors with pagination)
 - [ ] Bulk delete
 
@@ -69,7 +71,7 @@
 - [ ] Storage usage per collection
 
 **Vector Operations**
-- [ ] Upsert (insert or update)
+- [x] Upsert (insert or update)
 - [x] Update vector only (keep metadata)
 - [x] Update metadata only (keep vector)
 - [ ] Atomic update (vector + metadata together)
@@ -110,13 +112,13 @@
 - [ ] ScaNN (Google's algorithm)
 
 **Observability**
+- [x] Basic `/metrics` endpoint
 - [ ] Metrics: insert/search latency, index size, memory usage
 - [ ] Structured logging with tracing crate
 - [ ] Request ID for tracing
 - [ ] Enhanced health checks (storage status, index health, disk space)
 - [x] Ready endpoint (vs alive endpoint) - /api/health
 - [ ] Server version endpoint
-- [ ] Basic `/metrics` endpoint
 - [ ] Slow query logging
 
 **Resource Management**

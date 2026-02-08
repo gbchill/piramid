@@ -175,3 +175,58 @@ pub struct TextSearchRequest {
     #[serde(default)]
     pub metric: Option<String>,
 }
+
+// =============================================================================
+// UPSERT
+// =============================================================================
+
+#[derive(Deserialize)]
+pub struct UpsertRequest {
+    pub id: Option<String>,  // If provided, use this ID; otherwise generate new
+    pub vector: Vec<f32>,
+    pub text: String,
+    #[serde(default)]
+    pub metadata: HashMap<String, serde_json::Value>,
+}
+
+#[derive(Serialize)]
+pub struct UpsertResponse {
+    pub id: String,
+    pub created: bool,  // true if inserted, false if updated
+}
+
+// =============================================================================
+// BATCH SEARCH
+// =============================================================================
+
+#[derive(Deserialize)]
+pub struct BatchSearchRequest {
+    pub vectors: Vec<Vec<f32>>,
+    #[serde(default = "default_k")]
+    pub k: usize,
+    #[serde(default)]
+    pub metric: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct BatchSearchResponse {
+    pub results: Vec<Vec<HitResponse>>,
+}
+
+// =============================================================================
+// METRICS
+// =============================================================================
+
+#[derive(Serialize)]
+pub struct MetricsResponse {
+    pub total_collections: usize,
+    pub total_vectors: usize,
+    pub collections: Vec<CollectionMetrics>,
+}
+
+#[derive(Serialize)]
+pub struct CollectionMetrics {
+    pub name: String,
+    pub vector_count: usize,
+    pub index_type: String,
+}

@@ -12,9 +12,9 @@ use std::fs::{File, OpenOptions};
 use uuid::Uuid;
 
 use crate::error::Result;
-use crate::index::{HnswIndex, HnswConfig};
+use crate::index::{VectorIndex, IndexConfig};
 use super::wal::{Wal, WalEntry};
-use super::utils::{EntryPointer, save_index, load_index, get_wal_path, ensure_file_size, create_mmap, grow_mmap_if_needed};
+use super::utils::{EntryPointer, save_index, load_index, get_wal_path, ensure_file_size, create_mmap, grow_mmap_if_needed, save_vector_index, load_vector_index};
 use crate::metadata::Metadata;
 use crate::metrics::Metric;
 use crate::search::Hit;
@@ -22,22 +22,23 @@ use crate::quantization::QuantizedVector;
 
 use super::entry::Document;
 
-// Vector storage engine with memory-mapped files and HNSW indexing
+// Vector storage engine with memory-mapped files and pluggable indexing
 pub struct Collection {
     data_file: File,
     mmap: Option<MmapMut>,
     index: HashMap<Uuid, EntryPointer>,
-    hnsw_index: HnswIndex,
+    vector_index: Box<dyn VectorIndex>,
+    index_config: IndexConfig,
     path: String,
     wal: Wal,
 }
 
 impl Collection {
     pub fn open(path: &str) -> Result<Self> {
-        Self::with_hnsw(path, HnswConfig::default())
+        Self::with_config(path, IndexConfig::default())
     }
 
-    pub fn with_hnsw(path: &str, config: HnswConfig) -> Result<Self> {
+    pub fn with_config(path: &str, index_config: IndexConfig) -> Result<Self> {
         let file = OpenOptions::new()
             .read(true)
             .write(true)
@@ -50,7 +51,14 @@ impl Collection {
         // Load index from disk if exists
         let index = load_index(path)?;
 
-        let mut hnsw_index = HnswIndex::new(config);
+        // Try to load persisted vector index, otherwise create new one
+        let mut vector_index = match load_vector_index(path)? {
+            Some(loaded_index) => loaded_index,
+            None => {
+                // Create new index based on current collection size
+                index_config.create_index(index.len())
+            }
+        };
         
         // Initialize WAL
         let wal_path = get_wal_path(path);
@@ -64,7 +72,8 @@ impl Collection {
                 data_file: file,
                 mmap: Some(mmap),
                 index,
-                hnsw_index,
+                vector_index,
+                index_config: index_config.clone(),
                 path: path.to_string(),
                 wal,
             };
@@ -109,13 +118,14 @@ impl Collection {
                 .as_secs();
             temp_storage.wal.checkpoint(timestamp)?;
             temp_storage.save_index()?;
+            temp_storage.save_vector_index()?;
             temp_storage.wal.truncate()?;
             
             return Ok(temp_storage);
         }
         
-        // Rebuild HNSW from existing vectors
-        if !index.is_empty() {
+        // Rebuild vector index from existing vectors if index wasn't persisted
+        if !index.is_empty() && load_vector_index(path)?.is_none() {
             let mut vectors: HashMap<Uuid, Vec<f32>> = HashMap::new();
             for (id, idx_entry) in &index {
                 let offset = idx_entry.offset as usize;
@@ -129,7 +139,7 @@ impl Collection {
             }
             
             for (id, vector) in &vectors {
-                hnsw_index.insert(*id, vector, &vectors);
+                vector_index.insert(*id, vector, &vectors);
             }
         }
         
@@ -137,7 +147,8 @@ impl Collection {
             data_file: file,
             mmap: Some(mmap),
             index,
-            hnsw_index,
+            vector_index,
+            index_config,
             path: path.to_string(),
             wal,
         })
@@ -170,7 +181,7 @@ impl Collection {
                 vectors.insert(*vec_id, vec_entry.get_vector());
             }
         }
-        self.hnsw_index.insert(id, &vec_f32, &vectors);
+        self.vector_index.insert(id, &vec_f32, &vectors);
         
         Ok(id)
     }
@@ -178,7 +189,7 @@ impl Collection {
     // Internal delete without WAL logging (for recovery)
     fn delete_internal(&mut self, id: &Uuid) {
         self.index.remove(id);
-        self.hnsw_index.remove(id);
+        self.vector_index.remove(id);
     }
 
     pub fn insert(&mut self, entry: Document) -> Result<Uuid> {
@@ -195,6 +206,30 @@ impl Collection {
         self.save_index()?;
         
         self.insert_internal(entry)
+    }
+    
+    // Upsert: insert if not exists, update if exists
+    pub fn upsert(&mut self, entry: Document) -> Result<Uuid> {
+        let id = entry.id;
+        if self.index.contains_key(&id) {
+            // Update existing
+            let vector = entry.get_vector();
+            self.wal.log(&WalEntry::Update {
+                id,
+                vector,
+                text: entry.text.clone(),
+                metadata: entry.metadata.clone()
+            })?;
+            
+            self.delete_internal(&id);
+            self.insert_internal(entry)?;
+            self.save_index()?;
+            self.save_vector_index()?;
+            Ok(id)
+        } else {
+            // Insert new
+            self.insert(entry)
+        }
     }
 
     pub fn insert_batch(&mut self, entries: Vec<Document>) -> Result<Vec<Uuid>> {
@@ -251,7 +286,7 @@ impl Collection {
         // Persist index once
         self.save_index()?;
         
-        // Build vectors map for HNSW
+        // Build vectors map for index
         let mut vectors: HashMap<Uuid, Vec<f32>> = HashMap::new();
         for (vec_id, _) in &self.index {
             if let Some(vec_entry) = self.get(vec_id) {
@@ -259,10 +294,10 @@ impl Collection {
             }
         }
         
-        // Insert into HNSW index
+        // Insert into vector index
         for entry in entries {
             let vec_f32 = entry.get_vector();
-            self.hnsw_index.insert(entry.id, &vec_f32, &vectors);
+            self.vector_index.insert(entry.id, &vec_f32, &vectors);
         }
         
         Ok(ids)
@@ -270,6 +305,10 @@ impl Collection {
 
     fn save_index(&self) -> Result<()> {
         save_index(&self.path, &self.index)
+    }
+    
+    fn save_vector_index(&self) -> Result<()> {
+        save_vector_index(&self.path, self.vector_index.as_ref())
     }
 
     pub fn get(&self, id: &Uuid) -> Option<Document> {
@@ -288,7 +327,7 @@ impl Collection {
             }
         }
         
-        let neighbor_ids = self.hnsw_index.search(query, k, k * 2, &vectors);
+        let neighbor_ids = self.vector_index.search(query, k, &vectors);
         
         let mut results = Vec::new();
         for id in neighbor_ids {
@@ -324,8 +363,8 @@ impl Collection {
         self.index.len()
     }
 
-    pub fn index(&self) -> &HnswIndex {
-        &self.hnsw_index
+    pub fn vector_index(&self) -> &dyn VectorIndex {
+        self.vector_index.as_ref()
     }
 
     pub fn get_vectors(&self) -> HashMap<Uuid, Vec<f32>> {
@@ -358,6 +397,7 @@ impl Collection {
             
             self.delete_internal(id);
             self.save_index()?;
+            self.save_vector_index()?;
             Ok(true)
         } else {
             Ok(false)
@@ -433,6 +473,7 @@ impl Collection {
         
         self.wal.checkpoint(timestamp)?;
         self.save_index()?;
+        self.save_vector_index()?;
         self.wal.truncate()?;
         
         Ok(())

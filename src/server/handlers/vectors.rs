@@ -210,3 +210,83 @@ pub async fn search_vectors(
     
     Ok(Json(SearchResponse { results: search_results }))
 }
+
+// POST /api/collections/:collection/upsert - insert or update a vector
+pub async fn upsert_vector(
+    State(state): State<SharedState>,
+    Path(collection): Path<String>,
+    Json(req): Json<UpsertRequest>,
+) -> Result<Json<UpsertResponse>> {
+    if state.shutting_down.load(Ordering::Relaxed) {
+        return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
+    }
+
+    state.get_or_create_collection(&collection)?;
+    
+    let storage_ref = state.collections.get(&collection)
+        .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
+    let mut storage = storage_ref.write_with_timeout(LOCK_TIMEOUT)?;
+    
+    // Check if entry exists
+    let id = if let Some(id_str) = req.id {
+        Uuid::parse_str(&id_str)
+            .map_err(|_| ServerError::InvalidRequest("Invalid UUID".to_string()))?
+    } else {
+        Uuid::new_v4()
+    };
+    
+    let exists = storage.get(&id).is_some();
+    
+    let metadata = json_to_metadata(req.metadata);
+    let mut entry = Document::with_metadata(req.vector, req.text, metadata);
+    entry.id = id;
+    
+    storage.upsert(entry)?;
+    
+    Ok(Json(UpsertResponse { 
+        id: id.to_string(),
+        created: !exists
+    }))
+}
+
+// POST /api/collections/:collection/search/batch - search multiple queries at once
+pub async fn batch_search_vectors(
+    State(state): State<SharedState>,
+    Path(collection): Path<String>,
+    Json(req): Json<BatchSearchRequest>,
+) -> Result<Json<BatchSearchResponse>> {
+    if state.shutting_down.load(Ordering::Relaxed) {
+        return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
+    }
+
+    if req.vectors.is_empty() {
+        return Err(ServerError::InvalidRequest("No query vectors provided".to_string()).into());
+    }
+
+    state.get_or_create_collection(&collection)?;
+    
+    let storage_ref = state.collections.get(&collection)
+        .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
+    let storage = storage_ref.read_with_timeout(LOCK_TIMEOUT)?;
+    
+    let metric = parse_metric(req.metric);
+    let batch_results = storage.search_batch(&req.vectors, req.k, metric);
+    
+    let response_results: Vec<Vec<HitResponse>> = batch_results
+        .into_iter()
+        .map(|results| {
+            results
+                .into_iter()
+                .map(|r| HitResponse {
+                    id: r.id.to_string(),
+                    score: r.score,
+                    text: r.text,
+                    metadata: metadata_to_json(&r.metadata),
+                })
+                .collect()
+        })
+        .collect();
+    
+    Ok(Json(BatchSearchResponse { results: response_results }))
+}
+

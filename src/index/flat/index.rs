@@ -11,7 +11,7 @@ use crate::index::traits::{VectorIndex, IndexStats, IndexDetails, IndexType};
 
 // Flat index - simple brute force search
 // Stores nothing except config (vectors are in main storage)
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct FlatIndex {
     config: FlatConfig,
     vector_ids: Vec<Uuid>,  // Track which vectors we've seen

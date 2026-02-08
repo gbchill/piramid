@@ -83,3 +83,21 @@ impl std::fmt::Display for IndexType {
         }
     }
 }
+
+// Wrapper for persisting any index type
+#[derive(Serialize, Deserialize)]
+pub enum SerializableIndex {
+    Flat(crate::index::flat::FlatIndex),
+    Hnsw(crate::index::hnsw::HnswIndex),
+    Ivf(crate::index::ivf::IvfIndex),
+}
+
+impl SerializableIndex {
+    pub fn to_trait_object(self) -> Box<dyn VectorIndex> {
+        match self {
+            SerializableIndex::Flat(idx) => Box::new(idx),
+            SerializableIndex::Hnsw(idx) => Box::new(idx),
+            SerializableIndex::Ivf(idx) => Box::new(idx),
+        }
+    }
+}

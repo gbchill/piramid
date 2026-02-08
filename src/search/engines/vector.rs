@@ -4,7 +4,6 @@
 use crate::storage::Collection;
 use crate::metrics::Metric;
 use crate::search::Hit;
-use crate::search::utils::{create_vector_map, entry_to_result, sort_and_truncate};
 
 // Perform k-nearest neighbor vector similarity search
 // 
@@ -22,27 +21,8 @@ pub fn vector_search(
     k: usize,
     metric: Metric,
 ) -> Vec<Hit> {
-    // Create vector map for index
-    let vector_map = create_vector_map(storage);
-
-    // Use index to find k nearest neighbors
-    // ef = 2*k for better recall (HNSW parameter)
-    let ef = (k * 2).max(50);
-    let result_ids = storage.index().search(query, k, ef, &vector_map);
-
-    // Convert IDs to Hits
-    let mut results: Vec<Hit> = result_ids
-        .into_iter()
-        .filter_map(|id| {
-            storage.get(&id).map(|entry| {
-                entry_to_result(&entry, query, metric)
-            })
-        })
-        .collect();
-
-    // Sort and truncate
-    sort_and_truncate(&mut results, k);
-    results
+    // Use storage's search method which handles all index types
+    storage.search(query, k, metric)
 }
 
 #[cfg(test)]

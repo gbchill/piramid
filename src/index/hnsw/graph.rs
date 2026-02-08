@@ -58,7 +58,7 @@ impl Ord for SearchCandidate {
 }
 
 // Main HNSW index structure
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct HnswIndex{
     config: HnswConfig, // configuration parameters, for example: m, ef_construction, ml, metric
     nodes: HashMap<Uuid, HnswNode>,

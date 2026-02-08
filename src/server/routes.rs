@@ -30,6 +30,7 @@ pub fn create_router(state: SharedState) -> Router {
         // Health check - always first, it's what load balancers hit
         .route("/api/health", get(handlers::health))
         .route("/api/health/embeddings", get(handlers::health_embeddings))
+        .route("/api/metrics", get(handlers::metrics))
         
         // Collections CRUD
         .route("/api/collections", get(handlers::list_collections))
@@ -45,8 +46,12 @@ pub fn create_router(state: SharedState) -> Router {
         .route("/api/collections/{collection}/vectors/{id}", get(handlers::get_vector))
         .route("/api/collections/{collection}/vectors/{id}", delete(handlers::delete_vector))
         
+        // Upsert
+        .route("/api/collections/{collection}/upsert", post(handlers::upsert_vector))
+        
         // Search (POST because we're sending a vector in body)
         .route("/api/collections/{collection}/search", post(handlers::search_vectors))
+        .route("/api/collections/{collection}/search/batch", post(handlers::batch_search_vectors))
         
         // Embedding endpoints
         .route("/api/collections/{collection}/embed", post(handlers::embed_text))
