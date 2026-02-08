@@ -14,13 +14,14 @@ use uuid::Uuid;
 use crate::error::Result;
 use crate::index::{VectorIndex, IndexConfig};
 use super::wal::{Wal, WalEntry};
-use super::utils::{EntryPointer, save_index, load_index, get_wal_path, ensure_file_size, create_mmap, grow_mmap_if_needed, save_vector_index, load_vector_index};
+use super::utils::{EntryPointer, save_index, load_index, get_wal_path, ensure_file_size, create_mmap, grow_mmap_if_needed, save_vector_index, load_vector_index, save_metadata, load_metadata};
 use crate::metadata::Metadata;
 use crate::metrics::Metric;
 use crate::search::Hit;
 use crate::quantization::QuantizedVector;
 
 use super::entry::Document;
+use super::collection_metadata::CollectionMetadata;
 
 // Vector storage engine with memory-mapped files and pluggable indexing
 pub struct Collection {
@@ -29,6 +30,7 @@ pub struct Collection {
     index: HashMap<Uuid, EntryPointer>,
     vector_index: Box<dyn VectorIndex>,
     index_config: IndexConfig,
+    metadata: CollectionMetadata,
     path: String,
     wal: Wal,
 }
@@ -39,6 +41,13 @@ impl Collection {
     }
 
     pub fn with_config(path: &str, index_config: IndexConfig) -> Result<Self> {
+        // Extract collection name from path
+        let collection_name = std::path::Path::new(path)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("unknown")
+            .to_string();
+        
         let file = OpenOptions::new()
             .read(true)
             .write(true)
@@ -50,6 +59,16 @@ impl Collection {
 
         // Load index from disk if exists
         let index = load_index(path)?;
+
+        // Load or create metadata
+        let mut metadata = match load_metadata(path)? {
+            Some(meta) => {
+                let mut meta = meta;
+                meta.update_vector_count(index.len());
+                meta
+            }
+            None => CollectionMetadata::new(collection_name),
+        };
 
         // Try to load persisted vector index, otherwise create new one
         let mut vector_index = match load_vector_index(path)? {
@@ -74,6 +93,7 @@ impl Collection {
                 index,
                 vector_index,
                 index_config: index_config.clone(),
+                metadata,
                 path: path.to_string(),
                 wal,
             };
@@ -149,6 +169,7 @@ impl Collection {
             index,
             vector_index,
             index_config,
+            metadata,
             path: path.to_string(),
             wal,
         })
@@ -175,6 +196,15 @@ impl Collection {
         self.index.insert(id, index_entry);
         
         let vec_f32 = entry.get_vector();
+        
+        // Set dimensions on first insert
+        self.metadata.set_dimensions(vec_f32.len());
+        
+        // Validate dimensions match
+        if let Some(expected_dim) = self.metadata.dimensions {
+            crate::validation::validate_dimensions(&vec_f32, expected_dim)?;
+        }
+        
         let mut vectors: HashMap<Uuid, Vec<f32>> = HashMap::new();
         for (vec_id, _) in &self.index {
             if let Some(vec_entry) = self.get(vec_id) {
@@ -183,6 +213,9 @@ impl Collection {
         }
         self.vector_index.insert(id, &vec_f32, &vectors);
         
+        // Update metadata
+        self.metadata.update_vector_count(self.index.len());
+        
         Ok(id)
     }
 
@@ -190,6 +223,7 @@ impl Collection {
     fn delete_internal(&mut self, id: &Uuid) {
         self.index.remove(id);
         self.vector_index.remove(id);
+        self.metadata.update_vector_count(self.index.len());
     }
 
     pub fn insert(&mut self, entry: Document) -> Result<Uuid> {
@@ -309,6 +343,14 @@ impl Collection {
     
     fn save_vector_index(&self) -> Result<()> {
         save_vector_index(&self.path, self.vector_index.as_ref())
+    }
+    
+    fn save_metadata(&self) -> Result<()> {
+        save_metadata(&self.path, &self.metadata)
+    }
+    
+    pub fn metadata(&self) -> &CollectionMetadata {
+        &self.metadata
     }
 
     pub fn get(&self, id: &Uuid) -> Option<Document> {
@@ -502,6 +544,7 @@ impl Collection {
         self.wal.checkpoint(timestamp)?;
         self.save_index()?;
         self.save_vector_index()?;
+        self.save_metadata()?;
         self.wal.truncate()?;
         
         Ok(())

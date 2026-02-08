@@ -22,6 +22,9 @@ pub struct HealthResponse {
 pub struct CollectionInfo {
     pub name: String,
     pub count: usize,
+    pub created_at: Option<u64>,
+    pub updated_at: Option<u64>,
+    pub dimensions: Option<usize>,
 }
 
 #[derive(Serialize)]

@@ -22,7 +22,7 @@ pub use error::{PiramidError, Result, ErrorContext};
 pub use metadata::{Metadata, MetadataValue, metadata};
 pub use query::{Filter, FilterCondition};
 pub use search::Hit;
-pub use storage::{Document, Collection};
+pub use storage::{Document, Collection, CollectionMetadata};
 pub use embeddings::{EmbeddingConfig, EmbeddingProvider, EmbeddingError};
 pub use index::{
     HnswIndex, HnswConfig, 
