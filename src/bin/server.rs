@@ -12,7 +12,7 @@ async fn main() {
     
     // Config from environment (with sensible defaults)
     let port = std::env::var("PORT").unwrap_or_else(|_| "6333".to_string());
-    let data_dir = std::env::var("DATA_DIR").unwrap_or_else(|_| "./piramid_data".to_string());
+    let data_dir = std::env::var("DATA_DIR").unwrap_or_else(|_| "./.piramid".to_string());
     
     // Optional embedding configuration
     let embedding_provider = std::env::var("EMBEDDING_PROVIDER").ok();

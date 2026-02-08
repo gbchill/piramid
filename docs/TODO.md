@@ -108,8 +108,6 @@
 - [x] Flat/Brute Force (for small collections <10k vectors)
 - [x] IVF (Inverted File Index)
 - [ ] Product Quantization (PQ)
-- [ ] Annoy (Spotify's algorithm)
-- [ ] ScaNN (Google's algorithm)
 
 **Observability**
 - [x] Basic `/metrics` endpoint

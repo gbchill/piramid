@@ -60,9 +60,9 @@ mod tests {
 
     #[test]
     fn test_filtered_search() {
-        let test_db = "piramid_data/tests/test_filtered_search.db";
-        let test_index = "piramid_data/tests/test_filtered_search.index.db";
-        let test_wal = "piramid_data/tests/test_filtered_search.wal";
+        let test_db = ".piramid/tests/test_filtered_search.db";
+        let test_index = ".piramid/tests/test_filtered_search.index.db";
+        let test_wal = ".piramid/tests/test_filtered_search.wal";
         
         // Clean up any existing files
         let _ = std::fs::remove_file(test_db);
