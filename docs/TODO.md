@@ -61,7 +61,7 @@
 - [x] Batch insert API (10k inserts in <1s)
 - [x] Batch search (multiple queries in one request)
 - [x] Batch get vectors by IDs (via list_vectors with pagination)
-- [ ] Bulk delete
+- [x] Bulk delete
 
 **Collection Management**
 - [x] Delete collection (cascade remove all data)
@@ -81,10 +81,10 @@
 
 **Validation & Safety**
 - [x] Dimension consistency checks per collection
-- [ ] Vector normalization option
-- [ ] Vector format validation (NaN, infinity checks)
+- [x] Vector normalization option
+- [x] Vector format validation (NaN, infinity checks)
 - [x] Request size limits
-- [ ] Input validation & sanitization
+- [x] Input validation & sanitization
 - [x] Request timeout configuration (5s lock timeout)
 - [ ] Runtime config validation
 

@@ -6,6 +6,7 @@
 pub mod config;
 pub mod metrics;
 pub mod error;
+pub mod validation;
 pub mod metadata;
 pub mod query;
 pub mod search;

@@ -4,6 +4,7 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 use crate::{Metric, Document};
 use crate::error::{Result, ServerError};
+use crate::validation;
 use super::super::{
     state::SharedState,
     types::*,
@@ -12,6 +13,7 @@ use super::super::{
 };
 
 const LOCK_TIMEOUT: Duration = Duration::from_secs(5);
+const MAX_BATCH_SIZE: usize = 10_000;
 
 // Parse similarity metric from string
 fn parse_metric(s: Option<String>) -> Metric {
@@ -26,10 +28,20 @@ fn parse_metric(s: Option<String>) -> Metric {
 pub async fn insert_vector(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
-    Json(req): Json<InsertRequest>,
+    Json(mut req): Json<InsertRequest>,
 ) -> Result<Json<InsertResponse>> {
     if state.shutting_down.load(Ordering::Relaxed) {
         return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
+    }
+
+    // Validate inputs
+    validation::validate_collection_name(&collection)?;
+    validation::validate_text(&req.text)?;
+    validation::validate_vector(&req.vector)?;
+    
+    // Normalize if requested
+    if req.normalize {
+        req.vector = validation::normalize_vector(&req.vector);
     }
 
     state.get_or_create_collection(&collection)?;
@@ -50,18 +62,33 @@ pub async fn insert_vector(
 pub async fn insert_vectors_batch(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
-    Json(req): Json<BatchInsertRequest>,
+    Json(mut req): Json<BatchInsertRequest>,
 ) -> Result<Json<BatchInsertResponse>> {
     if state.shutting_down.load(Ordering::Relaxed) {
         return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
     }
 
-    if req.vectors.is_empty() {
-        return Err(ServerError::InvalidRequest("No vectors provided".to_string()).into());
-    }
+    // Validate inputs
+    validation::validate_collection_name(&collection)?;
+    validation::validate_batch_size(req.vectors.len(), MAX_BATCH_SIZE, "Insert")?;
 
     if req.texts.len() != req.vectors.len() {
         return Err(ServerError::InvalidRequest("vectors and texts length mismatch".to_string()).into());
+    }
+
+    // Validate all vectors
+    validation::validate_vectors(&req.vectors)?;
+    
+    // Validate all texts
+    for text in &req.texts {
+        validation::validate_text(text)?;
+    }
+    
+    // Normalize if requested
+    if req.normalize {
+        req.vectors = req.vectors.iter()
+            .map(|v| validation::normalize_vector(v))
+            .collect();
     }
 
     state.get_or_create_collection(&collection)?;
@@ -189,9 +216,9 @@ pub async fn delete_vectors_batch(
         return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
     }
 
-    if req.ids.is_empty() {
-        return Err(ServerError::InvalidRequest("No vector IDs provided".to_string()).into());
-    }
+    // Validate inputs
+    validation::validate_collection_name(&collection)?;
+    validation::validate_batch_size(req.ids.len(), MAX_BATCH_SIZE, "Delete")?;
 
     state.get_or_create_collection(&collection)?;
 
@@ -222,6 +249,10 @@ pub async fn search_vectors(
         return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
     }
 
+    // Validate inputs
+    validation::validate_collection_name(&collection)?;
+    validation::validate_vector(&req.vector)?;
+
     state.get_or_create_collection(&collection)?;
     
     let storage_ref = state.collections.get(&collection)
@@ -248,10 +279,20 @@ pub async fn search_vectors(
 pub async fn upsert_vector(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
-    Json(req): Json<UpsertRequest>,
+    Json(mut req): Json<UpsertRequest>,
 ) -> Result<Json<UpsertResponse>> {
     if state.shutting_down.load(Ordering::Relaxed) {
         return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
+    }
+
+    // Validate inputs
+    validation::validate_collection_name(&collection)?;
+    validation::validate_text(&req.text)?;
+    validation::validate_vector(&req.vector)?;
+    
+    // Normalize if requested
+    if req.normalize {
+        req.vector = validation::normalize_vector(&req.vector);
     }
 
     state.get_or_create_collection(&collection)?;
@@ -292,9 +333,10 @@ pub async fn batch_search_vectors(
         return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
     }
 
-    if req.vectors.is_empty() {
-        return Err(ServerError::InvalidRequest("No query vectors provided".to_string()).into());
-    }
+    // Validate inputs
+    validation::validate_collection_name(&collection)?;
+    validation::validate_batch_size(req.vectors.len(), MAX_BATCH_SIZE, "Search")?;
+    validation::validate_vectors(&req.vectors)?;
 
     state.get_or_create_collection(&collection)?;
     

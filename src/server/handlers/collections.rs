@@ -2,6 +2,7 @@ use axum::{extract::{Path, State}, response::Json};
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 use crate::error::{Result, ServerError};
+use crate::validation;
 use super::super::{
     state::SharedState,
     types::*,
@@ -36,6 +37,9 @@ pub async fn create_collection(
     if state.shutting_down.load(Ordering::Relaxed) {
         return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
     }
+
+    // Validate collection name
+    validation::validate_collection_name(&req.name)?;
 
     state.get_or_create_collection(&req.name)?;
     

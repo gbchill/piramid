@@ -45,6 +45,8 @@ pub struct InsertRequest {
     pub text: String,
     #[serde(default)]  // if missing in JSON, use Default (empty HashMap)
     pub metadata: HashMap<String, serde_json::Value>,
+    #[serde(default)]  // if missing, defaults to false
+    pub normalize: bool,  // Whether to normalize the vector to unit length
 }
 
 // What we return after storing
@@ -84,6 +86,8 @@ pub struct BatchInsertRequest {
     pub texts: Vec<String>,
     #[serde(default)]
     pub metadata: Vec<HashMap<String, serde_json::Value>>,
+    #[serde(default)]
+    pub normalize: bool,  // Whether to normalize all vectors
 }
 
 // Batch store response
@@ -206,6 +210,8 @@ pub struct UpsertRequest {
     pub text: String,
     #[serde(default)]
     pub metadata: HashMap<String, serde_json::Value>,
+    #[serde(default)]
+    pub normalize: bool,  // Whether to normalize the vector
 }
 
 #[derive(Serialize)]
