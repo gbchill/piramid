@@ -258,3 +258,15 @@ pub struct CollectionMetrics {
     pub vector_count: usize,
     pub index_type: String,
 }
+
+// =============================================================================
+// INDEX STATISTICS
+// =============================================================================
+
+#[derive(Serialize)]
+pub struct IndexStatsResponse {
+    pub index_type: String,
+    pub total_vectors: usize,
+    pub memory_usage_bytes: usize,
+    pub details: serde_json::Value,
+}

@@ -65,7 +65,7 @@
 
 **Collection Management**
 - [x] Delete collection (cascade remove all data)
-- [ ] Collection metadata (created_at, updated_at, dimensions)
+- [x] Collection metadata (created_at, updated_at, dimensions)
 - [x] List collections with stats
 - [ ] Per-collection config override
 - [ ] Storage usage per collection
@@ -92,14 +92,14 @@
 - [x] Native batch API support (OpenAI/Ollama - 2x-10x speedup)
 - [ ] Request metrics (count, latency, tokens, cost)
 - [x] Type-safe config (enum-based instead of strings)
-- [ ] Retry with exponential backoff
+- [x] Retry with exponential backoff
 - [ ] Provider timeout configuration
 - [x] Benchmark to verify 3-5x SIMD speedup target
 
 **Index Management**
 - [ ] Rebuild index command
 - [ ] Index compaction (remove deleted vectors)
-- [ ] Index statistics endpoint
+- [x] Index statistics endpoint
 - [ ] Startup validation (check integrity on boot)
 - [ ] Startup health check (validate all collections load)
 

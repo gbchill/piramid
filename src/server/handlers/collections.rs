@@ -20,9 +20,13 @@ pub async fn list_collections(State(state): State<SharedState>) -> Result<Json<C
     let mut infos = Vec::new();
     for entry in state.collections.iter() {
         let storage = entry.value().read_with_timeout(LOCK_TIMEOUT)?;
+        let meta = storage.metadata();
         infos.push(CollectionInfo {
             name: entry.key().clone(),
             count: storage.count(),
+            created_at: Some(meta.created_at),
+            updated_at: Some(meta.updated_at),
+            dimensions: meta.dimensions,
         });
     }
     
@@ -46,9 +50,15 @@ pub async fn create_collection(
     let storage_ref = state.collections.get(&req.name)
         .ok_or_else(|| ServerError::Internal("Collection not found after creation".into()))?;
     let storage = storage_ref.read_with_timeout(LOCK_TIMEOUT)?;
-    let count = storage.count();
+    let meta = storage.metadata();
     
-    Ok(Json(CollectionInfo { name: req.name, count }))
+    Ok(Json(CollectionInfo { 
+        name: req.name,
+        count: storage.count(),
+        created_at: Some(meta.created_at),
+        updated_at: Some(meta.updated_at),
+        dimensions: meta.dimensions,
+    }))
 }
 
 // GET /api/collections/:name - get info about one collection
@@ -65,9 +75,15 @@ pub async fn get_collection(
     let storage_ref = state.collections.get(&name)
         .ok_or_else(|| ServerError::NotFound("Collection not found".into()))?;
     let storage = storage_ref.read_with_timeout(LOCK_TIMEOUT)?;
-    let count = storage.count();
+    let meta = storage.metadata();
     
-    Ok(Json(CollectionInfo { name, count }))
+    Ok(Json(CollectionInfo { 
+        name,
+        count: storage.count(),
+        created_at: Some(meta.created_at),
+        updated_at: Some(meta.updated_at),
+        dimensions: meta.dimensions,
+    }))
 }
 
 // DELETE /api/collections/:name - remove a collection
@@ -106,4 +122,29 @@ pub async fn collection_count(
     let count = storage.count();
     
     Ok(Json(CountResponse { count }))
+}
+
+// GET /api/collections/:name/index/stats - get index statistics
+pub async fn index_stats(
+    State(state): State<SharedState>,
+    Path(collection): Path<String>,
+) -> Result<Json<IndexStatsResponse>> {
+    if state.shutting_down.load(Ordering::Relaxed) {
+        return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
+    }
+
+    state.get_or_create_collection(&collection)?;
+    
+    let storage_ref = state.collections.get(&collection)
+        .ok_or_else(|| ServerError::NotFound("Collection not found".into()))?;
+    let storage = storage_ref.read_with_timeout(LOCK_TIMEOUT)?;
+    
+    let stats = storage.vector_index().stats();
+    
+    Ok(Json(IndexStatsResponse {
+        index_type: stats.index_type.to_string(),
+        total_vectors: stats.total_vectors,
+        memory_usage_bytes: stats.memory_usage_bytes,
+        details: serde_json::to_value(&stats.details).unwrap_or(serde_json::json!({})),
+    }))
 }

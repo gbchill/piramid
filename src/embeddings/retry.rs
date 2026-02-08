@@ -1,0 +1,200 @@
+// Retry wrapper for embedders with exponential backoff
+
+use async_trait::async_trait;
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::time::sleep;
+use crate::embeddings::{Embedder, EmbeddingResponse, EmbeddingResult, EmbeddingError};
+
+pub struct RetryEmbedder {
+    inner: Arc<dyn Embedder>,
+    max_retries: u32,
+    initial_delay_ms: u64,
+    max_delay_ms: u64,
+}
+
+impl RetryEmbedder {
+    pub fn new(embedder: Arc<dyn Embedder>) -> Self {
+        Self {
+            inner: embedder,
+            max_retries: 3,
+            initial_delay_ms: 1000,  // Start with 1 second
+            max_delay_ms: 30000,     // Cap at 30 seconds
+        }
+    }
+    
+    pub fn with_config(
+        embedder: Arc<dyn Embedder>,
+        max_retries: u32,
+        initial_delay_ms: u64,
+        max_delay_ms: u64,
+    ) -> Self {
+        Self {
+            inner: embedder,
+            max_retries,
+            initial_delay_ms,
+            max_delay_ms,
+        }
+    }
+}
+
+#[async_trait]
+impl Embedder for RetryEmbedder {
+    async fn embed(&self, text: &str) -> EmbeddingResult<EmbeddingResponse> {
+        let mut attempts = 0;
+        let mut delay_ms = self.initial_delay_ms;
+        
+        loop {
+            match self.inner.embed(text).await {
+                Ok(result) => return Ok(result),
+                Err(e) => {
+                    attempts += 1;
+                    
+                    if !is_retryable_error(&e) || attempts > self.max_retries {
+                        return Err(e);
+                    }
+                    
+                    eprintln!(
+                        "Embedding request failed (attempt {}/{}): {}. Retrying in {}ms...",
+                        attempts, self.max_retries + 1, e, delay_ms
+                    );
+                    
+                    sleep(Duration::from_millis(delay_ms)).await;
+                    delay_ms = (delay_ms * 2).min(self.max_delay_ms);
+                }
+            }
+        }
+    }
+
+    async fn embed_batch(&self, texts: &[String]) -> EmbeddingResult<Vec<EmbeddingResponse>> {
+        let mut attempts = 0;
+        let mut delay_ms = self.initial_delay_ms;
+        
+        loop {
+            match self.inner.embed_batch(texts).await {
+                Ok(result) => return Ok(result),
+                Err(e) => {
+                    attempts += 1;
+                    
+                    if !is_retryable_error(&e) || attempts > self.max_retries {
+                        return Err(e);
+                    }
+                    
+                    eprintln!(
+                        "Batch embedding request failed (attempt {}/{}): {}. Retrying in {}ms...",
+                        attempts, self.max_retries + 1, e, delay_ms
+                    );
+                    
+                    sleep(Duration::from_millis(delay_ms)).await;
+                    delay_ms = (delay_ms * 2).min(self.max_delay_ms);
+                }
+            }
+        }
+    }
+
+    fn provider_name(&self) -> &str {
+        self.inner.provider_name()
+    }
+
+    fn model_name(&self) -> &str {
+        self.inner.model_name()
+    }
+
+    fn dimensions(&self) -> Option<usize> {
+        self.inner.dimensions()
+    }
+}
+
+// Determine if an error is retryable
+fn is_retryable_error(error: &EmbeddingError) -> bool {
+    // Use the built-in is_recoverable method
+    error.is_recoverable()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::{AtomicU32, Ordering};
+    use std::sync::Arc;
+
+    struct MockEmbedder {
+        calls: Arc<AtomicU32>,
+        fail_count: u32,
+    }
+
+    impl MockEmbedder {
+        fn new(fail_count: u32) -> Self {
+            Self {
+                calls: Arc::new(AtomicU32::new(0)),
+                fail_count,
+            }
+        }
+    }
+
+    #[async_trait]
+    impl Embedder for MockEmbedder {
+        async fn embed(&self, _text: &str) -> EmbeddingResult<EmbeddingResponse> {
+            let call_num = self.calls.fetch_add(1, Ordering::SeqCst);
+            
+            if call_num < self.fail_count {
+                return Err(EmbeddingError::RequestFailed("Connection failed".to_string()));
+            }
+            
+            Ok(EmbeddingResponse {
+                embedding: vec![1.0, 2.0, 3.0],
+                tokens: Some(10),
+                model: "test".to_string(),
+            })
+        }
+
+        async fn embed_batch(&self, texts: &[String]) -> EmbeddingResult<Vec<EmbeddingResponse>> {
+            let mut results = Vec::new();
+            for text in texts {
+                results.push(self.embed(text).await?);
+            }
+            Ok(results)
+        }
+
+        fn provider_name(&self) -> &str {
+            "mock"
+        }
+
+        fn model_name(&self) -> &str {
+            "test-model"
+        }
+
+        fn dimensions(&self) -> Option<usize> {
+            Some(3)
+        }
+    }
+
+    #[tokio::test]
+    async fn test_retry_success_after_failures() {
+        let mock = MockEmbedder::new(2); // Fail first 2 attempts
+        let calls_counter = mock.calls.clone();
+        let retry = RetryEmbedder::with_config(Arc::new(mock), 3, 10, 1000);
+        
+        let result = retry.embed("test").await;
+        assert!(result.is_ok());
+        assert_eq!(calls_counter.load(Ordering::SeqCst), 3); // 2 failures + 1 success
+    }
+
+    #[tokio::test]
+    async fn test_retry_exhaustion() {
+        let mock = MockEmbedder::new(10); // Always fail
+        let retry = RetryEmbedder::with_config(Arc::new(mock), 2, 10, 1000);
+        
+        let result = retry.embed("test").await;
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_retryable_errors() {
+        assert!(is_retryable_error(&EmbeddingError::RequestFailed("test".to_string())));
+        assert!(is_retryable_error(&EmbeddingError::Timeout("test".to_string())));
+        assert!(is_retryable_error(&EmbeddingError::RateLimitExceeded));
+        assert!(is_retryable_error(&EmbeddingError::ProviderUnavailable("test".to_string())));
+        assert!(!is_retryable_error(&EmbeddingError::AuthenticationFailed("test".to_string())));
+        assert!(!is_retryable_error(&EmbeddingError::ConfigError("test".to_string())));
+    }
+}

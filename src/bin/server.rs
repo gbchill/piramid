@@ -44,7 +44,10 @@ async fn main() {
                 println!("  Provider:    {}", provider);
                 println!("  Model:       {}", embedder.model_name());
                 println!();
-                Arc::new(AppState::with_embedder(&data_dir, embedder))
+                
+                // Wrap with retry logic (3 retries, exponential backoff)
+                let retry_embedder = Arc::new(embeddings::RetryEmbedder::new(embedder));
+                Arc::new(AppState::with_embedder(&data_dir, retry_embedder))
             }
             Err(e) => {
                 eprintln!("✗ Embeddings:  FAILED");
