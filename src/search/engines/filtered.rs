@@ -66,7 +66,8 @@ mod tests {
     #[test]
     fn test_filtered_search() {
         let _ = std::fs::remove_file("piramid_data/tests/test_filtered_search.db");
-        let _ = std::fs::remove_file(".hnsw.db");
+        let _ = std::fs::remove_file("piramid_data/tests/test_filtered_search.index.db");
+        
         let mut storage = VectorStorage::open("piramid_data/tests/test_filtered_search.db").unwrap();
 
         // Insert vectors with metadata
@@ -89,10 +90,10 @@ mod tests {
         let query = vec![1.0, 0.0, 0.0];
         let results = filtered_search(&storage, &query, 5, Metric::Cosine, &filter);
 
-        assert_eq!(results.len(), 1);
+        assert_eq!(results.len(), 1, "Expected 1 result, got {}: {:?}", results.len(), results.iter().map(|r| &r.text).collect::<Vec<_>>());
         assert_eq!(results[0].text, "rust doc");
 
         std::fs::remove_file("piramid_data/tests/test_filtered_search.db").unwrap();
-        let _ = std::fs::remove_file(".hnsw.db");
+        std::fs::remove_file("piramid_data/tests/test_filtered_search.index.db").unwrap();
     }
 }
