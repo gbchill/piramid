@@ -84,7 +84,7 @@ mod tests {
 
     #[test]
     fn test_flat_insert_and_search() {
-        let mut index = FlatIndex::new(FlatConfig { metric: Metric::Cosine });
+        let mut index = FlatIndex::new(FlatConfig::default());
         let mut vectors = HashMap::new();
         
         // Insert some vectors
@@ -114,7 +114,7 @@ mod tests {
     
     #[test]
     fn test_flat_remove() {
-        let mut index = FlatIndex::new(FlatConfig { metric: Metric::Cosine });
+        let mut index = FlatIndex::new(FlatConfig::default());
         let mut vectors = HashMap::new();
         
         let id1 = Uuid::new_v4();

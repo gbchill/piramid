@@ -265,12 +265,10 @@ mod tests {
 
     #[test]
     fn test_ivf_clustering() {
-        let config = IvfConfig {
-            num_clusters: 2,
-            num_probes: 2,
-            max_iterations: 5,
-            metric: Metric::Cosine,
-        };
+        let mut config = IvfConfig::default();
+        config.num_clusters = 2;
+        config.num_probes = 2;
+        config.max_iterations = 5;
         
         let mut index = IvfIndex::new(config);
         let mut vectors = HashMap::new();

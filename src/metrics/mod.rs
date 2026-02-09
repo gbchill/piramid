@@ -29,9 +29,11 @@ pub enum Metric {
     Euclidean,
     DotProduct,
 }
+use crate::config::ExecutionMode;
 
-use crate::config::ExecutionMode;
-use crate::config::ExecutionMode;
+
+impl Metric {
+    pub fn calculate(&self, a: &[f32], b: &[f32]) -> f32 {
         self.calculate_with_mode(a, b, ExecutionMode::default())
     }
     

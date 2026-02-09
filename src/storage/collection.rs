@@ -29,18 +29,43 @@ pub struct Collection {
     mmap: Option<MmapMut>,
     index: HashMap<Uuid, EntryPointer>,
     vector_index: Box<dyn VectorIndex>,
-    index_config: IndexConfig,
+    config: crate::config::CollectionConfig,
     metadata: CollectionMetadata,
     path: String,
     wal: Wal,
+    operation_count: usize,
 }
 
 impl Collection {
-    pub fn open(path: &str) -> Result<Self> {
-        Self::with_config(path, IndexConfig::default())
+
+    fn init_rayon_pool(config: &crate::config::ParallelismConfig) {
+        let num_threads = config.num_threads();
+        if num_threads > 0 {
+            rayon::ThreadPoolBuilder::new()
+                .num_threads(num_threads)
+                .build_global()
+                .ok();
+        }
     }
 
-    pub fn with_config(path: &str, index_config: IndexConfig) -> Result<Self> {
+    fn track_operation(&mut self) -> Result<()> {
+        self.operation_count += 1;
+        if self.config.wal.enabled && 
+           self.operation_count >= self.config.wal.checkpoint_frequency {
+            self.checkpoint()?;
+            self.operation_count = 0;
+        }
+        Ok(())
+    }
+    
+    pub fn open(path: &str) -> Result<Self> {
+        Self::with_config(path, crate::config::CollectionConfig::default())
+    }
+
+    pub fn with_config(path: &str, config: crate::config::CollectionConfig) -> Result<Self> {
+        // Initialize Rayon thread pool
+        Self::init_rayon_pool(&config.parallelism);
+        
         // Extract collection name from path
         let collection_name = std::path::Path::new(path)
             .file_stem()
@@ -54,14 +79,25 @@ impl Collection {
             .create(true)
             .open(path)?;
 
-        ensure_file_size(&file, 1024 * 1024)?; // 1MB initial size
-        let mmap = create_mmap(&file)?;
+        // Use configured mmap size
+        let initial_size = if config.memory.use_mmap {
+            config.memory.initial_mmap_size as u64
+        } else {
+            1024 * 1024
+        };
+        
+        ensure_file_size(&file, initial_size)?;
+        let mmap = if config.memory.use_mmap {
+            Some(create_mmap(&file)?)
+        } else {
+            None
+        };
 
         // Load index from disk if exists
         let index = load_index(path)?;
 
         // Load or create metadata
-        let mut metadata = match load_metadata(path)? {
+        let metadata = match load_metadata(path)? {
             Some(meta) => {
                 let mut meta = meta;
                 meta.update_vector_count(index.len());
@@ -75,27 +111,37 @@ impl Collection {
             Some(loaded_index) => loaded_index,
             None => {
                 // Create new index based on current collection size
-                index_config.create_index(index.len())
+                config.index.create_index(index.len())
             }
         };
         
-        // Initialize WAL
+        // Initialize WAL with config
         let wal_path = get_wal_path(path);
-        let wal = Wal::new(wal_path.into())?;
+        let wal = if config.wal.enabled {
+            Wal::new(wal_path.into())?
+        } else {
+            Wal::disabled(wal_path.into())?
+        };
         
-        // Replay WAL for crash recovery
-        let wal_entries = wal.replay()?;
+        // Replay WAL for crash recovery if enabled
+        let wal_entries = if config.wal.enabled {
+            wal.replay()?
+        } else {
+            Vec::new()
+        };
+        
         if !wal_entries.is_empty() {
             // Create temporary storage to apply WAL entries
             let mut temp_storage = Self {
                 data_file: file,
-                mmap: Some(mmap),
+                mmap,
                 index,
                 vector_index,
-                index_config: index_config.clone(),
+                config: config.clone(),
                 metadata,
                 path: path.to_string(),
                 wal,
+                operation_count: 0,
             };
             
             // Apply each WAL entry
@@ -146,32 +192,35 @@ impl Collection {
         
         // Rebuild vector index from existing vectors if index wasn't persisted
         if !index.is_empty() && load_vector_index(path)?.is_none() {
-            let mut vectors: HashMap<Uuid, Vec<f32>> = HashMap::new();
-            for (id, idx_entry) in &index {
-                let offset = idx_entry.offset as usize;
-                let length = idx_entry.length as usize;
-                if offset + length <= mmap.len() {
-                    let bytes = &mmap[offset..offset + length];
-                    if let Ok(entry) = bincode::deserialize::<Document>(bytes) {
-                        vectors.insert(*id, entry.get_vector());  // Dequantize
+            if let Some(ref mmap_ref) = mmap {
+                let mut vectors: HashMap<Uuid, Vec<f32>> = HashMap::new();
+                for (id, idx_entry) in &index {
+                    let offset = idx_entry.offset as usize;
+                    let length = idx_entry.length as usize;
+                    if offset + length <= mmap_ref.len() {
+                        let bytes = &mmap_ref[offset..offset + length];
+                        if let Ok(entry) = bincode::deserialize::<Document>(bytes) {
+                            vectors.insert(*id, entry.get_vector());
+                        }
                     }
                 }
-            }
-            
-            for (id, vector) in &vectors {
-                vector_index.insert(*id, vector, &vectors);
+                
+                for (id, vector) in &vectors {
+                    vector_index.insert(*id, vector, &vectors);
+                }
             }
         }
         
         Ok(Self {
             data_file: file,
-            mmap: Some(mmap),
+            mmap,
             index,
             vector_index,
-            index_config,
+            config,
             metadata,
             path: path.to_string(),
             wal,
+            operation_count: 0,
         })
     }
 
@@ -391,12 +440,18 @@ impl Collection {
     // Batch search - search multiple queries in parallel
     // Returns results for each query in the same order
     pub fn search_batch(&self, queries: &[Vec<f32>], k: usize, metric: Metric) -> Vec<Vec<Hit>> {
-        use rayon::prelude::*;
-        
-        queries
-            .par_iter()
-            .map(|query| self.search(query, k, metric))
-            .collect()
+        if self.config.parallelism.parallel_search {
+            use rayon::prelude::*;
+            queries
+                .par_iter()
+                .map(|query| self.search(query, k, metric))
+                .collect()
+        } else {
+            queries
+                .iter()
+                .map(|query| self.search(query, k, metric))
+                .collect()
+        }
     }
 
 
@@ -703,9 +758,3 @@ mod tests {
         let _ = std::fs::remove_file(".piramid/tests/test_batch_search.db.vecindex.db");
     }
 }
-
-    // Create a collection with full configuration control
-    pub fn with_full_config(path: &str, config: crate::config::CollectionConfig) -> Result<Self> {
-        Self::with_config(path, config.index)
-        // TODO: Apply other config options (quantization, memory, wal, parallelism)
-    }

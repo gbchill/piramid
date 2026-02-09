@@ -18,14 +18,23 @@
 - [x] Execution mode configuration (Auto, SIMD, Scalar)
 - [x] HNSW indexing (production-grade approximate k-NN)
 - [x] HNSW index persistence to disk
+- [x] HNSW ef_search parameter for search quality control
 - [x] IVF index persistence to disk
+- [x] IVF nprobe runtime override for search quality
 - [x] Flat index persistence to disk
 - [x] Benchmark suite
 - [x] SIMD acceleration (dot product, cosine, euclidean)
+- [x] Scalar fallback implementations for all metrics
 - [x] Memory-mapped files (mmap)
+- [x] Configurable mmap initial size
+- [x] Mmap enable/disable option
 - [x] Scalar quantization (int8) - 4x memory reduction
+- [x] Quantization configuration (None, Int8, Int4, Float16)
 - [x] Parallel search with rayon
+- [x] Parallelism configuration (SingleThreaded, Auto, Fixed threads)
+- [x] Parallel search toggle
 - [x] LRU cache for embeddings (50-90% cost savings)
+- [x] Cache configuration (size, TTL, enable/disable)
 
 ### Data Durability & Reliability
 
@@ -42,6 +51,9 @@
 - [x] Append-only log for all mutations (insert/update/delete)
 - [x] Recovery from WAL on crash/restart
 - [x] Periodic checkpointing to reduce replay time
+- [x] WAL configuration (enable/disable, checkpoint frequency)
+- [x] WAL high durability and fast modes
+- [x] WAL disabled mode support
 
 **Graceful Shutdown**
 - [x] Handle SIGTERM/SIGINT signals
@@ -68,7 +80,8 @@
 - [x] Delete collection (cascade remove all data)
 - [x] Collection metadata (created_at, updated_at, dimensions)
 - [x] List collections with stats
-- [ ] Per-collection config override
+- [x] Per-collection config override
+- [x] Unified CollectionConfig with all settings
 - [x] Storage usage per collection
 
 **Vector Operations**
@@ -101,6 +114,7 @@
 - [ ] Rebuild index command
 - [ ] Index compaction (remove deleted vectors)
 - [x] Index statistics endpoint
+- [x] HNSW memory usage calculation
 - [ ] Startup validation (check integrity on boot)
 - [ ] Startup health check (validate all collections load)
 
@@ -328,3 +342,5 @@
 - [ ] Privacy Mode (GDPR/HIPAA, encryption)
 - [ ] Auto-Pilot (self-tuning, auto-optimization)
 - [ ] Contributing guidelines
+
+

@@ -6,7 +6,7 @@ use crate::error::Result;
 use super::entry::WalEntry;
 
 pub struct Wal {
-    file: BufWriter<File>,
+    file: Option<BufWriter<File>>,
     path: PathBuf,
 }
 
@@ -17,19 +17,32 @@ impl Wal {
             .append(true)
             .open(&path)?;
         Ok(Wal {
-            file: BufWriter::new(file),
+            file: Some(BufWriter::new(file)),
+            path,
+        })
+    }
+    
+    pub fn disabled(path: PathBuf) -> Result<Self> {
+        Ok(Wal {
+            file: None,
             path,
         })
     }
 
     pub fn log(&mut self, entry: &WalEntry) -> Result<()> {
-        let json = serde_json::to_string(entry)?;
-        writeln!(self.file, "{}", json)?;
-        self.file.flush()?;
+        if let Some(file) = &mut self.file {
+            let json = serde_json::to_string(entry)?;
+            writeln!(file, "{}", json)?;
+            file.flush()?;
+        }
         Ok(())
     }
 
     pub fn replay(&self) -> Result<Vec<WalEntry>> {
+        if self.file.is_none() {
+            return Ok(Vec::new());
+        }
+        
         let file = File::open(&self.path)?;
         let reader = BufReader::new(file);
         let mut entries = Vec::new();
@@ -50,13 +63,22 @@ impl Wal {
         Ok(())
     }
 
-    pub fn truncate(&mut self) -> Result<()> {
-        drop(std::mem::replace(&mut self.file, BufWriter::new(File::create(&self.path)?)));
+    pub fn clear(&mut self) -> Result<()> {
+        if let Some(file) = &mut self.file {
+            file.get_mut().set_len(0)?;
+            file.flush()?;
+        }
         Ok(())
     }
-
+    
+    pub fn truncate(&mut self) -> Result<()> {
+        self.clear()
+    }
+    
     pub fn flush(&mut self) -> Result<()> {
-        self.file.flush()?;
+        if let Some(file) = &mut self.file {
+            file.flush()?;
+        }
         Ok(())
     }
 }
