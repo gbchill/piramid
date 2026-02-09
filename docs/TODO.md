@@ -93,6 +93,7 @@
 - [x] List vector IDs only (without full data) (via list_vectors)
 - [ ] Duplicate detection (find similar vectors in collection)
 - [ ] Implement SIMD/Parallel/Jit/Binary execution actual implementation with cpu detection 
+- [ ] fix query in search folder modularity import
 - [ ] implement actual memory detection for collection 
 
 **Validation & Safety**
