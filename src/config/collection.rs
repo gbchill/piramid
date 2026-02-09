@@ -24,6 +24,10 @@ pub struct CollectionConfig {
     // Parallelism settings
     #[serde(default)]
     pub parallelism: ParallelismConfig,
+    
+    // Execution mode for vector operations
+    #[serde(default)]
+    pub execution: ExecutionMode,
 }
 
 impl Default for CollectionConfig {
@@ -34,6 +38,7 @@ impl Default for CollectionConfig {
             memory: MemoryConfig::default(),
             wal: WalConfig::default(),
             parallelism: ParallelismConfig::default(),
+            execution: ExecutionMode::Auto,
         }
     }
 }
@@ -68,6 +73,12 @@ impl CollectionConfig {
     // Use single-threaded mode
     pub fn single_threaded(mut self) -> Self {
         self.parallelism = ParallelismConfig::single_threaded();
+        self
+    }
+    
+    // Set execution mode
+    pub fn with_execution_mode(mut self, mode: ExecutionMode) -> Self {
+        self.execution = mode;
         self
     }
 }

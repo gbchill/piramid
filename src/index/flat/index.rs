@@ -106,7 +106,7 @@ mod tests {
         
         // Search for nearest to [1, 0, 0]
         let query = vec![1.0, 0.0, 0.0];
-        let results = index.search(&query, 2, &vectors);
+        let results = index.search(&query, 2, &vectors, crate::config::SearchConfig::default());
         
         assert_eq!(results.len(), 2);
         assert_eq!(results[0], id1);

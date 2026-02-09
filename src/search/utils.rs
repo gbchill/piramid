@@ -20,7 +20,7 @@ pub(crate) fn entry_to_result(
     metric: Metric,
 ) -> Hit {
     let vec = entry.get_vector();  // Dequantize
-    let score = metric.calculate(query, &vec);
+    let score = metric.calculate(query, &vec, crate::config::ExecutionMode::Auto);
     Hit::new(
         entry.id,
         score,

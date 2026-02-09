@@ -12,29 +12,40 @@ use crate::config::ExecutionMode;
 
 
 pub fn cosine_similarity(a: &[f32], b: &[f32], mode: ExecutionMode) -> f32 {
-    match mode {
-        // Explicitly choose the SIMD implementation
+    let resolved = mode.resolve();
+    match resolved {
         ExecutionMode::Simd => cosine_similarity_simd(a, b),
-        
-        // Explicitly choose the Scalar implementation
         ExecutionMode::Scalar => cosine_similarity_scalar(a, b),
-        
-        // Handle Auto: Use runtime detection or a sensible default
-        ExecutionMode::Auto => {
-            // For example, if using the 'wide' crate, it often manages its own dispatch,
-            // but you can manually check for features like AVX2 here.
-           
-        },
-
-        // Placeholder for other modes
         ExecutionMode::Parallel => {
-                    },
-
-        // Exhaustive match ensures all variants are handled
-        _ => euclidean_distance_scalar(a, b),
+            use rayon::prelude::*;
+            let chunk_size = (a.len() / num_cpus::get()).max(1024);
+            
+            let (dot, norm_a, norm_b): (f32, f32, f32) = a.par_chunks(chunk_size)
+                .zip(b.par_chunks(chunk_size))
+                .map(|(chunk_a, chunk_b)| {
+                    let mut dot = 0.0;
+                    let mut norm_a = 0.0;
+                    let mut norm_b = 0.0;
+                    for i in 0..chunk_a.len() {
+                        dot += chunk_a[i] * chunk_b[i];
+                        norm_a += chunk_a[i] * chunk_a[i];
+                        norm_b += chunk_b[i] * chunk_b[i];
+                    }
+                    (dot, norm_a, norm_b)
+                })
+                .reduce(|| (0.0, 0.0, 0.0), |(d1, na1, nb1), (d2, na2, nb2)| {
+                    (d1 + d2, na1 + na2, nb1 + nb2)
+                });
+            
+            let denominator = norm_a.sqrt() * norm_b.sqrt();
+            if denominator == 0.0 {
+                0.0
+            } else {
+                dot / denominator
+            }
+        },
+        _ => cosine_similarity_scalar(a, b),
     }
-
-
 }
 
 fn cosine_similarity_simd(a: &[f32], b: &[f32]) -> f32 {
@@ -117,7 +128,7 @@ mod tests {
     #[test]
     fn test_identical_vectors() {
         let v = vec![1.0, 2.0, 3.0];
-        let similarity = cosine_similarity(&v, &v);
+        let similarity = cosine_similarity(&v, &v, crate::config::ExecutionMode::Auto);
         assert!((similarity - 1.0).abs() < 1e-6);
     }
 
@@ -125,7 +136,7 @@ mod tests {
     fn test_opposite_vectors() {
         let v1 = vec![1.0, 2.0, 3.0];
         let v2 = vec![-1.0, -2.0, -3.0];
-        let similarity = cosine_similarity(&v1, &v2);
+        let similarity = cosine_similarity(&v1, &v2, crate::config::ExecutionMode::Auto);
         assert!((similarity - (-1.0)).abs() < 1e-6);
     }
 
@@ -133,7 +144,7 @@ mod tests {
     fn test_orthogonal_vectors() {
         let v1 = vec![1.0, 0.0];
         let v2 = vec![0.0, 1.0];
-        let similarity = cosine_similarity(&v1, &v2);
+        let similarity = cosine_similarity(&v1, &v2, crate::config::ExecutionMode::Auto);
         assert!(similarity.abs() < 1e-6);
     }
 
@@ -141,7 +152,7 @@ mod tests {
     fn test_zero_vector() {
         let v1 = vec![0.0, 0.0, 0.0];
         let v2 = vec![1.0, 2.0, 3.0];
-        let similarity = cosine_similarity(&v1, &v2);
+        let similarity = cosine_similarity(&v1, &v2, crate::config::ExecutionMode::Auto);
         assert_eq!(similarity, 0.0);
     }
 
@@ -150,6 +161,6 @@ mod tests {
     fn test_different_lengths() {
         let v1 = vec![1.0, 2.0];
         let v2 = vec![1.0, 2.0, 3.0];
-        cosine_similarity(&v1, &v2);
+        cosine_similarity(&v1, &v2, crate::config::ExecutionMode::Auto);
     }
 }

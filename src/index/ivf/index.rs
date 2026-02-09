@@ -310,7 +310,7 @@ mod tests {
         index.insert(id2, &v2, &vectors);
         
         let query = vec![1.0, 0.0, 0.0];
-        let results = index.search(&query, 1, &vectors);
+        let results = index.search(&query, 1, &vectors, crate::config::SearchConfig::default());
         
         assert!(!results.is_empty());
     }

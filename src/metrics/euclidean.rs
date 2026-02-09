@@ -3,29 +3,30 @@ use crate::config::ExecutionMode;
 
 
 pub fn euclidean_distance(a: &[f32], b: &[f32], mode: ExecutionMode) -> f32 {
-   
-    match mode {
-        // Explicitly choose the SIMD implementation
+    let resolved = mode.resolve();
+    match resolved {
         ExecutionMode::Simd => euclidean_distance_simd(a, b),
-        
-        // Explicitly choose the Scalar implementation
         ExecutionMode::Scalar => euclidean_distance_scalar(a, b),
-        
-        // Handle Auto: Use runtime detection or a sensible default
-        ExecutionMode::Auto => {
-            // For example, if using the 'wide' crate, it often manages its own dispatch,
-            // but you can manually check for features like AVX2 here.
-           
-        },
-
-        // Placeholder for other modes
         ExecutionMode::Parallel => {
-                    },
-
-        // Exhaustive match ensures all variants are handled
+            use rayon::prelude::*;
+            let chunk_size = (a.len() / num_cpus::get()).max(1024);
+            
+            let sum_sq: f32 = a.par_chunks(chunk_size)
+                .zip(b.par_chunks(chunk_size))
+                .map(|(chunk_a, chunk_b)| {
+                    let mut sum = 0.0;
+                    for i in 0..chunk_a.len() {
+                        let diff = chunk_a[i] - chunk_b[i];
+                        sum += diff * diff;
+                    }
+                    sum
+                })
+                .sum();
+            
+            sum_sq.sqrt()
+        },
         _ => euclidean_distance_scalar(a, b),
     }
-
 }
 
 fn euclidean_distance_simd(a: &[f32], b: &[f32]) -> f32 {
@@ -78,30 +79,28 @@ fn euclidean_distance_scalar(a: &[f32], b: &[f32]) -> f32 {
 // Squared distance - skip the sqrt when you only need to compare
 // (if a² < b², then a < b, so sqrt is unnecessary for ranking)
 pub fn euclidean_distance_squared(a: &[f32], b: &[f32], mode: ExecutionMode) -> f32 {
-   
-      match mode {
-        // Explicitly choose the SIMD implementation
-        ExecutionMode::Simd => eeuclidean_distance_squared_simd(a, b),
-        
-        // Explicitly choose the Scalar implementation
-        ExecutionMode::Scalar => euclidean_distance_scalar(a, b),
-        
-        // Handle Auto: Use runtime detection or a sensible default
-        ExecutionMode::Auto => {
-            // For example, if using the 'wide' crate, it often manages its own dispatch,
-            // but you can manually check for features like AVX2 here.
-                   },
-
-        // Placeholder for other modes
+    let resolved = mode.resolve();
+    match resolved {
+        ExecutionMode::Simd => euclidean_distance_squared_simd(a, b),
+        ExecutionMode::Scalar => euclidean_distance_squared_scalar(a, b),
         ExecutionMode::Parallel => {
-            // e.g., use rayon here
+            use rayon::prelude::*;
+            let chunk_size = (a.len() / num_cpus::get()).max(1024);
+            
+            a.par_chunks(chunk_size)
+                .zip(b.par_chunks(chunk_size))
+                .map(|(chunk_a, chunk_b)| {
+                    let mut sum = 0.0;
+                    for i in 0..chunk_a.len() {
+                        let diff = chunk_a[i] - chunk_b[i];
+                        sum += diff * diff;
+                    }
+                    sum
+                })
+                .sum()
         },
-
-        // Exhaustive match ensures all variants are handled
-        _ => euclidean_distance_scalar(a, b),
+        _ => euclidean_distance_squared_scalar(a, b),
     }
-
-
 }
 
 fn euclidean_distance_squared_simd(a: &[f32], b: &[f32]) -> f32 {
@@ -158,14 +157,14 @@ mod tests {
     #[test]
     fn test_identical_vectors() {
         let v = vec![1.0, 2.0, 3.0];
-        assert_eq!(euclidean_distance(&v, &v), 0.0);
+        assert_eq!(euclidean_distance(&v, &v, crate::config::ExecutionMode::Auto), 0.0);
     }
 
     #[test]
     fn test_3_4_5_triangle() {
         let v1 = vec![0.0, 0.0];
         let v2 = vec![3.0, 4.0];
-        let distance = euclidean_distance(&v1, &v2);
+        let distance = euclidean_distance(&v1, &v2, crate::config::ExecutionMode::Auto);
         assert!((distance - 5.0).abs() < 1e-6);
     }
 
@@ -173,14 +172,14 @@ mod tests {
     fn test_unit_distance() {
         let v1 = vec![0.0];
         let v2 = vec![1.0];
-        assert!((euclidean_distance(&v1, &v2) - 1.0).abs() < 1e-6);
+        assert!((euclidean_distance(&v1, &v2, crate::config::ExecutionMode::Auto) - 1.0).abs() < 1e-6);
     }
 
     #[test]
     fn test_squared_distance() {
         let v1 = vec![0.0, 0.0];
         let v2 = vec![3.0, 4.0];
-        assert!((euclidean_distance_squared(&v1, &v2) - 25.0).abs() < 1e-6);
+        assert!((euclidean_distance_squared(&v1, &v2, crate::config::ExecutionMode::Auto) - 25.0).abs() < 1e-6);
     }
 
     #[test]
@@ -188,6 +187,6 @@ mod tests {
     fn test_different_lengths() {
         let v1 = vec![1.0, 2.0];
         let v2 = vec![1.0, 2.0, 3.0];
-        euclidean_distance(&v1, &v2);
+        euclidean_distance(&v1, &v2, crate::config::ExecutionMode::Auto);
     }
 }

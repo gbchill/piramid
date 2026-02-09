@@ -13,10 +13,9 @@
 mod types;
 mod engines;
 mod utils;
-mod filter;
+pub mod query;
 
 pub use types::Hit;
 pub use engines::{vector_search, filtered_search};
-pub use query::Filter; 
-// Re-export for convenience
+pub use query::{Filter, FilterCondition};
 pub use crate::metrics::Metric;

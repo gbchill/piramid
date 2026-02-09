@@ -1,81 +1,23 @@
-use wide::f32x8;
+// Dot product of two vectors
+// Fast similarity metric for normalized vectors
+
+mod scalar;
+mod simd;
+mod parallel;
+
 use crate::config::ExecutionMode;
+pub use scalar::dot_product_scalar;
+pub use simd::dot_product_simd;
+pub use parallel::dot_product_parallel;
 
 pub fn dot_product(a: &[f32], b: &[f32], mode: ExecutionMode) -> f32 {
     let resolved = mode.resolve();
     match resolved {
         ExecutionMode::Simd => dot_product_simd(a, b), 
         ExecutionMode::Scalar => dot_product_scalar(a, b),
-        ExecutionMode::Parallel => {
-            use rayon::prelude::*;
-            let chunk_size = (a.len() / num_cpus::get()).max(1024);
-            
-            a.par_chunks(chunk_size)
-                .zip(b.par_chunks(chunk_size))
-                .map(|(chunk_a, chunk_b)| {
-                    let mut sum = 0.0;
-                    for i in 0..chunk_a.len() {
-                        sum += chunk_a[i] * chunk_b[i];
-                    }
-                    sum
-                })
-                .sum()
-        },
+        ExecutionMode::Parallel => dot_product_parallel(a, b),
         _ => dot_product_scalar(a, b),
     }
-}
-
-fn dot_product_simd(a: &[f32], b: &[f32]) -> f32 {
-    assert_eq!(a.len(), b.len(), "Vectors must have same length");
-    let len = a.len();
-    let mut sum = f32x8::splat(0.0);
-    let chunks = len / 8;
-    let remainder = len % 8;
-
-    for i in 0..chunks {
-        let offset = i * 8;
-        let va = f32x8::new([
-            a[offset],
-            a[offset + 1],
-            a[offset + 2],
-            a[offset + 3],
-            a[offset + 4],
-            a[offset + 5],
-            a[offset + 6],
-            a[offset + 7],
-            ]);
-        let vb = f32x8::new([
-            b[offset],
-            b[offset + 1],
-            b[offset + 2],
-            b[offset + 3],
-            b[offset + 4],
-            b[offset + 5],
-            b[offset + 6],
-            b[offset + 7],
-            ]);
-
-        sum += va * vb;
-    }
-
-    let mut result: f32 = sum.to_array().iter().sum();
-    // Handle remaining elements
-    for i in (len - remainder)..len {
-        result += a[i] * b[i];
-    }
-
-    result
-}
-
-fn dot_product_scalar(a: &[f32], b: &[f32]) -> f32 {
-    assert_eq!(a.len(), b.len(), "Vectors must have same length");
-    
-    let mut result = 0.0;
-    for i in 0..a.len() {
-        result += a[i] * b[i];
-    }
-    
-    result
 }
 
 #[cfg(test)]

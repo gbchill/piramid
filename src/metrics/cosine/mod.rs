@@ -1,0 +1,70 @@
+// Cosine similarity between two vectors
+// Measures the cosine of the angle between vectors, ignoring magnitude.
+// 
+// Returns value in range [-1, 1] where:
+// - 1.0 = identical direction
+// - 0.0 = orthogonal (perpendicular)
+// - -1.0 = opposite direction
+
+mod scalar;
+mod simd;
+mod parallel;
+
+use crate::config::ExecutionMode;
+pub use scalar::cosine_similarity_scalar;
+pub use simd::cosine_similarity_simd;
+pub use parallel::cosine_similarity_parallel;
+
+pub fn cosine_similarity(a: &[f32], b: &[f32], mode: ExecutionMode) -> f32 {
+    let resolved = mode.resolve();
+    match resolved {
+        ExecutionMode::Simd => cosine_similarity_simd(a, b),
+        ExecutionMode::Scalar => cosine_similarity_scalar(a, b),
+        ExecutionMode::Parallel => cosine_similarity_parallel(a, b),
+        _ => cosine_similarity_scalar(a, b),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_identical_vectors() {
+        let v = vec![1.0, 2.0, 3.0];
+        let similarity = cosine_similarity(&v, &v, crate::config::ExecutionMode::Auto);
+        assert!((similarity - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_opposite_vectors() {
+        let v1 = vec![1.0, 2.0, 3.0];
+        let v2 = vec![-1.0, -2.0, -3.0];
+        let similarity = cosine_similarity(&v1, &v2, crate::config::ExecutionMode::Auto);
+        assert!((similarity - (-1.0)).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_orthogonal_vectors() {
+        let v1 = vec![1.0, 0.0];
+        let v2 = vec![0.0, 1.0];
+        let similarity = cosine_similarity(&v1, &v2, crate::config::ExecutionMode::Auto);
+        assert!(similarity.abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_zero_vector() {
+        let v1 = vec![0.0, 0.0, 0.0];
+        let v2 = vec![1.0, 2.0, 3.0];
+        let similarity = cosine_similarity(&v1, &v2, crate::config::ExecutionMode::Auto);
+        assert_eq!(similarity, 0.0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Vectors must have same length")]
+    fn test_different_lengths() {
+        let v1 = vec![1.0, 2.0];
+        let v2 = vec![1.0, 2.0, 3.0];
+        cosine_similarity(&v1, &v2, crate::config::ExecutionMode::Auto);
+    }
+}

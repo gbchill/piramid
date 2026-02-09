@@ -12,9 +12,9 @@ pub mod latency;
 
 // `pub use` re-exports: users can do `metrics::cosine_similarity`
 // instead of `metrics::cosine::cosine_similarity`
-pub use cosine::{cosine_similarity, cosine_similarity};
-pub use euclidean::{euclidean_distance, euclidean_distance, euclidean_distance_squared, euclidean_distance_squared};
-pub use dot::{dot_product, dot_product};
+pub use cosine::cosine_similarity;
+pub use euclidean::{euclidean_distance, euclidean_distance_squared};
+pub use dot::dot_product;
 pub use latency::{LatencyTracker, time_operation, time_operation_sync};
 
 // Distance/similarity metric for vector comparison.
@@ -39,7 +39,7 @@ impl Metric {
             Metric::Cosine => cosine_similarity(a, b, mode),
             Metric::Euclidean => {
                 let dist = euclidean_distance(a, b, mode);
-                1.0 / (1.0 + dist)  // flip: distance -> similarity
+                1.0 / (1.0 + dist)
             }
             Metric::DotProduct => dot_product(a, b, mode),
         }
@@ -55,8 +55,8 @@ mod tests {
         let v = vec![1.0, 2.0, 3.0];
         
         // Identical vectors should have max similarity
-        assert!((Metric::Cosine.calculate(&v, &v) - 1.0).abs() < 1e-6);
-        assert!((Metric::Euclidean.calculate(&v, &v) - 1.0).abs() < 1e-6);
+        assert!((Metric::Cosine.calculate(&v, &v, ExecutionMode::Auto) - 1.0).abs() < 1e-6);
+        assert!((Metric::Euclidean.calculate(&v, &v, ExecutionMode::Auto) - 1.0).abs() < 1e-6);
     }
 
     #[test]
@@ -65,6 +65,6 @@ mod tests {
         let v2 = vec![0.0, 1.0];
         
         // Orthogonal vectors have 0 cosine similarity
-        assert!(Metric::Cosine.calculate(&v1, &v2).abs() < 1e-6);
+        assert!(Metric::Cosine.calculate(&v1, &v2, ExecutionMode::Auto).abs() < 1e-6);
     }
 }

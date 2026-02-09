@@ -20,9 +20,9 @@ pub fn vector_search(
     query: &[f32],
     k: usize,
     metric: Metric,
+    mode: crate::config::ExecutionMode,
 ) -> Vec<Hit> {
-    // Use storage's search method which handles all index types
-    storage.search(query, k, metric)
+    storage.search_with_mode(query, k, metric, mode)
 }
 
 #[cfg(test)]
@@ -53,7 +53,7 @@ mod tests {
 
         // Search
         let query = vec![1.0, 0.0, 0.0];
-        let results = vector_search(&storage, &query, 2, Metric::Cosine);
+        let results = vector_search(&storage, &query, 2, Metric::Cosine, crate::config::ExecutionMode::Auto);
 
         assert_eq!(results.len(), 2);
         assert!(results[0].text == "doc0" || results[0].text == "doc2");

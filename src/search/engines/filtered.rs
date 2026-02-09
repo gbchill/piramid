@@ -2,7 +2,7 @@
 
 use crate::storage::Collection;
 use crate::metrics::Metric;
-use crate::query::Filter;
+use crate::search::query::Filter;
 use crate::search::Hit;
 use crate::search::utils::sort_and_truncate;
 
@@ -27,17 +27,15 @@ pub fn filtered_search(
     k: usize,
     metric: Metric,
     filter: &Filter,
+    mode: crate::config::ExecutionMode,
 ) -> Vec<Hit> {
-    // Search for more candidates to compensate for filtered-out results
     let search_k = k * 10;
     
-    let results = storage.search(query, search_k, metric);
+    let results = storage.search_with_mode(query, search_k, metric, mode);
 
-    // Apply filter
     let mut filtered: Vec<Hit> = results
         .into_iter()
         .filter_map(|hit| {
-            // Get entry to check metadata
             storage.get(&hit.id).and_then(|entry| {
                 if !filter.matches(&entry.metadata) {
                     return None;
@@ -47,7 +45,6 @@ pub fn filtered_search(
         })
         .collect();
 
-    // Sort and truncate
     sort_and_truncate(&mut filtered, k);
     filtered
 }
@@ -92,7 +89,7 @@ mod tests {
             // Search with filter
             let filter = Filter::new().eq("lang", "rust");
             let query = vec![1.0, 0.0, 0.0];
-            let results = filtered_search(&storage, &query, 5, Metric::Cosine, &filter);
+            let results = filtered_search(&storage, &query, 5, Metric::Cosine, &filter, crate::config::ExecutionMode::Auto);
 
             assert_eq!(results.len(), 1, "Expected 1 result, got {}: {:?}", results.len(), results.iter().map(|r| &r.text).collect::<Vec<_>>());
             assert_eq!(results[0].text, "rust doc");

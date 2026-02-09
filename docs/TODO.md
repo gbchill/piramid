@@ -97,7 +97,8 @@
 
 Codebase Organization
 - [ ] Modularize code into clear layers if not already (API, Service, Storage, Indexing)
-- [ ] No redundant code 
+- [ ] No redundant code
+- [ ] no dead code 
 - [ ] maximize for longetivity naming conventions NOT short-term convenience like search_with_smd or search_width_qualtiy -> optimize for UX experience and clarity instead of short-term dev speed 
 - [ ] make sure folders are organized by domain (e.g. all search-related code in search/ folder) and not by technical layer (e.g. not api/search.rs, service/search.rs, etc.)
 - [ ] make sure utility files are seperate and categorized 
@@ -121,12 +122,12 @@ Codebase Organization
 - [ ] remove prebuilt embedding functionality for now
 - [ ] Local embedding model support (e.g. sentence-transformers)
 - [ ] native batch api support for hugginface as well (make sure )
+- [ ] implement actual batch api for embedding providers
 - [ ] Request metrics (count, latency, tokens, cost)
 - [x] Type-safe config (enum-based instead of strings)
 - [x] Retry with exponential backoff
 - [ ] Provider timeout configuration
 - [x] Benchmark to verify 3-5x SIMD speedup target
-- [ ] implement actual batch api for embedding providers
 
 **Index Algorithms**
 - [x] HNSW (current default)
@@ -143,12 +144,6 @@ Codebase Organization
 - [x] Ready endpoint (vs alive endpoint) - /api/health
 - [ ] Server version endpoint
 - [ ] Slow query logging
-
-**HTTP & Networking**
-- [ ] HTTP/2 support
-- [ ] Compression (gzip/brotli) for responses
-- [ ] Keep-alive connection management
-- [x] Configurable max request body size
 
  **Index Management**
 - [ ] Rebuild index function
@@ -168,6 +163,13 @@ Codebase Organization
 - [ ] Automatic cleanup of orphaned files
 - [ ] Data compaction (reclaim space from deletes)
 
+**HTTP & Networking**
+- [ ] HTTP/2 support
+- [ ] Compression (gzip/brotli) for responses
+- [ ] Keep-alive connection management
+- [x] Configurable max request body size
+
+
 **Security Basics**
 - [ ] API key authentication
 - [ ] Security headers (CORS, CSP, HSTS)
@@ -178,76 +180,35 @@ Codebase Organization
 ### Documentation & Testing
 
 **Documentation**
-- [ ] `docs/API.md` - Complete REST API reference
+- [ ] `docs/API.md` - Interactive API docs (Swagger/OpenAPI)
+- [ ] `pip/README.md` - Python client usage
+- [ ] `npm/README.md` - JavaScript client usage
 - [ ] `docs/QUICKSTART.md` - 5-minute tutorial
 - [ ] `CHANGELOG.md` - Version tracking
-- [ ] Update README with production features
-- [ ] OpenAPI/Swagger spec generation
-- [ ] Interactive API docs (Swagger UI)
-- [ ] Client SDK examples
 - [ ] License headers in source files
 - [ ] Third-party license audit
 
-**Testing**
-- [ ] Integration test suite
-- [ ] Load testing (verify 1M vectors in <10ms)
-- [ ] Stress testing (memory limits, concurrent requests)
+**Launch Prep**
+- [ ] dashboard full update and revamp
 
 **CI/CD**
 - [x] GitHub Actions CI pipeline
 - [x] Docker image publishing (Dockerfile exists)
+- [ ] fix broken ci pipleine gh workflow for cargo 
+- [ ] fix broken ci pipleine  gh workflow for pip  
+- [ ] fix broken ci pipleine  gh workflow for npm 
+- [ ] fix broken ci pipleine gh workflow for docker image  
 
-**Launch Prep**
-- [ ] Performance tuning based on benchmarks
-- [ ] Production deployment guide
-- [ ] Monitoring setup
-- [ ] Basic CLI tool for admin operations
-- [ ] Example collection generator (demo data)
 
- 
 
-### Post-Launch Features
+### Post-Launch 
 
-**Advanced Search**
-- [ ] Range search (distance threshold instead of top-k)
-- [ ] Recommendation API (similar to these IDs, not those)
-- [ ] Grouped/diverse search (max results per category)
-- [ ] Scroll/pagination for large result sets
-- [ ] Metadata-only search (no vector similarity)
-- [ ] Vector similarity between two stored vectors
-- [ ] Vector count per metadata filter
-
-**Query Optimization**
-- [ ] Query result caching
-- [ ] Query planning/optimization
-- [ ] Query timeout enforcement
-- [ ] Query complexity limits
-
-**Metadata Improvements**
-- [ ] Complex filters (AND/OR/NOT combinations)
-- [ ] Metadata indexing for fast filtering
-- [ ] Range queries on numeric metadata
-- [ ] Regex/pattern matching on string metadata
-- [ ] Date range filters
-- [ ] Array membership checks
-
-**Data Import/Export**
-- [ ] Import from JSON/CSV/Parquet
-- [ ] Export to JSON/CSV/Parquet
-- [ ] Streaming import for large datasets
-- [ ] Import progress tracking
-- [ ] Format validation on import
 
 **Client SDKs**
 - [ ] Official Python SDK
 - [ ] Official JavaScript/TypeScript SDK
 - [ ] SDK documentation
 - [ ] SDK examples
-
-**Backup & Restore**
-- [ ] Snapshot API (copy-on-write)
-- [ ] Point-in-time recovery (PITR)
-- [ ] Incremental backups
 
 **ACID Transactions**
 - [ ] Atomic batch operations (all-or-nothing)
@@ -264,10 +225,64 @@ Codebase Organization
 - [ ] Write buffering optimization
 - [ ] Background job queue for long operations
 
+Codebase Organization
+- [ ] Modularize code into clear layers if not already (API, Service, Storage, Indexing)
+- [ ] No redundant code
+- [ ] no dead code 
+- [ ] maximize for longetivity naming conventions NOT short-term convenience like search_with_smd or search_width_qualtiy -> optimize for UX experience and clarity instead of short-term dev speed 
+- [ ] make sure folders are organized by domain (e.g. all search-related code in search/ folder) and not by technical layer (e.g. not api/search.rs, service/search.rs, etc.)
+- [ ] make sure utility files are seperate and categorized 
+
+
+**Query Optimization**
+- [ ] Query result caching
+- [ ] Query planning/optimization
+- [ ] Query timeout enforcement
+- [ ] Query complexity limits
+
+**Backup & Restore**
+- [ ] Snapshot API (copy-on-write)
+- [ ] Point-in-time recovery (PITR)
+- [ ] Incremental backups
+
+**Metadata Improvements**
+- [ ] Complex filters (AND/OR/NOT combinations)
+- [ ] Metadata indexing for fast filtering
+- [ ] Range queries on numeric metadata
+- [ ] Regex/pattern matching on string metadata
+- [ ] Date range filters
+- [ ] Array membership checks
+
+Codebase Organization
+- [ ] Modularize code into clear layers if not already (API, Service, Storage, Indexing)
+- [ ] No redundant code
+- [ ] no dead code 
+- [ ] maximize for longetivity naming conventions NOT short-term convenience like search_with_smd or search_width_qualtiy -> optimize for UX experience and clarity instead of short-term dev speed 
+- [ ] make sure folders are organized by domain (e.g. all search-related code in search/ folder) and not by technical layer (e.g. not api/search.rs, service/search.rs, etc.)
+- [ ] make sure utility files are seperate and categorized 
+
+
 **Schema Support**
 - [ ] Define expected dimensions per collection
 - [ ] Metadata schema validation
 - [ ] Schema versioning
+
+
+**Advanced Search**
+- [ ] Range search (distance threshold instead of top-k)
+- [ ] Recommendation API (similar to these IDs, not those)
+- [ ] Grouped/diverse search (max results per category)
+- [ ] Scroll/pagination for large result sets
+- [ ] Metadata-only search (no vector similarity)
+- [ ] Vector similarity between two stored vectors
+- [ ] Vector count per metadata filter
+
+**Data Import/Export**
+- [ ] Import from JSON/CSV/Parquet
+- [ ] Export to JSON/CSV/Parquet
+- [ ] Streaming import for large datasets
+- [ ] Import progress tracking
+- [ ] Format validation on import
 
 **Advanced Security**
 - [ ] JWT token support
@@ -313,12 +328,6 @@ Codebase Organization
 - [ ] Development mode with auto-reload
 - [ ] Verbose debug logging mode
 
-**Telemetry & Analytics**
-- [ ] Usage telemetry (opt-in)
-- [ ] Error reporting (opt-in)
-- [ ] Feature usage tracking
-
- 
 
 ### Future Considerations
 

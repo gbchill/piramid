@@ -411,20 +411,24 @@ impl Collection {
     }
 
     pub fn search(&self, query: &[f32], k: usize, metric: Metric) -> Vec<Hit> {
+        self.search_with_mode(query, k, metric, self.config.execution)
+    }
+
+    pub fn search_with_mode(&self, query: &[f32], k: usize, metric: Metric, mode: crate::config::ExecutionMode) -> Vec<Hit> {
         let mut vectors: HashMap<Uuid, Vec<f32>> = HashMap::new();
         for (id, _) in &self.index {
             if let Some(entry) = self.get(id) {
-                vectors.insert(*id, entry.get_vector());  // Dequantize
+                vectors.insert(*id, entry.get_vector());
             }
         }
         
-        let neighbor_ids = self.vector_index.search(query, k, &vectors);
+        let neighbor_ids = self.vector_index.search(query, k, &vectors, crate::config::SearchConfig::default());
         
         let mut results = Vec::new();
         for id in neighbor_ids {
             if let Some(entry) = self.get(&id) {
-                let vec = entry.get_vector();  // Dequantize
-                let score = metric.calculate(query, &vec);
+                let vec = entry.get_vector();
+                let score = metric.calculate(query, &vec, mode);
                 results.push(Hit {
                     id,
                     score,
@@ -488,10 +492,11 @@ impl Collection {
         query: &[f32],
         k: usize,
         metric: Metric,
-        filter: Option<&crate::query::Filter>,
+        filter: Option<&crate::search::query::Filter>,
     ) -> Vec<Hit> {
+        let mode = self.config.execution;
         match filter {
-            Some(f) => crate::search::filtered_search(self, query, k, metric, f),
+            Some(f) => crate::search::filtered_search(self, query, k, metric, f, mode),
             None => self.search(query, k, metric),
         }
     }
