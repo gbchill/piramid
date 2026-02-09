@@ -1,0 +1,241 @@
+// Collection module - modular organization
+//
+// This module now uses a modular structure:
+// - storage.rs: Core data structure and basic accessors
+// - builder.rs: Initialization and recovery logic
+// - operations.rs: CRUD operations (insert, delete, update)
+// - search.rs: Search and filtering operations
+// - persistence.rs: Disk operations and checkpointing
+
+mod storage;
+mod operations;
+mod search;
+mod persistence;
+mod builder;
+
+pub use storage::Collection;
+pub use builder::CollectionBuilder;
+
+use uuid::Uuid;
+use crate::error::Result;
+use crate::metadata::Metadata;
+use crate::metrics::Metric;
+use crate::search::Hit;
+use crate::storage::document::Document;
+use std::collections::HashMap;
+
+// Public API implementation
+impl Collection {
+    pub fn open(path: &str) -> Result<Self> {
+        CollectionBuilder::open(path)
+    }
+
+    pub fn with_config(path: &str, config: crate::config::CollectionConfig) -> Result<Self> {
+        CollectionBuilder::with_config(path, config)
+    }
+
+    pub fn get(&self, id: &Uuid) -> Option<Document> {
+        operations::get(self, id)
+    }
+
+    pub fn insert(&mut self, entry: Document) -> Result<Uuid> {
+        operations::insert(self, entry)
+    }
+    
+    pub fn upsert(&mut self, entry: Document) -> Result<Uuid> {
+        operations::upsert(self, entry)
+    }
+
+    pub fn insert_batch(&mut self, entries: Vec<Document>) -> Result<Vec<Uuid>> {
+        operations::insert_batch(self, entries)
+    }
+
+    pub fn delete(&mut self, id: &Uuid) -> Result<bool> {
+        operations::delete(self, id)
+    }
+    
+    pub fn delete_batch(&mut self, ids: &[Uuid]) -> Result<usize> {
+        operations::delete_batch(self, ids)
+    }
+    
+    pub fn update_metadata(&mut self, id: &Uuid, metadata: Metadata) -> Result<bool> {
+        operations::update_metadata(self, id, metadata)
+    }
+    
+    pub fn update_vector(&mut self, id: &Uuid, vector: Vec<f32>) -> Result<bool> {
+        operations::update_vector(self, id, vector)
+    }
+
+    pub fn search(&self, query: &[f32], k: usize, metric: Metric) -> Vec<Hit> {
+        search::search(self, query, k, metric)
+    }
+
+    pub fn search_with_mode(&self, query: &[f32], k: usize, metric: Metric, mode: crate::config::ExecutionMode) -> Vec<Hit> {
+        search::search_with_mode(self, query, k, metric, mode)
+    }
+
+    pub fn search_batch(&self, queries: &[Vec<f32>], k: usize, metric: Metric) -> Vec<Vec<Hit>> {
+        search::search_batch(self, queries, k, metric)
+    }
+
+    pub fn search_with_filter(
+        &self,
+        query: &[f32],
+        k: usize,
+        metric: Metric,
+        filter: Option<&crate::search::query::Filter>,
+    ) -> Vec<Hit> {
+        search::search_with_filter(self, query, k, metric, filter)
+    }
+
+    pub fn get_vectors(&self) -> HashMap<Uuid, Vec<f32>> {
+        operations::get_vectors(self)
+    }
+
+    pub fn checkpoint(&mut self) -> Result<()> {
+        persistence::checkpoint(self)
+    }
+
+    pub fn flush(&mut self) -> Result<()> {
+        persistence::flush(self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::metrics::Metric;
+
+    #[test]
+    fn test_basic_store_and_retrieve() {
+        let test_path = ".piramid/tests/test_basic.db";
+        let test_index = ".piramid/tests/test_basic.db.index.db";
+        let test_wal = ".piramid/tests/test_basic.db.wal.db";
+        let test_vecindex = ".piramid/tests/test_basic.db.vecindex.db";
+        
+        let _ = std::fs::remove_file(test_path);
+        let _ = std::fs::remove_file(test_index);
+        let _ = std::fs::remove_file(test_wal);
+        let _ = std::fs::remove_file(test_vecindex);
+        
+        let mut storage = Collection::open(test_path).unwrap();
+        let entry = Document::new(vec![1.0, 2.0, 3.0], "test".to_string());
+        let id = storage.insert(entry).unwrap();
+        
+        let retrieved = storage.get(&id).unwrap();
+        assert_eq!(retrieved.text, "test");
+        assert_eq!(retrieved.get_vector(), vec![1.0, 2.0, 3.0]);
+        
+        drop(storage);
+        std::fs::remove_file(test_path).unwrap();
+        std::fs::remove_file(test_index).unwrap();
+        let _ = std::fs::remove_file(test_wal);
+        let _ = std::fs::remove_file(test_vecindex);
+    }
+
+    #[test]
+    fn test_persistence() {
+        let test_path = ".piramid/tests/test_persist.db";
+        let test_index = ".piramid/tests/test_persist.db.index.db";
+        let test_wal = ".piramid/tests/test_persist.db.wal.db";
+        let test_vecindex = ".piramid/tests/test_persist.db.vecindex.db";
+        
+        let _ = std::fs::remove_file(test_path);
+        let _ = std::fs::remove_file(test_index);
+        let _ = std::fs::remove_file(test_wal);
+        let _ = std::fs::remove_file(test_vecindex);
+        
+        let id1;
+        let id2;
+        
+        {
+            let mut storage = Collection::open(test_path).unwrap();
+            let e1 = Document::new(vec![1.0, 2.0], "first".to_string());
+            let e2 = Document::new(vec![3.0, 4.0], "second".to_string());
+            id1 = storage.insert(e1).unwrap();
+            id2 = storage.insert(e2).unwrap();
+        }
+        
+        {
+            let storage = Collection::open(test_path).unwrap();
+            assert_eq!(storage.count(), 2);
+            assert_eq!(storage.get(&id1).unwrap().text, "first");
+            assert_eq!(storage.get(&id2).unwrap().text, "second");
+        }
+        
+        std::fs::remove_file(test_path).unwrap();
+        std::fs::remove_file(test_index).unwrap();
+        let _ = std::fs::remove_file(test_wal);
+        let _ = std::fs::remove_file(test_vecindex);
+    }
+
+    #[test]
+    fn test_search() {
+        let _ = std::fs::remove_file(".piramid/tests/test_search.db");
+        let _ = std::fs::remove_file(".piramid/tests/test_search.db.index.db");
+        let _ = std::fs::remove_file(".piramid/tests/test_search.db.wal.db");
+        let _ = std::fs::remove_file(".piramid/tests/test_search.db.vecindex.db");
+        
+        let mut storage = Collection::open(".piramid/tests/test_search.db").unwrap();
+        
+        let vectors = vec![
+            vec![1.0, 0.0, 0.0],
+            vec![0.0, 1.0, 0.0],
+            vec![0.0, 0.0, 1.0],
+            vec![0.9, 0.1, 0.0],
+        ];
+        
+        for (i, vec) in vectors.iter().enumerate() {
+            let entry = Document::new(vec.clone(), format!("vec{}", i));
+            storage.insert(entry).unwrap();
+        }
+        
+        let query = vec![1.0, 0.0, 0.0];
+        let results = storage.search(&query, 2, Metric::Cosine);
+        
+        assert_eq!(results.len(), 2);
+        
+        drop(storage);
+        std::fs::remove_file(".piramid/tests/test_search.db").unwrap();
+        std::fs::remove_file(".piramid/tests/test_search.db.index.db").unwrap();
+        let _ = std::fs::remove_file(".piramid/tests/test_search.db.wal.db");
+        let _ = std::fs::remove_file(".piramid/tests/test_search.db.vecindex.db");
+    }
+
+    #[test]
+    fn test_batch_search() {
+        let _ = std::fs::remove_file(".piramid/tests/test_batch_search.db");
+        let _ = std::fs::remove_file(".piramid/tests/test_batch_search.db.index.db");
+        let _ = std::fs::remove_file(".piramid/tests/test_batch_search.db.wal.db");
+        let _ = std::fs::remove_file(".piramid/tests/test_batch_search.db.vecindex.db");
+        
+        let mut storage = Collection::open(".piramid/tests/test_batch_search.db").unwrap();
+        
+        // Insert test vectors
+        for i in 0..10 {
+            let vec = vec![i as f32, 0.0, 0.0];
+            let entry = Document::new(vec, format!("vec{}", i));
+            storage.insert(entry).unwrap();
+        }
+        
+        // Batch search with multiple queries
+        let queries = vec![
+            vec![0.0, 0.0, 0.0],
+            vec![5.0, 0.0, 0.0],
+            vec![9.0, 0.0, 0.0],
+        ];
+        
+        let results = storage.search_batch(&queries, 2, Metric::Euclidean);
+        
+        assert_eq!(results.len(), 3);
+        assert_eq!(results[0].len(), 2);
+        assert_eq!(results[1].len(), 2);
+        assert_eq!(results[2].len(), 2);
+        
+        drop(storage);
+        std::fs::remove_file(".piramid/tests/test_batch_search.db").unwrap();
+        std::fs::remove_file(".piramid/tests/test_batch_search.db.index.db").unwrap();
+        let _ = std::fs::remove_file(".piramid/tests/test_batch_search.db.wal.db");
+        let _ = std::fs::remove_file(".piramid/tests/test_batch_search.db.vecindex.db");
+    }
+}
