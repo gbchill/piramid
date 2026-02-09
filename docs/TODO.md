@@ -92,6 +92,8 @@
 - [x] Check vector existence by ID (via get)
 - [x] List vector IDs only (without full data) (via list_vectors)
 - [ ] Duplicate detection (find similar vectors in collection)
+- [ ] Implement SIMD/Parallel/Jit/Binary execution actual implementation with cpu detection 
+- [ ] implement actual memory detection for collection 
 
 **Validation & Safety**
 - [x] Dimension consistency checks per collection
@@ -109,6 +111,7 @@
 - [x] Retry with exponential backoff
 - [ ] Provider timeout configuration
 - [x] Benchmark to verify 3-5x SIMD speedup target
+- [ ] implement actual batch api for embedding providers
 
 **Index Management**
 - [ ] Rebuild index command
