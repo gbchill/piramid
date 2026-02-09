@@ -4,18 +4,17 @@
 // - Euclidean: Physical distance in space (magnitude matters)
 // - Dot Product: Fast, good for normalized vectors
 
-// each file is a module. `mod x` says "include x.rs"
-mod cosine;
-mod euclidean;
-mod dot;
+pub mod cosine;
+pub mod euclidean;
+pub mod dot;
 pub mod latency;
 
-// `pub use` re-exports: users can do `metrics::cosine_similarity`
-// instead of `metrics::cosine::cosine_similarity`
 pub use cosine::cosine_similarity;
 pub use euclidean::{euclidean_distance, euclidean_distance_squared};
 pub use dot::dot_product;
 pub use latency::{LatencyTracker, time_operation, time_operation_sync};
+
+use crate::config::ExecutionMode;
 
 // Distance/similarity metric for vector comparison.
 // 
@@ -24,16 +23,13 @@ pub use latency::{LatencyTracker, time_operation, time_operation_sync};
 // - Distance metrics (Euclidean): lower = more similar
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 pub enum Metric {
-    #[default]  // used when you call Metric::default()
+    #[default]
     Cosine,
     Euclidean,
     DotProduct,
 }
-use crate::config::ExecutionMode;
-
 
 impl Metric {
-    
     pub fn calculate(&self, a: &[f32], b: &[f32], mode: ExecutionMode) -> f32 {
         match self {
             Metric::Cosine => cosine_similarity(a, b, mode),
@@ -68,3 +64,4 @@ mod tests {
         assert!(Metric::Cosine.calculate(&v1, &v2, ExecutionMode::Auto).abs() < 1e-6);
     }
 }
+

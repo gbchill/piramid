@@ -91,17 +91,17 @@
 - [x] Atomic update (vector + metadata together)
 - [x] Check vector existence by ID (via get)
 - [x] List vector IDs only (without full data) (via list_vectors)
-- [ ] Implement SIMD/Parallel/Jit/Binary execution actual implementation with cpu detection 
-- [ ] fix query in search folder modularity import
+- [x] Implement SIMD/Parallel/Jit/Binary execution actual implementation with cpu detection 
+- [x] fix query in search folder modularity import
 - [ ] implement actual memory detection for collection 
 
 Codebase Organization
-- [ ] Modularize code into clear layers if not already (API, Service, Storage, Indexing)
-- [ ] No redundant code
-- [ ] no dead code 
-- [ ] maximize for longetivity naming conventions NOT short-term convenience like search_with_smd or search_width_qualtiy -> optimize for UX experience and clarity instead of short-term dev speed 
-- [ ] make sure folders are organized by domain (e.g. all search-related code in search/ folder) and not by technical layer (e.g. not api/search.rs, service/search.rs, etc.)
-- [ ] make sure utility files are seperate and categorized 
+- [x] Modularize code into clear layers if not already (API, Service, Storage, Indexing)
+- [x] No redundant code
+- [x] no dead code 
+- [x] maximize for longetivity naming conventions NOT short-term convenience like search_with_smd or search_width_qualtiy -> optimize for UX experience and clarity instead of short-term dev speed 
+- [x] make sure folders are organized by domain (e.g. all search-related code in search/ folder) and not by technical layer (e.g. not api/search.rs, service/search.rs, etc.)
+- [x] make sure utility files are seperate and categorized 
 
 **Configuration**
 - [ ] Config file support (YAML)

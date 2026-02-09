@@ -4,11 +4,15 @@
 mod scalar;
 mod simd;
 mod parallel;
+mod binary;
+mod jit;
 
 use crate::config::ExecutionMode;
 pub use scalar::dot_product_scalar;
 pub use simd::dot_product_simd;
 pub use parallel::dot_product_parallel;
+pub use binary::dot_product_binary;
+pub use jit::dot_product_jit;
 
 pub fn dot_product(a: &[f32], b: &[f32], mode: ExecutionMode) -> f32 {
     let resolved = mode.resolve();
@@ -16,6 +20,8 @@ pub fn dot_product(a: &[f32], b: &[f32], mode: ExecutionMode) -> f32 {
         ExecutionMode::Simd => dot_product_simd(a, b), 
         ExecutionMode::Scalar => dot_product_scalar(a, b),
         ExecutionMode::Parallel => dot_product_parallel(a, b),
+        ExecutionMode::Binary => dot_product_binary(a, b),
+        ExecutionMode::Jit => dot_product_jit(a, b),
         _ => dot_product_scalar(a, b),
     }
 }

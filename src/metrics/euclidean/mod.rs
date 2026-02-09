@@ -4,11 +4,15 @@
 mod scalar;
 mod simd;
 mod parallel;
+mod binary;
+mod jit;
 
 use crate::config::ExecutionMode;
 pub use scalar::{euclidean_distance_scalar, euclidean_distance_squared_scalar};
 pub use simd::{euclidean_distance_simd, euclidean_distance_squared_simd};
 pub use parallel::{euclidean_distance_parallel, euclidean_distance_squared_parallel};
+pub use binary::{euclidean_distance_binary, euclidean_distance_squared_binary};
+pub use jit::{euclidean_distance_jit, euclidean_distance_squared_jit};
 
 pub fn euclidean_distance(a: &[f32], b: &[f32], mode: ExecutionMode) -> f32 {
     let resolved = mode.resolve();
@@ -16,6 +20,8 @@ pub fn euclidean_distance(a: &[f32], b: &[f32], mode: ExecutionMode) -> f32 {
         ExecutionMode::Simd => euclidean_distance_simd(a, b),
         ExecutionMode::Scalar => euclidean_distance_scalar(a, b),
         ExecutionMode::Parallel => euclidean_distance_parallel(a, b),
+        ExecutionMode::Binary => euclidean_distance_binary(a, b),
+        ExecutionMode::Jit => euclidean_distance_jit(a, b),
         _ => euclidean_distance_scalar(a, b),
     }
 }
@@ -26,6 +32,8 @@ pub fn euclidean_distance_squared(a: &[f32], b: &[f32], mode: ExecutionMode) -> 
         ExecutionMode::Simd => euclidean_distance_squared_simd(a, b),
         ExecutionMode::Scalar => euclidean_distance_squared_scalar(a, b),
         ExecutionMode::Parallel => euclidean_distance_squared_parallel(a, b),
+        ExecutionMode::Binary => euclidean_distance_squared_binary(a, b),
+        ExecutionMode::Jit => euclidean_distance_squared_jit(a, b),
         _ => euclidean_distance_squared_scalar(a, b),
     }
 }
