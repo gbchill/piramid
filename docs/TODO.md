@@ -543,7 +543,7 @@
 
 ### [Zipy](https://github.com/ashworks1706/zipy) development begins
 
-### Zipy Integration (GPU Acceleration)
+**Zipy Integration (GPU Acceleration)**
 
 [ ] Dependency Integration: Add zipy crate to Cargo.toml as an optional feature.
 
