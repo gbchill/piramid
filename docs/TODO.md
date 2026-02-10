@@ -235,11 +235,9 @@
 
 [ ] remove prebuilt embedding functionality for now
 
-[ ] Local embedding model support (e.g. sentence-transformers)
+[ ] CPU Local Embeddings support (e.g. sentence-transformers)
 
 [ ] native batch api support for hugginface (make sure )
-
-[ ] implement actual batch api for embedding providers
 
 [ ] Request metrics (count, latency, tokens, cost)
 
@@ -293,15 +291,14 @@
 
 [x] IVF (Inverted File Index)
 
-[ ] Product Quantization (PQ)
+[ ] Product Quantization (PQ) (CPU Compression)
 
-[ ] **HNSW Tombstoning:** Soft-delete nodes without breaking graph connectivity.
+[ ] HNSW Tombstoning: Soft-delete nodes without breaking graph connectivity.
 
-[ ] are we prefiltering or post filtering why and when 
+[ ] Implement HNSW Pre-filtering (Bitmap visitor) 
 
 
 **Resource Management**
-
 
 [ ] Max vectors per collection
 
@@ -384,7 +381,6 @@
 
 **ACID Transactions**
 
-
 [ ] Atomic batch operations (all-or-nothing)
 
 [ ] Rollback on failure
@@ -396,7 +392,6 @@
 [ ] Request deduplication
 
 **Async Storage I/O**
-
 
 [ ] Non-blocking writes (tokio-fs)
 
@@ -412,7 +407,6 @@
 
 **Query Optimization**
 
-
 [ ] Query result caching
 
 [ ] Query planning/optimization
@@ -423,7 +417,6 @@
 
 **Backup & Restore**
 
-
 [ ] Snapshot API (copy-on-write)
 
 [ ] Point-in-time recovery (PITR)
@@ -431,7 +424,6 @@
 [ ] Incremental backups
 
 **Metadata Improvements**
-
 
 [ ] Complex filters (AND/OR/NOT combinations)
 
@@ -447,7 +439,6 @@
 
 **Schema Support**
 
-
 [ ] Define expected dimensions per collection
 
 [ ] Metadata schema validation
@@ -455,7 +446,6 @@
 [ ] Schema versioning
 
 **Advanced Search**
-
 
 [ ] Range search (distance threshold instead of top-k)
 
@@ -473,7 +463,6 @@
 
 **Data Import/Export**
 
-
 [ ] Import from JSON/CSV/Parquet
 
 [ ] Export to JSON/CSV/Parquet
@@ -486,12 +475,9 @@
 
 **Advanced Security**
 
-
 [ ] JWT token support
 
 [ ] Multi-tenant isolation
-
-[ ] Role-based access control (RBAC)
 
 [ ] Collection-level permissions
 
@@ -500,7 +486,6 @@
 [ ] Audit logging
 
 **API Versioning**
-
 
 [ ] API version in URLs or headers
 
@@ -513,7 +498,7 @@
 **Monitoring & Alerting**
 
 
-[ ] Email/webhook alerts for errors
+[ ] Email alerts for errors
 
 [ ] Disk space alerts
 
@@ -523,28 +508,9 @@
 
 [ ] Slow query alerts
 
-**gRPC API**
-
-
-[ ] Alternative to REST
-
-[ ] Streaming inserts
-
-[ ] Bi-directional streaming
-
-**Prometheus Integration**
-
-
-[ ] Full Prometheus endpoint
-
-[ ] Custom metrics export
-
-[ ] Grafana dashboard templates
-
 ### Future Considerations
 
 **Additional Features**
-
 
 [ ] Corrupted file detection + auto-repair
 
@@ -558,8 +524,6 @@
 
 [ ] Collection aliases
 
-[ ] Per-collection HNSW configuration
-
 [ ] Hot reload configuration
 
 [ ] Move collection between directories
@@ -568,19 +532,8 @@
 
 [ ] Verbose debug logging mode
 
-**Semantic Cache**
-
-
-[ ] Semantic matching for LLM responses
-
-[ ] TTL and LRU eviction
-
-[ ] OpenAI/Anthropic integration
-
-[ ] Cost savings dashboard
 
 **MCP Integration**
-
 
 [ ] MCP server implementation
 
@@ -588,39 +541,60 @@
 
 [ ] Agent-friendly responses (structured JSON-LD)
 
+### Zipy Kernel Integration (GPU Acceleration)
 
-### Zipy Kernel Integration
+**Core Infrastructure**
 
-**GPU Acceleration**
+[ ] WGPU Initialization: Initialize wgpu instance, select best adapter (Vulkan/Metal/DX12), and request device/queue.
 
+[ ] Device Selection Strategy: Logic to prioritize Discrete GPU > Integrated GPU > CPU Fallback.
 
-[ ] wgpu backend (cross-platform GPU)
+[ ] **Headless Support:** Ensure engine runs on servers without displays (common CI/CD failure point).
 
-[ ] Optional CUDA for NVIDIA
+[ ] **Async Runtime Integration:** Ensure GPU futures play nicely with Tokio/Axum (non-blocking).
 
-[ ] Batch search on GPU (10-100x faster)
+**Memory Management**
 
-[ ] Local embedding models on GPU
+[ ] Staging Belt: Implement efficient CPU -> GPU data transfer (avoiding stalls).
 
-**Distributed System**
+[ ] Unified Buffer Allocator: Custom allocator to manage VRAM blocks for vectors (reducing fragmentation).
 
+[ ] Zero-Copy checks: Verify shared memory support on Apple Silicon (M1/M2/M3).
 
-[ ] Replication (master-slave, multi-master)
+[ ] VRAM Budgeting: Runtime tracker for GPU memory usage with eviction policies.
 
-[ ] Sharding (horizontal partitioning)
+**Compute Kernels (WGSL Shaders)**
 
-[ ] Distributed queries (scatter-gather)
+[ ] Dot Product: Optimized f32 dot product shader (workgroup shared memory).
 
-[ ] Cluster management
+[ ] Cosine Similarity: Fused normalization + dot product shader.
 
-**WASM Support**
+[ ] Euclidean Distance: L2 distance squared shader.
 
+[ ] FP16 Support: Half-precision shader variants for 2x throughput on supported cards.
 
-[ ] Compile core to WASM
+**Search Operations**
 
-[ ] Client-side vector search
+[ ] Brute Force Search (Exact): "Flat" index implementation on GPU (Baseline benchmark).
 
-[ ] Edge deployment (Cloudflare, Vercel)
+[ ] Batch Search: Dispatch command encoder for multiple query vectors in one pass.
 
-[ ] Offline-first apps
+[ ] Parallel Reduction: GPU-side "Top-K" reduction (finding max values without copying full array to CPU).
 
+[ ] Bitonic Sort: Implement bitonic sort shader for sorting scores directly on VRAM.
+
+**Hybrid Indexing Support**
+
+[ ] GPU-Accelerated IVF: Offload "Find Nearest Centroid" step to GPU during index build.
+
+[ ] K-Means on GPU: Implement K-Means clustering shader for faster IVF training.
+
+### Zipy Agent Engine
+
+[ ] Model Loader: Load LLM weights into reserved VRAM.
+
+[ ] KV Cache Manager: Manage conversational memory blocks (PagedAttention).
+
+[ ] Fused Retrieval: Zero-Copy feed of search results into Model Context.
+
+[ ] Token Generation: Sampling loop and probability distribution logic.
