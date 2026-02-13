@@ -325,14 +325,13 @@ pub async fn search_vectors(
     Path(collection): Path<String>,
     Extension(request_id): Extension<crate::server::request_id::RequestId>,
     Json(req): Json<SearchRequest>,
-) -> Result<Json<SearchResponse>> {
+) -> Result<Json<SearchResultsResponse>> {
     if state.shutting_down.load(Ordering::Relaxed) {
         return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
     }
 
     // Validate inputs
     validation::validate_collection_name(&collection)?;
-    validation::validate_vector(&req.vector)?;
 
     state.get_or_create_collection(&collection)?;
     
@@ -342,56 +341,119 @@ pub async fn search_vectors(
     let storage = storage_ref.read();
     record_lock_read(state.latency_tracker.get(&collection).as_deref(), lock_start);
     
-    let metric = parse_metric(req.metric);
+    let SearchRequest { vector, vectors, k, metric, ef, nprobe, overfetch, preset } = req;
+    let metric = parse_metric(metric);
     let effective_search = apply_search_overrides(
         storage.config().search,
-        req.ef,
-        req.nprobe,
-        req.overfetch,
-        req.preset.clone(),
+        ef,
+        nprobe,
+        overfetch,
+        preset.clone(),
     );
     
-    let start = Instant::now();
-    let results = storage.search(
-        &req.vector,
-        req.k,
-        metric,
-        crate::SearchParams {
-            mode: storage.config().execution,
-            filter: None,
-            filter_overfetch_override: req.overfetch,
-            search_config_override: Some(effective_search),
-        },
-    );
-    let duration = start.elapsed();
-    if duration.as_millis() > state.slow_query_ms {
-        tracing::warn!(
-            collection=%collection,
-            request_id = request_id.0.as_str(),
-            elapsed_ms = duration.as_millis(),
-            "slow_search"
-        );
-    }
+    let response = match (vector, vectors) {
+        (Some(vec), None) => {
+            validation::validate_vector(&vec)?;
+            let start = Instant::now();
+            let results = storage.search(
+                &vec,
+                k,
+                metric,
+                crate::SearchParams {
+                    mode: storage.config().execution,
+                    filter: None,
+                    filter_overfetch_override: overfetch,
+                    search_config_override: Some(effective_search),
+                },
+            );
+            let duration = start.elapsed();
+            if duration.as_millis() > state.slow_query_ms {
+                tracing::warn!(
+                    collection=%collection,
+                    request_id = request_id.0.as_str(),
+                    elapsed_ms = duration.as_millis(),
+                    "slow_search"
+                );
+            }
+            
+            if let Some(tracker) = state.latency_tracker.get(&collection) {
+                tracker.record_search(duration);
+            }
+
+            let search_results: Vec<HitResponse> = results
+                .into_iter()
+                .map(|r| HitResponse {
+                    id: r.id.to_string(),
+                    score: r.score,
+                    text: r.text,
+                    metadata: metadata_to_json(&r.metadata),
+                })
+                .collect();
+
+            SearchResultsResponse::Single(SearchResponse { 
+                results: search_results,
+                latency_ms: Some(duration.as_millis() as f32),
+            })
+        }
+        (None, Some(queries)) => {
+            validation::validate_batch_size(queries.len(), MAX_BATCH_SIZE, "Search")?;
+            validation::validate_vectors(&queries)?;
+
+            let start = Instant::now();
+            let batch_results = storage.search_batch_with_params(
+                &queries,
+                k,
+                metric,
+                crate::SearchParams {
+                    mode: storage.config().execution,
+                    filter: None,
+                    filter_overfetch_override: overfetch,
+                    search_config_override: Some(effective_search),
+                },
+            );
+            let duration = start.elapsed();
+            if duration.as_millis() > state.slow_query_ms {
+                tracing::warn!(
+                    collection=%collection,
+                    request_id = request_id.0.as_str(),
+                    elapsed_ms = duration.as_millis(),
+                    "slow_batch_search"
+                );
+            }
+
+            if let Some(tracker) = state.latency_tracker.get(&collection) {
+                tracker.record_search(duration);
+            }
+
+            let response_results: Vec<Vec<HitResponse>> = batch_results
+                .into_iter()
+                .map(|results| {
+                    results
+                        .into_iter()
+                        .map(|r| HitResponse {
+                            id: r.id.to_string(),
+                            score: r.score,
+                            text: r.text,
+                            metadata: metadata_to_json(&r.metadata),
+                        })
+                        .collect()
+                })
+                .collect();
+
+            SearchResultsResponse::Multi(MultiSearchResponse { 
+                results: response_results,
+                latency_ms: Some(duration.as_millis() as f32),
+            })
+        }
+        (Some(_), Some(_)) => {
+            return Err(ServerError::InvalidRequest("Provide either vector or vectors, not both".to_string()).into());
+        }
+        (None, None) => {
+            return Err(ServerError::InvalidRequest("No search vector(s) provided".to_string()).into());
+        }
+    };
     
-    // Record latency
-    if let Some(tracker) = state.latency_tracker.get(&collection) {
-        tracker.record_search(duration);
-    }
-    
-    let search_results: Vec<HitResponse> = results
-        .into_iter()
-        .map(|r| HitResponse {
-            id: r.id.to_string(),
-            score: r.score,
-            text: r.text,
-            metadata: metadata_to_json(&r.metadata),
-        })
-        .collect();
-    
-    Ok(Json(SearchResponse { 
-        results: search_results,
-        latency_ms: Some(duration.as_millis() as f32),
-    }))
+    Ok(Json(response))
 }
 
 // POST /api/collections/:collection/upsert - insert or update a vector
@@ -457,82 +519,6 @@ pub async fn upsert_vector(
 }
 
 // POST /api/collections/:collection/search/batch - search multiple queries at once
-pub async fn batch_search_vectors(
-    State(state): State<SharedState>,
-    Path(collection): Path<String>,
-    Extension(request_id): Extension<crate::server::request_id::RequestId>,
-    Json(req): Json<BatchSearchRequest>,
-) -> Result<Json<BatchSearchResponse>> {
-    if state.shutting_down.load(Ordering::Relaxed) {
-        return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
-    }
-
-    // Validate inputs
-    validation::validate_collection_name(&collection)?;
-    validation::validate_batch_size(req.vectors.len(), MAX_BATCH_SIZE, "Search")?;
-    validation::validate_vectors(&req.vectors)?;
-
-    state.get_or_create_collection(&collection)?;
-    
-    let storage_ref = state.collections.get(&collection)
-        .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
-    let lock_start = Instant::now();
-    let storage = storage_ref.read();
-    record_lock_read(state.latency_tracker.get(&collection).as_deref(), lock_start);
-    
-    let metric = parse_metric(req.metric);
-    let effective_search = apply_search_overrides(
-        storage.config().search,
-        req.ef,
-        req.nprobe,
-        req.overfetch,
-        req.preset.clone(),
-    );
-    
-    let start = Instant::now();
-    let search_params = crate::SearchParams {
-        mode: storage.config().execution,
-        filter: None,
-        filter_overfetch_override: req.overfetch,
-        search_config_override: Some(effective_search),
-    };
-    let batch_results = storage.search_batch_with_params(&req.vectors, req.k, metric, search_params);
-    let duration = start.elapsed();
-    if duration.as_millis() > state.slow_query_ms {
-        tracing::warn!(
-            collection=%collection,
-            request_id = request_id.0.as_str(),
-            elapsed_ms = duration.as_millis(),
-            "slow_batch_search"
-        );
-    }
-    
-    // Record latency
-    if let Some(tracker) = state.latency_tracker.get(&collection) {
-        tracker.record_search(duration);
-    }
-    
-    let response_results: Vec<Vec<HitResponse>> = batch_results
-        .into_iter()
-        .map(|results| {
-            results
-                .into_iter()
-                .map(|r| HitResponse {
-                    id: r.id.to_string(),
-                    score: r.score,
-                    text: r.text,
-                    metadata: metadata_to_json(&r.metadata),
-                })
-                .collect()
-        })
-        .collect();
-    
-    Ok(Json(BatchSearchResponse { 
-        results: response_results,
-        latency_ms: Some(duration.as_millis() as f32),
-    }))
-}
-
 // POST /api/collections/:collection/search/range - search with a min_score threshold
 pub async fn range_search_vectors(
     State(state): State<SharedState>,

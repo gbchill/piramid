@@ -111,7 +111,10 @@ pub struct BatchInsertResponse {
 
 #[derive(Deserialize)]
 pub struct SearchRequest {
-    pub vector: Vec<f32>,
+    #[serde(default)]
+    pub vector: Option<Vec<f32>>,
+    #[serde(default)]
+    pub vectors: Option<Vec<Vec<f32>>>,
     #[serde(default = "default_k")]
     pub k: usize,  // how many results to return
     #[serde(default)]
@@ -141,6 +144,20 @@ pub struct SearchResponse {
     pub results: Vec<HitResponse>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub latency_ms: Option<f32>,
+}
+
+#[derive(Serialize)]
+pub struct MultiSearchResponse {
+    pub results: Vec<Vec<HitResponse>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub latency_ms: Option<f32>,
+}
+
+#[derive(Serialize)]
+#[serde(untagged)]
+pub enum SearchResultsResponse {
+    Single(SearchResponse),
+    Multi(MultiSearchResponse),
 }
 
 // =============================================================================
@@ -252,38 +269,9 @@ pub struct UpsertResponse {
 }
 
 // =============================================================================
-// BATCH SEARCH
-// =============================================================================
-
-#[derive(Deserialize)]
-pub struct BatchSearchRequest {
-    pub vectors: Vec<Vec<f32>>,
-    #[serde(default = "default_k")]
-    pub k: usize,
-    #[serde(default)]
-    pub metric: Option<String>,
-    #[serde(default)]
-    pub ef: Option<usize>,
-    #[serde(default)]
-    pub nprobe: Option<usize>,
-    #[serde(default)]
-    pub overfetch: Option<usize>,
-    #[serde(default)]
-    pub preset: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct BatchSearchResponse {
-    pub results: Vec<Vec<HitResponse>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub latency_ms: Option<f32>,
-}
-
-pub mod range;
-
-// =============================================================================
 // METRICS
 // =============================================================================
+pub mod range;
 
 #[derive(Serialize)]
 pub struct MetricsResponse {
