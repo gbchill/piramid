@@ -3,6 +3,7 @@ use std::sync::atomic::Ordering;
 use std::time::Instant;
 use crate::{Metric, Document};
 use crate::error::{Result, ServerError};
+use crate::server::metrics::{record_lock_read, record_lock_write};
 use super::super::{
     state::SharedState,
     types::*,
@@ -46,9 +47,7 @@ pub async fn embed_text(
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
     let lock_start = Instant::now();
     let mut storage = storage_ref.write();
-    if let Some(tracker) = state.latency_tracker.get(&collection) {
-        tracker.record_lock_write(lock_start.elapsed());
-    }
+    record_lock_write(state.latency_tracker.get(&collection).as_deref(), lock_start);
 
     let id = storage.insert(entry)?;
 
@@ -84,9 +83,7 @@ pub async fn embed_batch(
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
     let lock_start = Instant::now();
     let mut storage = storage_ref.write();
-    if let Some(tracker) = state.latency_tracker.get(&collection) {
-        tracker.record_lock_write(lock_start.elapsed());
-    }
+    record_lock_write(state.latency_tracker.get(&collection).as_deref(), lock_start);
 
     let mut ids = Vec::with_capacity(responses.len());
     let mut total_tokens = 0u32;
@@ -141,9 +138,7 @@ pub async fn search_by_text(
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
     let lock_start = Instant::now();
     let storage = storage_ref.read();
-    if let Some(tracker) = state.latency_tracker.get(&collection) {
-        tracker.record_lock_read(lock_start.elapsed());
-    }
+    record_lock_read(state.latency_tracker.get(&collection).as_deref(), lock_start);
 
     let start = Instant::now();
     let results: Vec<HitResponse> = storage

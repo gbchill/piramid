@@ -19,8 +19,8 @@ pub struct SearchConfig {
     pub nprobe: Option<usize>,
 
     // How many extra candidates to pull when a filter is present (multiplier of k)
-    #[serde(default = "default_filter_expansion")]
-    pub filter_expansion: usize,
+    #[serde(default = "default_filter_overfetch")]
+    pub filter_overfetch: usize,
 }
 
 impl Default for SearchConfig {
@@ -28,7 +28,7 @@ impl Default for SearchConfig {
         SearchConfig {
             ef: None,      // Use index config default
             nprobe: None,  // Use index config default
-            filter_expansion: default_filter_expansion(),
+            filter_overfetch: default_filter_overfetch(),
         }
     }
 }
@@ -39,7 +39,7 @@ impl SearchConfig {
         SearchConfig {
             ef: Some(400),
             nprobe: Some(20),
-            filter_expansion: default_filter_expansion(),
+            filter_overfetch: default_filter_overfetch(),
         }
     }
     
@@ -53,9 +53,9 @@ impl SearchConfig {
         SearchConfig {
             ef: Some(50),
             nprobe: Some(1),
-            filter_expansion: default_filter_expansion(),
+            filter_overfetch: default_filter_overfetch(),
         }
     }
 }
 
-fn default_filter_expansion() -> usize { 10 }
+fn default_filter_overfetch() -> usize { 10 }

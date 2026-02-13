@@ -10,6 +10,10 @@ pub struct WalConfig {
     
     // Checkpoint frequency (flush every N operations)
     pub checkpoint_frequency: usize,
+
+    // Optional time-based checkpoint interval (seconds)
+    #[serde(default)]
+    pub checkpoint_interval_secs: Option<u64>,
     
     // Maximum log file size in bytes before rotation
     pub max_log_size: usize,
@@ -23,6 +27,7 @@ impl Default for WalConfig {
         WalConfig {
             enabled: true,
             checkpoint_frequency: 1000,
+            checkpoint_interval_secs: None,
             max_log_size: 100 * 1024 * 1024,  // 100MB
             sync_on_write: false,
         }
@@ -37,6 +42,7 @@ impl WalConfig {
             checkpoint_frequency: 0,
             max_log_size: 0,
             sync_on_write: false,
+            checkpoint_interval_secs: None,
         }
     }
     
@@ -47,6 +53,7 @@ impl WalConfig {
             checkpoint_frequency: 100,
             max_log_size: 50 * 1024 * 1024,  // 50MB
             sync_on_write: true,
+            checkpoint_interval_secs: Some(1),
         }
     }
     
@@ -57,6 +64,7 @@ impl WalConfig {
             checkpoint_frequency: 10000,
             max_log_size: 500 * 1024 * 1024,  // 500MB
             sync_on_write: false,
+            checkpoint_interval_secs: None,
         }
     }
 }

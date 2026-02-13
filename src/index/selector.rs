@@ -193,6 +193,7 @@ mod tests {
         let flat_config = IndexConfig::Flat { 
             metric: Metric::Cosine,
             mode: ExecutionMode::default(),
+            search: SearchConfig::default(),
         };
         assert_eq!(flat_config.select_type(1_000_000), IndexType::Flat);
         
@@ -204,6 +205,7 @@ mod tests {
             ml: 1.0 / 16.0_f32.ln(),
             metric: Metric::Cosine,
             mode: ExecutionMode::default(),
+            search: SearchConfig::default(),
         };
         assert_eq!(hnsw_config.select_type(100), IndexType::Hnsw);
     }

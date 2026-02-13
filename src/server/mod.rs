@@ -11,6 +11,7 @@ pub mod types;
 pub mod handlers;
 pub mod routes;
 pub mod helpers;
+pub mod metrics;
 
 pub use state::{AppState, SharedState};
 pub use routes::create_router;

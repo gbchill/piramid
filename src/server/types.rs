@@ -284,6 +284,7 @@ pub struct CollectionMetrics {
 pub struct WalStats {
     pub collection: String,
     pub last_checkpoint: Option<u64>,
+    pub checkpoint_age_secs: Option<u64>,
     pub wal_size_bytes: Option<u64>,
 }
 

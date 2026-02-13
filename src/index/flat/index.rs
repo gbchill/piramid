@@ -80,7 +80,6 @@ impl VectorIndex for FlatIndex {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::metrics::Metric;
 
     #[test]
     fn test_flat_insert_and_search() {

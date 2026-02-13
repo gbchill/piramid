@@ -8,6 +8,10 @@ use super::*;
 pub struct CollectionConfig {
     // Index configuration
     pub index: crate::index::IndexConfig,
+
+    // Search behavior defaults
+    #[serde(default)]
+    pub search: SearchConfig,
     
     // Quantization settings
     #[serde(default)]
@@ -34,6 +38,7 @@ impl Default for CollectionConfig {
     fn default() -> Self {
         CollectionConfig {
             index: crate::index::IndexConfig::default(),
+            search: SearchConfig::default(),
             quantization: QuantizationConfig::default(),
             memory: MemoryConfig::default(),
             wal: WalConfig::default(),

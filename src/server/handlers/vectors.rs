@@ -5,6 +5,7 @@ use std::time::Instant;
 use crate::{Metric, Document};
 use crate::error::{Result, ServerError};
 use crate::validation;
+use crate::server::metrics::{record_lock_read, record_lock_write};
 use super::super::{
     state::SharedState,
     types::*,
@@ -51,9 +52,7 @@ pub async fn insert_vector(
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
     let lock_start = Instant::now();
     let mut storage = storage_ref.write();
-    if let Some(tracker) = state.latency_tracker.get(&collection) {
-        tracker.record_lock_write(lock_start.elapsed());
-    }
+    record_lock_write(state.latency_tracker.get(&collection).as_deref(), lock_start);
     
     // Time the operation
     let start = Instant::now();
@@ -128,9 +127,7 @@ pub async fn insert_vectors_batch(
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
     let lock_start = Instant::now();
     let mut storage = storage_ref.write();
-    if let Some(tracker) = state.latency_tracker.get(&collection) {
-        tracker.record_lock_write(lock_start.elapsed());
-    }
+    record_lock_write(state.latency_tracker.get(&collection).as_deref(), lock_start);
 
     let start = Instant::now();
     let ids: Vec<Uuid> = storage.insert_batch(entries)?;
@@ -169,9 +166,7 @@ pub async fn get_vector(
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
     let lock_start = Instant::now();
     let storage = storage_ref.read();
-    if let Some(tracker) = state.latency_tracker.get(&collection) {
-        tracker.record_lock_read(lock_start.elapsed());
-    }
+    record_lock_read(state.latency_tracker.get(&collection).as_deref(), lock_start);
     
     let entry = storage.get(&uuid)
         .ok_or(ServerError::NotFound(super::super::helpers::VECTOR_NOT_FOUND.to_string()))?;
@@ -200,9 +195,7 @@ pub async fn list_vectors(
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
     let lock_start = Instant::now();
     let storage = storage_ref.read();
-    if let Some(tracker) = state.latency_tracker.get(&collection) {
-        tracker.record_lock_read(lock_start.elapsed());
-    }
+    record_lock_read(state.latency_tracker.get(&collection).as_deref(), lock_start);
     
     let vectors: Vec<VectorResponse> = storage.get_all()
         .into_iter()
@@ -272,9 +265,7 @@ pub async fn delete_vectors_batch(
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
     let lock_start = Instant::now();
     let mut storage = storage_ref.write();
-    if let Some(tracker) = state.latency_tracker.get(&collection) {
-        tracker.record_lock_write(lock_start.elapsed());
-    }
+    record_lock_write(state.latency_tracker.get(&collection).as_deref(), lock_start);
 
     // Parse UUIDs
     let mut uuids = Vec::with_capacity(req.ids.len());
@@ -319,9 +310,7 @@ pub async fn search_vectors(
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
     let lock_start = Instant::now();
     let storage = storage_ref.read();
-    if let Some(tracker) = state.latency_tracker.get(&collection) {
-        tracker.record_lock_read(lock_start.elapsed());
-    }
+    record_lock_read(state.latency_tracker.get(&collection).as_deref(), lock_start);
     
     let metric = parse_metric(req.metric);
     
@@ -381,9 +370,7 @@ pub async fn upsert_vector(
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
     let lock_start = Instant::now();
     let mut storage = storage_ref.write();
-    if let Some(tracker) = state.latency_tracker.get(&collection) {
-        tracker.record_lock_write(lock_start.elapsed());
-    }
+    record_lock_write(state.latency_tracker.get(&collection).as_deref(), lock_start);
     
     // Check if entry exists
     let id = if let Some(id_str) = req.id {

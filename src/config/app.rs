@@ -32,9 +32,22 @@ impl Default for AppConfig {
 }
 
 impl AppConfig {
+    pub fn validate(&self) -> Result<(), String> {
+        if self.wal.enabled {
+            if self.wal.checkpoint_frequency == 0 {
+                return Err("WAL checkpoint_frequency must be > 0 when WAL is enabled".into());
+            }
+        }
+        if self.search.filter_overfetch == 0 {
+            return Err("SEARCH filter_overfetch must be >= 1".into());
+        }
+        Ok(())
+    }
+
     pub fn to_collection_config(&self) -> CollectionConfig {
         CollectionConfig {
             index: self.index.clone(),
+            search: self.search.clone(),
             quantization: self.quantization.clone(),
             memory: self.memory.clone(),
             wal: self.wal.clone(),
@@ -83,6 +96,11 @@ impl AppConfig {
                 cfg.wal.checkpoint_frequency = freq.max(1);
             }
         }
+        if let Ok(val) = std::env::var("WAL_CHECKPOINT_INTERVAL_SECS") {
+            if let Ok(secs) = val.parse::<u64>() {
+                cfg.wal.checkpoint_interval_secs = Some(secs.max(1));
+            }
+        }
 
         if let Ok(val) = std::env::var("MEMORY_USE_MMAP") {
             cfg.memory.use_mmap = val == "1" || val.eq_ignore_ascii_case("true");
@@ -114,9 +132,12 @@ impl AppConfig {
             };
         }
 
-        if let Ok(val) = std::env::var("SEARCH_FILTER_EXPANSION") {
+        // Prefer new env name, fall back to legacy for compatibility
+        if let Ok(val) = std::env::var("SEARCH_FILTER_OVERFETCH")
+            .or_else(|_| std::env::var("SEARCH_FILTER_EXPANSION"))
+        {
             if let Ok(factor) = val.parse::<usize>() {
-                cfg.search.filter_expansion = factor.max(1);
+                cfg.search.filter_overfetch = factor.max(1);
             }
         }
 

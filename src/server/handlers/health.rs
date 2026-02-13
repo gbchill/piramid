@@ -64,9 +64,17 @@ pub async fn metrics(State(state): State<SharedState>) -> Result<Json<MetricsRes
         let wal_size = std::fs::metadata(&format!("{}.wal.db", storage.path))
             .map(|m| m.len())
             .ok();
+        let checkpoint_age_secs = storage.persistence.last_checkpoint().and_then(|ts| {
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .ok()?
+                .as_secs();
+            now.checked_sub(ts)
+        });
         wal_stats.push(WalStats {
             collection: storage.path.clone(),
             last_checkpoint: storage.persistence.last_checkpoint(),
+            checkpoint_age_secs,
             wal_size_bytes: wal_size,
         });
     } 

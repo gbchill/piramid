@@ -70,6 +70,9 @@ impl Collection {
         if matches!(effective_params.mode, crate::config::ExecutionMode::Auto) {
             effective_params.mode = self.config().execution;
         }
+        if effective_params.filter_overfetch_override.is_none() {
+            effective_params.filter_overfetch_override = Some(self.config.search.filter_overfetch);
+        }
         crate::search::search_collection(self, query, k, metric, effective_params)
     }
 
@@ -77,6 +80,7 @@ impl Collection {
         let params = crate::search::SearchParams {
             mode: self.config().execution,
             filter: None,
+            filter_overfetch_override: None,
         };
         crate::search::search_batch_collection(self, queries, k, metric, params)
     }
@@ -187,6 +191,7 @@ mod tests {
         let results = storage.search(&query, 2, Metric::Cosine, crate::search::SearchParams {
             mode: storage.config().execution,
             filter: None,
+            filter_overfetch_override: None,
         });
         
         assert_eq!(results.len(), 2);

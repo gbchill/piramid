@@ -35,7 +35,21 @@ impl Collection {
     }
 
     pub(super) fn track_operation(&mut self) -> Result<()> {
-        if self.persistence.should_checkpoint(&self.config.wal) {
+        let interval_due = if let Some(last) = self.persistence.last_checkpoint() {
+            if let Some(interval) = self.config.wal.checkpoint_interval_secs {
+                let now = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
+                now.saturating_sub(last) >= interval
+            } else {
+                false
+            }
+        } else {
+            false
+        };
+
+        if self.persistence.should_checkpoint(&self.config.wal) || interval_due {
             super::persistence::checkpoint(self)?;
             self.persistence.reset_counter();
         }

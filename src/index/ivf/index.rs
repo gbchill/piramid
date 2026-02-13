@@ -261,7 +261,6 @@ impl VectorIndex for IvfIndex {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::metrics::Metric;
 
     #[test]
     fn test_ivf_clustering() {
