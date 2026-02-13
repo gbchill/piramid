@@ -61,6 +61,7 @@ impl Default for IndexConfig {
         IndexConfig::Auto { 
             metric: Metric::Cosine,
             mode: ExecutionMode::default(),
+            search: SearchConfig::default(),
         }
     }
 }
