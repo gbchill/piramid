@@ -20,7 +20,7 @@ pub use metrics::Metric;
 pub use error::{PiramidError, Result, ErrorContext};
 pub use metadata::{Metadata, MetadataValue, metadata};
 pub use search::query::{Filter, FilterCondition};
-pub use search::Hit;
+pub use search::{Hit, SearchParams};
 pub use storage::{Document, Collection, CollectionMetadata};
 pub use embeddings::{EmbeddingConfig, EmbeddingProvider, EmbeddingError};
 pub use index::{

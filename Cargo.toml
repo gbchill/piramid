@@ -49,6 +49,7 @@ dashmap= "6.0"
 # Parallel processing
 rayon = "1.10"
 num_cpus = "1.16"
+parking_lot = "0.12"
 
 [dev-dependencies]
 # Logging
@@ -60,4 +61,3 @@ criterion = {version = "0.5", features = ["html_reports"]}
 [[bench]]
 name = "hnsw_performance"
 harness = false
-

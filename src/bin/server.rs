@@ -17,6 +17,7 @@ async fn main() {
     // Optional embedding configuration
     let embedding_provider = std::env::var("EMBEDDING_PROVIDER").ok();
     let embedding_model = std::env::var("EMBEDDING_MODEL").ok();
+    let app_config = piramid::AppConfig::default();
     
     // Create shared state with optional embedder
     let state = if let Some(provider) = embedding_provider {
@@ -47,21 +48,21 @@ async fn main() {
                 
                 // Wrap with retry logic (3 retries, exponential backoff)
                 let retry_embedder = Arc::new(embeddings::RetryEmbedder::new(embedder));
-                Arc::new(AppState::with_embedder(&data_dir, retry_embedder))
+                Arc::new(AppState::with_embedder(&data_dir, app_config.clone(), retry_embedder))
             }
             Err(e) => {
                 eprintln!("✗ Embeddings:  FAILED");
                 eprintln!("  Error:       {}", e);
                 eprintln!("  Status:      Running without embedding support");
                 eprintln!();
-                Arc::new(AppState::new(&data_dir))
+                Arc::new(AppState::new(&data_dir, app_config.clone()))
             }
         }
     } else {
         println!("○ Embeddings:  DISABLED");
         println!("  Configure EMBEDDING_PROVIDER to enable");
         println!();
-        Arc::new(AppState::new(&data_dir))
+        Arc::new(AppState::new(&data_dir, app_config.clone()))
     };
     
     // Build router with all our routes
@@ -110,4 +111,3 @@ async fn main() {
     
     println!("👋 Goodbye!");
 }
-

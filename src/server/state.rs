@@ -1,10 +1,12 @@
-use std::sync::{Arc, RwLock, atomic::{AtomicBool, Ordering}};
+use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+use parking_lot::RwLock;
 use dashmap::DashMap;
 
 use crate::Collection;
 use crate::embeddings::Embedder;
 use crate::metrics::LatencyTracker;
 use crate::error::{Result, ServerError};
+use crate::config::AppConfig;
 
 // Shared application state
 // Each collection is an independent Collection with its own file.
@@ -15,10 +17,11 @@ pub struct AppState {
     pub embedder: Option<Arc<dyn Embedder>>,
     pub shutting_down: Arc<AtomicBool>,
     pub latency_tracker: Arc<DashMap<String, LatencyTracker>>,  // Per-collection latency tracking
+    pub app_config: AppConfig,
 }
 
 impl AppState {
-    pub fn new(data_dir: &str) -> Self {
+    pub fn new(data_dir: &str, app_config: AppConfig) -> Self {
         std::fs::create_dir_all(data_dir).ok();
         
         Self {
@@ -27,10 +30,11 @@ impl AppState {
             embedder: None,
             shutting_down: Arc::new(AtomicBool::new(false)),
             latency_tracker: Arc::new(DashMap::new()),
+            app_config,
         }
     }
 
-    pub fn with_embedder(data_dir: &str, embedder: Arc<dyn Embedder>) -> Self {
+    pub fn with_embedder(data_dir: &str, app_config: AppConfig, embedder: Arc<dyn Embedder>) -> Self {
         std::fs::create_dir_all(data_dir).ok();
         
         Self {
@@ -39,6 +43,7 @@ impl AppState {
             embedder: Some(embedder),
             shutting_down: Arc::new(AtomicBool::new(false)),
             latency_tracker: Arc::new(DashMap::new()),
+            app_config,
         }
     }
 
@@ -50,7 +55,7 @@ impl AppState {
 
         if !self.collections.contains_key(name) {
             let path = format!("{}/{}.db", self.data_dir, name);
-            let storage = Collection::open(&path)?;
+            let storage = Collection::with_config(&path, self.app_config.to_collection_config())?;
             self.collections.insert(name.to_string(), Arc::new(RwLock::new(storage)));
             
             // Create latency tracker for this collection
@@ -63,8 +68,7 @@ impl AppState {
     pub fn checkpoint_all(&self) -> Result<()> {
         for mut entry in self.collections.iter_mut() {
             let storage = entry.value_mut();
-            let mut storage_guard = storage.write()
-                .map_err(|e| ServerError::Internal(format!("Lock poisoned: {}", e)))?;
+            let mut storage_guard = storage.write();
             storage_guard.checkpoint()?;
             storage_guard.flush()?;
         }

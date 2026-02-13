@@ -11,12 +11,16 @@ pub struct LatencyTracker {
     search_latency_us: Arc<AtomicU64>,
     delete_latency_us: Arc<AtomicU64>,
     update_latency_us: Arc<AtomicU64>,
+    lock_read_latency_us: Arc<AtomicU64>,
+    lock_write_latency_us: Arc<AtomicU64>,
     
     // Operation counts
     insert_count: Arc<AtomicU64>,
     search_count: Arc<AtomicU64>,
     delete_count: Arc<AtomicU64>,
     update_count: Arc<AtomicU64>,
+    lock_read_count: Arc<AtomicU64>,
+    lock_write_count: Arc<AtomicU64>,
 }
 
 impl Default for LatencyTracker {
@@ -32,10 +36,14 @@ impl LatencyTracker {
             search_latency_us: Arc::new(AtomicU64::new(0)),
             delete_latency_us: Arc::new(AtomicU64::new(0)),
             update_latency_us: Arc::new(AtomicU64::new(0)),
+            lock_read_latency_us: Arc::new(AtomicU64::new(0)),
+            lock_write_latency_us: Arc::new(AtomicU64::new(0)),
             insert_count: Arc::new(AtomicU64::new(0)),
             search_count: Arc::new(AtomicU64::new(0)),
             delete_count: Arc::new(AtomicU64::new(0)),
             update_count: Arc::new(AtomicU64::new(0)),
+            lock_read_count: Arc::new(AtomicU64::new(0)),
+            lock_write_count: Arc::new(AtomicU64::new(0)),
         }
     }
     
@@ -65,6 +73,18 @@ impl LatencyTracker {
         self.update_count.fetch_add(1, Ordering::Relaxed);
         let us = duration.as_micros() as u64;
         self.update_moving_average(&self.update_latency_us, us, &self.update_count);
+    }
+
+    pub fn record_lock_read(&self, duration: Duration) {
+        self.lock_read_count.fetch_add(1, Ordering::Relaxed);
+        let us = duration.as_micros() as u64;
+        self.update_moving_average(&self.lock_read_latency_us, us, &self.lock_read_count);
+    }
+
+    pub fn record_lock_write(&self, duration: Duration) {
+        self.lock_write_count.fetch_add(1, Ordering::Relaxed);
+        let us = duration.as_micros() as u64;
+        self.update_moving_average(&self.lock_write_latency_us, us, &self.lock_write_count);
     }
     
     // Get average insert latency in milliseconds
@@ -100,6 +120,24 @@ impl LatencyTracker {
     // Get average update latency in milliseconds
     pub fn avg_update_latency_ms(&self) -> Option<f32> {
         let us = self.update_latency_us.load(Ordering::Relaxed);
+        if us > 0 {
+            Some(us as f32 / 1000.0)
+        } else {
+            None
+        }
+    }
+
+    pub fn avg_lock_read_latency_ms(&self) -> Option<f32> {
+        let us = self.lock_read_latency_us.load(Ordering::Relaxed);
+        if us > 0 {
+            Some(us as f32 / 1000.0)
+        } else {
+            None
+        }
+    }
+
+    pub fn avg_lock_write_latency_ms(&self) -> Option<f32> {
+        let us = self.lock_write_latency_us.load(Ordering::Relaxed);
         if us > 0 {
             Some(us as f32 / 1000.0)
         } else {

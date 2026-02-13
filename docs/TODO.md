@@ -1,6 +1,5 @@
 ### Foundation
 
-
 [x] Vector storage (HashMap + bincode persistence)
 
 [x] UUID-based IDs, error handling
@@ -10,7 +9,6 @@
 [ ] **Schema Versioning:** Add version headers to storage files to allow future data migration.
 
 ### Search & Similarity
-
 
 [x] Similarity metrics (cosine, euclidean, dot product)
 
@@ -22,7 +20,6 @@
 
 ### HTTP Server & Embeddings
 
-
 [x] REST API (axum), Collections/Vectors CRUD
 
 [x] Dashboard (Next.js - placeholder)
@@ -32,7 +29,6 @@
 [x] Batch embedding endpoints
 
 ### Performance & Indexing
-
 
 [x] Execution mode configuration (Auto, SIMD, Scalar)
 
@@ -80,7 +76,6 @@
 
 **Error Handling**
 
-
 [x] Replace ALL `.unwrap()` with proper error handling
 
 [x] Graceful degradation for failures
@@ -96,7 +91,6 @@
 [x] HTTP error response mapping
 
 **Write-Ahead Log (WAL)**
-
 
 [x] Append-only log for all mutations (insert/update/delete)
 
@@ -114,7 +108,6 @@
 
 **Graceful Shutdown**
 
-
 [x] Handle SIGTERM/SIGINT signals
 
 [x] Flush all pending writes to disk
@@ -129,7 +122,6 @@
 
 **Concurrent Safety**
 
-
 [x] Lock-free or fine-grained locking for writes
 
 [x] Deadlock detection/prevention
@@ -140,7 +132,6 @@
 
 **Batch Operations**
 
-
 [x] Batch insert API (10k inserts in <1s)
 
 [x] Batch search (multiple queries in one request)
@@ -150,7 +141,6 @@
 [x] Bulk delete
 
 **Collection Management**
-
 
 [x] Delete collection (cascade remove all data)
 
@@ -165,7 +155,6 @@
 [x] Storage usage per collection
 
 **Vector Operations**
-
 
 [x] Upsert (insert or update)
 
@@ -187,7 +176,6 @@
 
 **Codebase Organization**
 
-
 [x] Modularize code into clear layers if not already (API, Service, Storage, Indexing)
 
 [x] No redundant code
@@ -202,7 +190,6 @@
 
 **Configuration**
 
-
 [ ] Config file support (YAML)
 
 [ ] make sure config is universal and accessed from one point 
@@ -212,7 +199,6 @@
 [ ] Environment variable documentation
 
 **Validation & Safety**
-
 
 [x] Dimension consistency checks per collection
 
@@ -229,7 +215,6 @@
 [ ] Runtime config validation
 
 **Embeddings Optimization**
-
 
 [x] Native batch API support (OpenAI/Ollama - 2x-10x speedup)
 
@@ -253,7 +238,6 @@
 
 **Observability**
 
-
 [x] Basic `/metrics` endpoint
 
 [x] Metrics: insert/search latency, index size, memory usage
@@ -271,7 +255,6 @@
 [ ] Slow query logging
 
 **Index Management**
-
 
 [ ] Rebuild index function
 
@@ -302,7 +285,6 @@
 
 **Resource Management**
 
-
 [ ] Max vectors per collection
 
 [ ] Storage size limits per collection
@@ -319,7 +301,6 @@
 
 **HTTP & Networking**
 
-
 [ ] HTTP/2 support
 
 [ ] Compression (gzip/brotli) for responses
@@ -330,7 +311,6 @@
 
 **Security Basics**
 
-
 [ ] API key authentication
 
 [ ] Security headers (CORS, CSP, HSTS)
@@ -340,7 +320,6 @@
 ### Documentation & Testing
 
 **Documentation**
-
 
 [ ] `docs/API.md` - Interactive API docs (Swagger/OpenAPI)
 
@@ -358,11 +337,9 @@
 
 **Launch Prep**
 
-
 [ ] dashboard full update and revamp
 
 **CI/CD**
-
 
 [x] GitHub Actions CI pipeline
 
@@ -384,7 +361,6 @@
 
 **ACID Transactions**
 
-
 [ ] Atomic batch operations (all-or-nothing)
 
 [ ] Rollback on failure
@@ -396,7 +372,6 @@
 [ ] Request deduplication
 
 **Async Storage I/O**
-
 
 [ ] Non-blocking writes (tokio-fs)
 
@@ -412,7 +387,6 @@
 
 **Query Optimization**
 
-
 [ ] Query result caching
 
 [ ] Query planning/optimization
@@ -423,7 +397,6 @@
 
 **Backup & Restore**
 
-
 [ ] Snapshot API (copy-on-write)
 
 [ ] Point-in-time recovery (PITR)
@@ -431,7 +404,6 @@
 [ ] Incremental backups
 
 **Metadata Improvements**
-
 
 [ ] Complex filters (AND/OR/NOT combinations)
 
@@ -447,7 +419,6 @@
 
 **Schema Support**
 
-
 [ ] Define expected dimensions per collection
 
 [ ] Metadata schema validation
@@ -455,7 +426,6 @@
 [ ] Schema versioning
 
 **Advanced Search**
-
 
 [ ] Range search (distance threshold instead of top-k)
 
@@ -473,7 +443,6 @@
 
 **Data Import/Export**
 
-
 [ ] Import from JSON/CSV/Parquet
 
 [ ] Export to JSON/CSV/Parquet
@@ -485,7 +454,6 @@
 [ ] Format validation on import
 
 **Advanced Security**
-
 
 [ ] JWT token support
 
@@ -501,7 +469,6 @@
 
 **API Versioning**
 
-
 [ ] API version in URLs or headers
 
 [ ] Backward compatibility strategy
@@ -511,7 +478,6 @@
 [ ] API changelog tracking
 
 **Monitoring & Alerting**
-
 
 [ ] Email/webhook alerts for errors
 
@@ -525,7 +491,6 @@
 
 **gRPC API**
 
-
 [ ] Alternative to REST
 
 [ ] Streaming inserts
@@ -533,7 +498,6 @@
 [ ] Bi-directional streaming
 
 **Prometheus Integration**
-
 
 [ ] Full Prometheus endpoint
 
@@ -544,7 +508,6 @@
 ### Future Considerations
 
 **Additional Features**
-
 
 [ ] Corrupted file detection + auto-repair
 
@@ -570,7 +533,6 @@
 
 **Semantic Cache**
 
-
 [ ] Semantic matching for LLM responses
 
 [ ] TTL and LRU eviction
@@ -580,7 +542,6 @@
 [ ] Cost savings dashboard
 
 **MCP Integration**
-
 
 [ ] MCP server implementation
 
@@ -593,7 +554,6 @@
 
 **GPU Acceleration**
 
-
 [ ] wgpu backend (cross-platform GPU)
 
 [ ] Optional CUDA for NVIDIA
@@ -604,7 +564,6 @@
 
 **Distributed System**
 
-
 [ ] Replication (master-slave, multi-master)
 
 [ ] Sharding (horizontal partitioning)
@@ -614,7 +573,6 @@
 [ ] Cluster management
 
 **WASM Support**
-
 
 [ ] Compile core to WASM
 

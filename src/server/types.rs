@@ -264,6 +264,8 @@ pub struct MetricsResponse {
     pub total_collections: usize,
     pub total_vectors: usize,
     pub collections: Vec<CollectionMetrics>,
+    pub app_config: crate::config::AppConfig,
+    pub wal_stats: Vec<WalStats>,
 }
 
 #[derive(Serialize)]
@@ -274,6 +276,15 @@ pub struct CollectionMetrics {
     pub memory_usage_bytes: usize,
     pub insert_latency_ms: Option<f32>,
     pub search_latency_ms: Option<f32>,
+    pub lock_read_ms: Option<f32>,
+    pub lock_write_ms: Option<f32>,
+}
+
+#[derive(Serialize)]
+pub struct WalStats {
+    pub collection: String,
+    pub last_checkpoint: Option<u64>,
+    pub wal_size_bytes: Option<u64>,
 }
 
 // =============================================================================

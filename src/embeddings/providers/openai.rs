@@ -247,12 +247,14 @@ struct OpenAIEmbeddingResponse {
     usage: Usage,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct EmbeddingData {
     embedding: Vec<f32>,
     index: usize,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct Usage {
     prompt_tokens: u32,

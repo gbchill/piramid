@@ -315,6 +315,7 @@ impl HnswIndex{
         distances.into_iter().map(|(id, _)| id).collect()
     }
 
+    #[allow(dead_code)]
     fn get_neighbors_at_level(&self, node_id: &Uuid, level: usize) -> Vec<Uuid> {
         // get neighbors at the current level
         if let Some(node) = self.nodes.get(node_id) {
@@ -455,7 +456,6 @@ mod tests {
         assert_eq!(index.nodes.len(), 0);
     }
 }
-
 
 
 

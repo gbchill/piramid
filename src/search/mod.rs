@@ -1,9 +1,5 @@
 // Search module - all search operations
 //
-// This module provides different types of search operations on vector storage:
-// - vector_search: Basic k-NN similarity search
-// - filtered_search: k-NN with metadata filtering
-// 
 // Future search types:
 // - range_search: Find all vectors within a distance threshold
 // - batch_search: Search multiple queries at once
@@ -11,11 +7,11 @@
 // - recommendation_search: Find similar to these, not like those
 
 mod types;
-mod engines;
-mod utils;
+pub mod utils;
 pub mod query;
+pub mod engine;
 
 pub use types::Hit;
-pub use engines::{vector_search, filtered_search};
 pub use query::{Filter, FilterCondition};
+pub use engine::{SearchParams, search_collection, search_batch_collection};
 pub use crate::metrics::Metric;

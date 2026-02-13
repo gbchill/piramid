@@ -1,16 +1,13 @@
 use axum::{extract::{Path, State}, response::Json};
 use std::sync::atomic::Ordering;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use crate::{Metric, Document};
 use crate::error::{Result, ServerError};
 use super::super::{
     state::SharedState,
     types::*,
-    sync::LockHelper,
     helpers::{json_to_metadata, metadata_to_json},
 };
-
-const LOCK_TIMEOUT: Duration = Duration::from_secs(5);
 
 // Parse similarity metric from string
 fn parse_metric(s: Option<String>) -> Metric {
@@ -47,7 +44,11 @@ pub async fn embed_text(
 
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
-    let mut storage = storage_ref.write().unwrap();
+    let lock_start = Instant::now();
+    let mut storage = storage_ref.write();
+    if let Some(tracker) = state.latency_tracker.get(&collection) {
+        tracker.record_lock_write(lock_start.elapsed());
+    }
 
     let id = storage.insert(entry)?;
 
@@ -81,7 +82,11 @@ pub async fn embed_batch(
 
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
-    let mut storage = storage_ref.write().unwrap();
+    let lock_start = Instant::now();
+    let mut storage = storage_ref.write();
+    if let Some(tracker) = state.latency_tracker.get(&collection) {
+        tracker.record_lock_write(lock_start.elapsed());
+    }
 
     let mut ids = Vec::with_capacity(responses.len());
     let mut total_tokens = 0u32;
@@ -134,11 +139,20 @@ pub async fn search_by_text(
 
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
-    let storage = storage_ref.read().unwrap();
+    let lock_start = Instant::now();
+    let storage = storage_ref.read();
+    if let Some(tracker) = state.latency_tracker.get(&collection) {
+        tracker.record_lock_read(lock_start.elapsed());
+    }
 
     let start = Instant::now();
     let results: Vec<HitResponse> = storage
-        .search(&response.embedding, req.k, metric)
+        .search(
+            &response.embedding,
+            req.k,
+            metric,
+            crate::SearchParams::default(),
+        )
         .into_iter()
         .map(|r| HitResponse {
             id: r.id.to_string(),

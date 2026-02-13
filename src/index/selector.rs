@@ -136,6 +136,7 @@ impl IndexConfig {
         }
     }
     
+    #[allow(dead_code)]
     fn get_metric(&self) -> Metric {
         match self {
             IndexConfig::Auto { metric, .. } => *metric,

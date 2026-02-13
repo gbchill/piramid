@@ -6,9 +6,9 @@ use uuid::Uuid;
 
 use crate::error::Result;
 use crate::index::VectorIndex;
-use crate::storage::wal::Wal;
 use crate::storage::persistence::EntryPointer;
 use crate::storage::metadata::CollectionMetadata;
+use super::persistence_service::PersistenceService;
 
 // Vector storage engine with memory-mapped files and pluggable indexing
 pub struct Collection {
@@ -16,11 +16,11 @@ pub struct Collection {
     pub(super) mmap: Option<MmapMut>,
     pub(super) index: HashMap<Uuid, EntryPointer>,
     pub(super) vector_index: Box<dyn VectorIndex>,
-    pub(super) config: crate::config::CollectionConfig,
-    pub(super) metadata: CollectionMetadata,
-    pub(super) path: String,
-    pub(super) wal: Wal,
-    pub(super) operation_count: usize,
+    pub(super) vector_cache: HashMap<Uuid, Vec<f32>>,
+    pub config: crate::config::CollectionConfig,
+    pub metadata: CollectionMetadata,
+    pub path: String,
+    pub persistence: PersistenceService,
 }
 
 impl Collection {
@@ -35,11 +35,9 @@ impl Collection {
     }
 
     pub(super) fn track_operation(&mut self) -> Result<()> {
-        self.operation_count += 1;
-        if self.config.wal.enabled && 
-           self.operation_count >= self.config.wal.checkpoint_frequency {
+        if self.persistence.should_checkpoint(&self.config.wal) {
             super::persistence::checkpoint(self)?;
-            self.operation_count = 0;
+            self.persistence.reset_counter();
         }
         Ok(())
     }
@@ -64,6 +62,14 @@ impl Collection {
         self.vector_index.as_ref()
     }
 
+    pub fn vectors_view(&self) -> &HashMap<Uuid, Vec<f32>> {
+        &self.vector_cache
+    }
+
+    pub fn config(&self) -> &crate::config::CollectionConfig {
+        &self.config
+    }
+
     pub fn get_all(&self) -> Vec<crate::storage::document::Document> {
         let mut all_entries = Vec::new();
         for (id, _) in &self.index {
@@ -72,5 +78,28 @@ impl Collection {
             }
         }
         all_entries
+    }
+
+    pub(super) fn rebuild_vector_cache(&mut self) {
+        self.vector_cache.clear();
+        for (id, _) in &self.index {
+            if let Some(entry) = super::operations::get(self, id) {
+                self.vector_cache.insert(*id, entry.get_vector());
+            }
+        }
+    }
+
+    // If cache and index diverge (e.g., after crash), rebuild to ensure consistency.
+    pub fn ensure_cache_consistency(&mut self) {
+        if self.vector_cache.len() != self.index.len() {
+            self.rebuild_vector_cache();
+            return;
+        }
+        for (id, _) in &self.index {
+            if !self.vector_cache.contains_key(id) {
+                self.rebuild_vector_cache();
+                break;
+            }
+        }
     }
 }

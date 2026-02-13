@@ -21,16 +21,17 @@ pub fn checkpoint(storage: &mut Collection) -> Result<()> {
         .unwrap()
         .as_secs();
     
-    storage.wal.checkpoint(timestamp)?;
+    storage.persistence.wal.checkpoint(timestamp)?;
+    storage.persistence.record_checkpoint(timestamp);
     save_index(storage)?;
     save_vector_index(storage)?;
     save_metadata(storage)?;
-    storage.wal.truncate()?;
+    storage.persistence.wal.truncate()?;
     
     Ok(())
 }
 
 pub fn flush(storage: &mut Collection) -> Result<()> {
-    storage.wal.flush()?;
+    storage.persistence.wal.flush()?;
     Ok(())
 }

@@ -7,12 +7,13 @@ use crate::error::Result;
 use crate::storage::wal::{Wal, WalEntry};
 use crate::storage::persistence::{
     get_wal_path, ensure_file_size, create_mmap, load_index,
-    load_metadata, load_vector_index, grow_mmap_if_needed
+    load_metadata, load_vector_index
 };
 use crate::storage::document::Document;
 use crate::storage::metadata::CollectionMetadata;
 use crate::quantization::QuantizedVector;
 use super::storage::Collection;
+use super::persistence_service::PersistenceService;
 
 pub struct CollectionBuilder;
 
@@ -71,36 +72,38 @@ impl CollectionBuilder {
         } else {
             Wal::disabled(wal_path.into())?
         };
+        let persistence = PersistenceService::new(wal);
         
         let wal_entries = if config.wal.enabled {
-            wal.replay()?
+            persistence.wal.replay()?
         } else {
             Vec::new()
         };
         
         if !wal_entries.is_empty() {
-            let mut temp_storage = Collection {
-                data_file: file,
-                mmap,
-                index,
-                vector_index,
-                config: config.clone(),
-                metadata,
-                path: path.to_string(),
-                wal,
-                operation_count: 0,
-            };
+        let mut temp_storage = Collection {
+            data_file: file,
+            mmap,
+            index,
+            vector_index,
+            vector_cache: HashMap::new(),
+            config: config.clone(),
+            metadata,
+            path: path.to_string(),
+            persistence,
+        };
             
-            Self::replay_wal(&mut temp_storage, wal_entries)?;
+        Self::replay_wal(&mut temp_storage, wal_entries)?;
+        temp_storage.rebuild_vector_cache();
             
             let timestamp = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_secs();
-            temp_storage.wal.checkpoint(timestamp)?;
+            temp_storage.persistence.wal.checkpoint(timestamp)?;
             super::persistence::save_index(&temp_storage)?;
             super::persistence::save_vector_index(&temp_storage)?;
-            temp_storage.wal.truncate()?;
+            temp_storage.persistence.wal.truncate()?;
             
             return Ok(temp_storage);
         }
@@ -111,17 +114,19 @@ impl CollectionBuilder {
             }
         }
         
-        Ok(Collection {
+        let mut collection = Collection {
             data_file: file,
             mmap,
             index,
             vector_index,
+            vector_cache: HashMap::new(),
             config,
             metadata,
             path: path.to_string(),
-            wal,
-            operation_count: 0,
-        })
+            persistence,
+        };
+        collection.rebuild_vector_cache();
+        Ok(collection)
     }
 
     fn replay_wal(storage: &mut Collection, entries: Vec<WalEntry>) -> Result<()> {

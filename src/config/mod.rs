@@ -11,6 +11,7 @@ mod cache;
 mod wal;
 mod collection;
 mod search_mode;
+mod app;
 
 pub use execution::ExecutionMode;
 pub use storage::StorageConfig;
@@ -22,3 +23,4 @@ pub use cache::CacheConfig;
 pub use wal::WalConfig;
 pub use collection::CollectionConfig;
 pub use search_mode::{SearchMode, RangeSearchParams};
+pub use app::AppConfig;

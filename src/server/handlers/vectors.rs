@@ -1,19 +1,16 @@
 use axum::{extract::{Path, Query, State}, response::Json};
 use uuid::Uuid;
 use std::sync::atomic::Ordering;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use crate::{Metric, Document};
 use crate::error::{Result, ServerError};
 use crate::validation;
-use crate::metrics::LatencyTracker;
 use super::super::{
     state::SharedState,
     types::*,
-    sync::LockHelper,
     helpers::{json_to_metadata, metadata_to_json},
 };
 
-const LOCK_TIMEOUT: Duration = Duration::from_secs(5);
 const MAX_BATCH_SIZE: usize = 10_000;
 
 // Parse similarity metric from string
@@ -52,7 +49,11 @@ pub async fn insert_vector(
     
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
-    let mut storage = storage_ref.write().unwrap();
+    let lock_start = Instant::now();
+    let mut storage = storage_ref.write();
+    if let Some(tracker) = state.latency_tracker.get(&collection) {
+        tracker.record_lock_write(lock_start.elapsed());
+    }
     
     // Time the operation
     let start = Instant::now();
@@ -76,8 +77,6 @@ pub async fn insert_vectors_batch(
     Path(collection): Path<String>,
     Json(mut req): Json<BatchInsertRequest>,
 ) -> Result<Json<BatchInsertResponse>> {
-    // track latency ms 
-    let start_time = std::time::Instant::now();
     if state.shutting_down.load(Ordering::Relaxed) {
         return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
     }
@@ -127,7 +126,11 @@ pub async fn insert_vectors_batch(
     // Store in batch
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
-    let mut storage = storage_ref.write().unwrap();
+    let lock_start = Instant::now();
+    let mut storage = storage_ref.write();
+    if let Some(tracker) = state.latency_tracker.get(&collection) {
+        tracker.record_lock_write(lock_start.elapsed());
+    }
 
     let start = Instant::now();
     let ids: Vec<Uuid> = storage.insert_batch(entries)?;
@@ -164,7 +167,11 @@ pub async fn get_vector(
     
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
-    let storage = storage_ref.read().unwrap();
+    let lock_start = Instant::now();
+    let storage = storage_ref.read();
+    if let Some(tracker) = state.latency_tracker.get(&collection) {
+        tracker.record_lock_read(lock_start.elapsed());
+    }
     
     let entry = storage.get(&uuid)
         .ok_or(ServerError::NotFound(super::super::helpers::VECTOR_NOT_FOUND.to_string()))?;
@@ -191,7 +198,11 @@ pub async fn list_vectors(
     
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
-    let storage = storage_ref.read().unwrap();
+    let lock_start = Instant::now();
+    let storage = storage_ref.read();
+    if let Some(tracker) = state.latency_tracker.get(&collection) {
+        tracker.record_lock_read(lock_start.elapsed());
+    }
     
     let vectors: Vec<VectorResponse> = storage.get_all()
         .into_iter()
@@ -224,7 +235,7 @@ pub async fn delete_vector(
     
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
-    let mut storage = storage_ref.write().unwrap();
+    let mut storage = storage_ref.write();
     
     let start = Instant::now();
     let deleted = storage.delete(&uuid)?;
@@ -259,7 +270,11 @@ pub async fn delete_vectors_batch(
 
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
-    let mut storage = storage_ref.write().unwrap();
+    let lock_start = Instant::now();
+    let mut storage = storage_ref.write();
+    if let Some(tracker) = state.latency_tracker.get(&collection) {
+        tracker.record_lock_write(lock_start.elapsed());
+    }
 
     // Parse UUIDs
     let mut uuids = Vec::with_capacity(req.ids.len());
@@ -302,12 +317,21 @@ pub async fn search_vectors(
     
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
-    let storage = storage_ref.read().unwrap();
+    let lock_start = Instant::now();
+    let storage = storage_ref.read();
+    if let Some(tracker) = state.latency_tracker.get(&collection) {
+        tracker.record_lock_read(lock_start.elapsed());
+    }
     
     let metric = parse_metric(req.metric);
     
     let start = Instant::now();
-    let results = storage.search(&req.vector, req.k, metric);
+    let results = storage.search(
+        &req.vector,
+        req.k,
+        metric,
+        crate::SearchParams::default(),
+    );
     let duration = start.elapsed();
     
     // Record latency
@@ -355,7 +379,11 @@ pub async fn upsert_vector(
     
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
-    let mut storage = storage_ref.write().unwrap();
+    let lock_start = Instant::now();
+    let mut storage = storage_ref.write();
+    if let Some(tracker) = state.latency_tracker.get(&collection) {
+        tracker.record_lock_write(lock_start.elapsed());
+    }
     
     // Check if entry exists
     let id = if let Some(id_str) = req.id {
@@ -410,7 +438,11 @@ pub async fn batch_search_vectors(
     
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
-    let storage = storage_ref.read().unwrap();
+    let lock_start = Instant::now();
+    let storage = storage_ref.read();
+    if let Some(tracker) = state.latency_tracker.get(&collection) {
+        tracker.record_lock_read(lock_start.elapsed());
+    }
     
     let metric = parse_metric(req.metric);
     
@@ -443,4 +475,3 @@ pub async fn batch_search_vectors(
         latency_ms: Some(duration.as_millis() as f32),
     }))
 }
-

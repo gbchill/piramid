@@ -5,13 +5,11 @@
 // - `handlers.rs` - the actual endpoint logic
 // - `routes.rs` - wires handlers to URL paths
 // - `helpers.rs` - utility functions and macros
-// - `sync.rs` - synchronization primitives (RwLock helpers)
 
 pub mod state;
 pub mod types;
 pub mod handlers;
 pub mod routes;
-pub mod sync;
 pub mod helpers;
 
 pub use state::{AppState, SharedState};

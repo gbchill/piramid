@@ -1,34 +1,6 @@
 // Helper utilities for search operations
 
-use std::collections::HashMap;
-use uuid::Uuid;
-
-use crate::storage::{Collection, Document};
-use crate::metrics::Metric;
 use crate::search::Hit;
-
-// Create a vector map from storage (used by index for searching)
-// This is a common operation needed by all search types
-pub(crate) fn create_vector_map(storage: &Collection) -> HashMap<Uuid, Vec<f32>> {
-    storage.get_vectors()
-}
-
-// Convert a Document to Hit with calculated score
-pub(crate) fn entry_to_result(
-    entry: &Document,
-    query: &[f32],
-    metric: Metric,
-) -> Hit {
-    let vec = entry.get_vector();  // Dequantize
-    let score = metric.calculate(query, &vec, crate::config::ExecutionMode::Auto);
-    Hit::new(
-        entry.id,
-        score,
-        entry.text.clone(),
-        vec,
-        entry.metadata.clone(),
-    )
-}
 
 // Sort search results by score (descending) and truncate to k
 pub(crate) fn sort_and_truncate(results: &mut Vec<Hit>, k: usize) {
@@ -44,26 +16,7 @@ pub(crate) fn sort_and_truncate(results: &mut Vec<Hit>, k: usize) {
 mod tests {
     use super::*;
     use crate::metadata::Metadata;
-    use crate::storage::Document;
-    use crate::Collection;
-    use crate::metrics::Metric;
-    use crate::QuantizedVector;
-
-    #[test]
-    fn test_entry_to_result() {
-        let entry = Document {
-            id: Uuid::new_v4(),
-            vector: QuantizedVector::from_f32(&vec![1.0, 0.0]),
-            text: "test".to_string(),
-            metadata: Metadata::new(),
-        };
-        
-        let query = vec![1.0, 0.0];
-        let result = entry_to_result(&entry, &query, Metric::Cosine);
-        
-        assert_eq!(result.text, "test");
-        assert!(result.score > 0.99); // Cosine of identical vectors ≈ 1.0
-    }
+    use uuid::Uuid;
 
     #[test]
     fn test_sort_and_truncate() {

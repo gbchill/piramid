@@ -17,6 +17,10 @@ pub struct SearchConfig {
     // IVF: Number of clusters to probe (higher = better recall, slower)
     // Default: uses num_probes from config
     pub nprobe: Option<usize>,
+
+    // How many extra candidates to pull when a filter is present (multiplier of k)
+    #[serde(default = "default_filter_expansion")]
+    pub filter_expansion: usize,
 }
 
 impl Default for SearchConfig {
@@ -24,6 +28,7 @@ impl Default for SearchConfig {
         SearchConfig {
             ef: None,      // Use index config default
             nprobe: None,  // Use index config default
+            filter_expansion: default_filter_expansion(),
         }
     }
 }
@@ -34,6 +39,7 @@ impl SearchConfig {
         SearchConfig {
             ef: Some(400),
             nprobe: Some(20),
+            filter_expansion: default_filter_expansion(),
         }
     }
     
@@ -47,6 +53,9 @@ impl SearchConfig {
         SearchConfig {
             ef: Some(50),
             nprobe: Some(1),
+            filter_expansion: default_filter_expansion(),
         }
     }
 }
+
+fn default_filter_expansion() -> usize { 10 }

@@ -4,14 +4,13 @@
 // - storage.rs: Core data structure and basic accessors
 // - builder.rs: Initialization and recovery logic
 // - operations.rs: CRUD operations (insert, delete, update)
-// - search.rs: Search and filtering operations
 // - persistence.rs: Disk operations and checkpointing
 
 mod storage;
 mod operations;
-mod search;
 mod persistence;
 mod builder;
+mod persistence_service;
 
 pub use storage::Collection;
 pub use builder::CollectionBuilder;
@@ -66,30 +65,24 @@ impl Collection {
         operations::update_vector(self, id, vector)
     }
 
-    pub fn search(&self, query: &[f32], k: usize, metric: Metric) -> Vec<Hit> {
-        search::search(self, query, k, metric)
-    }
-
-    pub fn search_with_mode(&self, query: &[f32], k: usize, metric: Metric, mode: crate::config::ExecutionMode) -> Vec<Hit> {
-        search::search_with_mode(self, query, k, metric, mode)
+    pub fn search(&self, query: &[f32], k: usize, metric: Metric, params: crate::search::SearchParams) -> Vec<Hit> {
+        let mut effective_params = params;
+        if matches!(effective_params.mode, crate::config::ExecutionMode::Auto) {
+            effective_params.mode = self.config().execution;
+        }
+        crate::search::search_collection(self, query, k, metric, effective_params)
     }
 
     pub fn search_batch(&self, queries: &[Vec<f32>], k: usize, metric: Metric) -> Vec<Vec<Hit>> {
-        search::search_batch(self, queries, k, metric)
+        let params = crate::search::SearchParams {
+            mode: self.config().execution,
+            filter: None,
+        };
+        crate::search::search_batch_collection(self, queries, k, metric, params)
     }
 
-    pub fn search_with_filter(
-        &self,
-        query: &[f32],
-        k: usize,
-        metric: Metric,
-        filter: Option<&crate::search::query::Filter>,
-    ) -> Vec<Hit> {
-        search::search_with_filter(self, query, k, metric, filter)
-    }
-
-    pub fn get_vectors(&self) -> HashMap<Uuid, Vec<f32>> {
-        operations::get_vectors(self)
+    pub fn get_vectors(&self) -> &HashMap<Uuid, Vec<f32>> {
+        self.vectors_view()
     }
 
     pub fn checkpoint(&mut self) -> Result<()> {
@@ -191,7 +184,10 @@ mod tests {
         }
         
         let query = vec![1.0, 0.0, 0.0];
-        let results = storage.search(&query, 2, Metric::Cosine);
+        let results = storage.search(&query, 2, Metric::Cosine, crate::search::SearchParams {
+            mode: storage.config().execution,
+            filter: None,
+        });
         
         assert_eq!(results.len(), 2);
         

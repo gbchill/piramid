@@ -1,7 +1,8 @@
 use axum::{http::StatusCode, response::Json};
-use super::super::{state::SharedState, types::{HealthResponse, MetricsResponse, CollectionMetrics}, sync::LockHelper};
+use super::super::{state::SharedState, types::{HealthResponse, MetricsResponse, CollectionMetrics}};
 use axum::extract::State;
 use crate::error::Result;
+use crate::server::types::WalStats;
 
 // GET /api/health - simple liveness check
 pub async fn health() -> Json<HealthResponse> {
@@ -22,6 +23,7 @@ pub async fn health_embeddings(State(state): State<SharedState>) -> StatusCode {
 // GET /api/metrics - basic metrics about collections and vectors
 pub async fn metrics(State(state): State<SharedState>) -> Result<Json<MetricsResponse>> {
     let mut collection_metrics = Vec::new();
+    let mut wal_stats = Vec::new();
     let mut total_vectors = 0;
     
     for item in state.collections.iter() {
@@ -29,17 +31,23 @@ pub async fn metrics(State(state): State<SharedState>) -> Result<Json<MetricsRes
         let storage_ref = item.value();
         
         // Use a read lock with timeout
-        let storage = storage_ref.read().unwrap();
+        let storage = storage_ref.read();
         let count = storage.count();
         let index_type = storage.vector_index().index_type().to_string();
         let memory_usage_bytes = storage.memory_usage_bytes();
         
         // Get latency stats for this collection
-        let (insert_latency_ms, search_latency_ms) = if let Some(tracker) = state.latency_tracker.get(&collection_name) {
-            (tracker.avg_insert_latency_ms(), tracker.avg_search_latency_ms())
-        } else {
-            (None, None)
-        };
+        let (insert_latency_ms, search_latency_ms, lock_read_ms, lock_write_ms) =
+            if let Some(tracker) = state.latency_tracker.get(&collection_name) {
+                (
+                    tracker.avg_insert_latency_ms(),
+                    tracker.avg_search_latency_ms(),
+                    tracker.avg_lock_read_latency_ms(),
+                    tracker.avg_lock_write_latency_ms(),
+                )
+            } else {
+                (None, None, None, None)
+            };
 
         total_vectors += count;
         collection_metrics.push(CollectionMetrics {
@@ -49,6 +57,17 @@ pub async fn metrics(State(state): State<SharedState>) -> Result<Json<MetricsRes
             memory_usage_bytes,
             insert_latency_ms,
             search_latency_ms,
+            lock_read_ms,
+            lock_write_ms,
+        });
+
+        let wal_size = std::fs::metadata(&format!("{}.wal.db", storage.path))
+            .map(|m| m.len())
+            .ok();
+        wal_stats.push(WalStats {
+            collection: storage.path.clone(),
+            last_checkpoint: storage.persistence.last_checkpoint(),
+            wal_size_bytes: wal_size,
         });
     } 
     
@@ -56,6 +75,7 @@ pub async fn metrics(State(state): State<SharedState>) -> Result<Json<MetricsRes
         total_collections: state.collections.len(),
         total_vectors,
         collections: collection_metrics,
+        app_config: state.app_config.clone(),
+        wal_stats,
     }))
 }
-
