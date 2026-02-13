@@ -3,6 +3,7 @@ use parking_lot::RwLock;
 use dashmap::DashMap;
 
 use crate::Collection;
+use crate::storage::collection::CollectionOpenOptions;
 use crate::embeddings::Embedder;
 use crate::metrics::LatencyTracker;
 use crate::error::{Result, ServerError};
@@ -59,7 +60,10 @@ impl AppState {
 
         if !self.collections.contains_key(name) {
             let path = format!("{}/{}.db", self.data_dir, name);
-            let storage = Collection::with_config(&path, self.app_config.to_collection_config())?;
+            let storage = Collection::open_with_options(
+                &path,
+                CollectionOpenOptions::from(self.app_config.to_collection_config()),
+            )?;
             self.collections.insert(name.to_string(), Arc::new(RwLock::new(storage)));
             
             // Create latency tracker for this collection

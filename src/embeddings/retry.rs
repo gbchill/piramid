@@ -13,27 +13,34 @@ pub struct RetryEmbedder {
     max_delay_ms: u64,
 }
 
-impl RetryEmbedder {
-    pub fn new(embedder: Arc<dyn Embedder>) -> Self {
+#[derive(Clone, Debug)]
+pub struct RetryConfig {
+    pub max_retries: u32,
+    pub initial_delay_ms: u64,
+    pub max_delay_ms: u64,
+}
+
+impl Default for RetryConfig {
+    fn default() -> Self {
         Self {
-            inner: embedder,
             max_retries: 3,
-            initial_delay_ms: 1000,  // Start with 1 second
-            max_delay_ms: 30000,     // Cap at 30 seconds
+            initial_delay_ms: 1000,
+            max_delay_ms: 30000,
         }
     }
+}
+
+impl RetryEmbedder {
+    pub fn new(embedder: Arc<dyn Embedder>) -> Self {
+        Self::with_options(embedder, RetryConfig::default())
+    }
     
-    pub fn with_config(
-        embedder: Arc<dyn Embedder>,
-        max_retries: u32,
-        initial_delay_ms: u64,
-        max_delay_ms: u64,
-    ) -> Self {
+    pub fn with_options(embedder: Arc<dyn Embedder>, options: RetryConfig) -> Self {
         Self {
             inner: embedder,
-            max_retries,
-            initial_delay_ms,
-            max_delay_ms,
+            max_retries: options.max_retries,
+            initial_delay_ms: options.initial_delay_ms,
+            max_delay_ms: options.max_delay_ms,
         }
     }
 }
@@ -172,7 +179,14 @@ mod tests {
     async fn test_retry_success_after_failures() {
         let mock = MockEmbedder::new(2); // Fail first 2 attempts
         let calls_counter = mock.calls.clone();
-        let retry = RetryEmbedder::with_config(Arc::new(mock), 3, 10, 1000);
+        let retry = RetryEmbedder::with_options(
+            Arc::new(mock),
+            RetryConfig {
+                max_retries: 3,
+                initial_delay_ms: 10,
+                max_delay_ms: 1000,
+            },
+        );
         
         let result = retry.embed("test").await;
         assert!(result.is_ok());
@@ -182,7 +196,14 @@ mod tests {
     #[tokio::test]
     async fn test_retry_exhaustion() {
         let mock = MockEmbedder::new(10); // Always fail
-        let retry = RetryEmbedder::with_config(Arc::new(mock), 2, 10, 1000);
+        let retry = RetryEmbedder::with_options(
+            Arc::new(mock),
+            RetryConfig {
+                max_retries: 2,
+                initial_delay_ms: 10,
+                max_delay_ms: 1000,
+            },
+        );
         
         let result = retry.embed("test").await;
         assert!(result.is_err());

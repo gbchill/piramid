@@ -12,17 +12,14 @@ use crate::storage::persistence::{
 use crate::storage::document::Document;
 use crate::storage::metadata::CollectionMetadata;
 use crate::quantization::QuantizedVector;
-use super::storage::Collection;
+use super::{CollectionOpenOptions, storage::Collection};
 use super::persistence::PersistenceService;
 
 pub struct CollectionBuilder;
 
 impl CollectionBuilder {
-    pub fn open(path: &str) -> Result<Collection> {
-        Self::with_config(path, crate::config::CollectionConfig::default())
-    }
-
-    pub fn with_config(path: &str, config: crate::config::CollectionConfig) -> Result<Collection> {
+    pub fn open(path: &str, options: CollectionOpenOptions) -> Result<Collection> {
+        let config = options.config;
         Collection::init_rayon_pool(&config.parallelism);
         
         let collection_name = std::path::Path::new(path)

@@ -15,6 +15,25 @@ mod persistence;
 pub use storage::Collection;
 pub use builder::CollectionBuilder;
 
+#[derive(Clone)]
+pub struct CollectionOpenOptions {
+    pub config: crate::config::CollectionConfig,
+}
+
+impl Default for CollectionOpenOptions {
+    fn default() -> Self {
+        Self {
+            config: crate::config::CollectionConfig::default(),
+        }
+    }
+}
+
+impl From<crate::config::CollectionConfig> for CollectionOpenOptions {
+    fn from(config: crate::config::CollectionConfig) -> Self {
+        Self { config }
+    }
+}
+
 use uuid::Uuid;
 use crate::error::Result;
 use crate::metadata::Metadata;
@@ -26,11 +45,11 @@ use std::collections::HashMap;
 // Public API implementation
 impl Collection {
     pub fn open(path: &str) -> Result<Self> {
-        CollectionBuilder::open(path)
+        CollectionBuilder::open(path, CollectionOpenOptions::default())
     }
 
-    pub fn with_config(path: &str, config: crate::config::CollectionConfig) -> Result<Self> {
-        CollectionBuilder::with_config(path, config)
+    pub fn open_with_options(path: &str, options: CollectionOpenOptions) -> Result<Self> {
+        CollectionBuilder::open(path, options)
     }
 
     pub fn get(&self, id: &Uuid) -> Option<Document> {

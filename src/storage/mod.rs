@@ -1,7 +1,7 @@
 // Storage module - handles vector persistence with memory-mapped files
 
 mod document;
-mod collection;
+pub mod collection;
 mod metadata;
 mod persistence;
 pub mod wal;
