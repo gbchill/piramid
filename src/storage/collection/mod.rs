@@ -81,6 +81,7 @@ impl Collection {
             mode: self.config().execution,
             filter: None,
             filter_overfetch_override: None,
+            search_config_override: None,
         };
         crate::search::search_batch_collection(self, queries, k, metric, params)
     }
@@ -192,6 +193,7 @@ mod tests {
             mode: storage.config().execution,
             filter: None,
             filter_overfetch_override: None,
+            search_config_override: None,
         });
         
         assert_eq!(results.len(), 2);

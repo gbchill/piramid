@@ -6,7 +6,6 @@ use crate::{Metric, Document};
 use crate::error::{Result, ServerError};
 use crate::validation;
 use crate::server::metrics::{record_lock_read, record_lock_write};
-use crate::server::types::range::RangeSearchRequest;
 use super::super::{
     state::SharedState,
     types::*,
@@ -342,13 +341,25 @@ pub async fn search_vectors(
     record_lock_read(state.latency_tracker.get(&collection).as_deref(), lock_start);
     
     let metric = parse_metric(req.metric);
+    let effective_search = apply_search_overrides(
+        storage.config().search,
+        req.ef,
+        req.nprobe,
+        req.overfetch,
+        req.preset.clone(),
+    );
     
     let start = Instant::now();
     let results = storage.search(
         &req.vector,
         req.k,
         metric,
-        crate::SearchParams::default(),
+        crate::SearchParams {
+            mode: storage.config().execution,
+            filter: None,
+            filter_overfetch_override: req.overfetch,
+            search_config_override: Some(effective_search),
+        },
     );
     let duration = start.elapsed();
     

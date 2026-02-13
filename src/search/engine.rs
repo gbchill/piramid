@@ -12,6 +12,7 @@ pub struct SearchParams<'a> {
     pub mode: ExecutionMode,
     pub filter: Option<&'a Filter>,
     pub filter_overfetch_override: Option<usize>,
+    pub search_config_override: Option<crate::config::SearchConfig>,
 }
 
 impl Default for SearchParams<'_> {
@@ -20,6 +21,7 @@ impl Default for SearchParams<'_> {
             mode: ExecutionMode::Auto,
             filter: None,
             filter_overfetch_override: None,
+            search_config_override: None,
         }
     }
 }
@@ -33,7 +35,8 @@ pub fn search_collection(
 ) -> Vec<Hit> {
     // Build vector map once for the index to use.
     let vectors = storage.get_vectors();
-    let base_overfetch = storage.config.search.filter_overfetch.max(1);
+    let effective_search = params.search_config_override.unwrap_or(storage.config.search);
+    let base_overfetch = effective_search.filter_overfetch.max(1);
     let expansion = params
         .filter_overfetch_override
         .unwrap_or(base_overfetch)
@@ -45,7 +48,7 @@ pub fn search_collection(
         query,
         search_k,
         vectors,
-        storage.config.search,
+        effective_search,
     );
 
     let mut results = Vec::new();
@@ -135,6 +138,7 @@ mod tests {
                 mode: storage.config().execution,
                 filter: Some(&filter),
                 filter_overfetch_override: None,
+                search_config_override: None,
             };
 
             let results = search_collection(&storage, &[1.0, 0.0, 0.0][..], 5, Metric::Cosine, params);
