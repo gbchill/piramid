@@ -4,6 +4,7 @@
 use serde::{Serialize, Deserialize};
 use crate::metrics::Metric;
 use crate::config::ExecutionMode;
+use crate::config::SearchConfig;
 
 use super::traits::{VectorIndex, IndexType};
 use super::{FlatIndex, FlatConfig, HnswIndex, HnswConfig, IvfIndex, IvfConfig};
@@ -17,12 +18,16 @@ pub enum IndexConfig {
         metric: Metric,
         #[serde(default)]
         mode: ExecutionMode,
+        #[serde(default)]
+        search: SearchConfig,
     },
     // Flat index (brute force)
     Flat { 
         metric: Metric,
         #[serde(default)]
         mode: ExecutionMode,
+        #[serde(default)]
+        search: SearchConfig,
     },
     // HNSW index
     Hnsw {
@@ -35,6 +40,8 @@ pub enum IndexConfig {
         metric: Metric,
         #[serde(default)]
         mode: ExecutionMode,
+        #[serde(default)]
+        search: SearchConfig,
     },
     // IVF index
     Ivf {
@@ -44,6 +51,8 @@ pub enum IndexConfig {
         metric: Metric,
         #[serde(default)]
         mode: ExecutionMode,
+        #[serde(default)]
+        search: SearchConfig,
     },
 }
 
