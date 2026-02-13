@@ -51,6 +51,7 @@ impl AppConfig {
                 "flat" => IndexConfig::Flat {
                     metric: crate::metrics::Metric::Cosine,
                     mode: ExecutionMode::Auto,
+                    search: cfg.search.clone(),
                 },
                 "hnsw" => IndexConfig::Hnsw {
                     m: 16,
@@ -60,6 +61,7 @@ impl AppConfig {
                     ml: 1.0 / (16.0_f32).ln(),
                     metric: crate::metrics::Metric::Cosine,
                     mode: ExecutionMode::Auto,
+                    search: cfg.search.clone(),
                 },
                 "ivf" => IndexConfig::Ivf {
                     num_clusters: 256,
@@ -67,6 +69,7 @@ impl AppConfig {
                     max_iterations: 20,
                     metric: crate::metrics::Metric::Cosine,
                     mode: ExecutionMode::Auto,
+                    search: cfg.search.clone(),
                 },
                 _ => cfg.index.clone(),
             };
