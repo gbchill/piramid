@@ -11,6 +11,7 @@ mod operations;
 mod persistence;
 mod builder;
 mod persistence_service;
+mod cache;
 
 pub use storage::Collection;
 pub use builder::CollectionBuilder;
