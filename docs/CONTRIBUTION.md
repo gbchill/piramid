@@ -1,36 +1,39 @@
-• Beginner Priorities
+• Beginner Priorities (read in this order)
 
-  - src/bin/server.rs – entrypoint: builds config via `config::loader::load_app_config`, wires optional embedder, spins up Axum server with graceful shutdown and checkpoints.
-  - src/server/state.rs – shared AppState: collection map, embedder, shutdown flag, latency trackers. Learn how Arc/RwLock/DashMap are used.
-  - src/server/routes.rs + src/server/handlers/ – HTTP surface. Handlers show validation, locking (via metrics helper), and how storage/search are called. Great place
-    to see async/axum patterns.
-  - src/storage/collection/ – core database: mmap-backed file + in-memory index map + pluggable vector index + WAL. Files to skim: builder.rs (open/replay WAL),
-    operations.rs (insert/delete/upsert), cache.rs (vector cache), persistence/ (WAL + checkpoints).
-  - src/index/ – vector index strategies. traits.rs defines the interface; selector.rs picks Flat/HNSW/IVF; implementations live in subfolders.
-  - src/metrics – cosine/euclidean/dot and LatencyTracker; shows SIMD mode handling.
-  - src/embeddings/ – embedding abstraction + providers (OpenAI/Ollama), retry/cache wrappers.
-  - src/validation.rs – input checks (dims, batch sizes, names); reused everywhere.
-  - src/quantization/mod.rs – int8 quantization; understand how vectors are stored/loaded.
+  1) `src/bin/server.rs` – entrypoint. Loads config via `config::loader::load_app_config`, optionally wires an embedder, builds the Axum router, and starts the server with graceful shutdown.
+  2) `src/server/state.rs` – shared `AppState`: holds collections (DashMap of `Arc<RwLock<Collection>>`), embedder, shutdown flag, latency trackers, and config.
+  3) `src/server/routes.rs` + `src/server/handlers/` – HTTP surface. Handlers show validation, lock timing (via metrics helper), and how storage/search are called.
+  4) `src/storage/collection/` – core data path. Start with:
+      • `builder.rs` (open/replay WAL, build indexes),
+      • `operations.rs` (insert/delete/upsert),
+      • `cache.rs` (vector cache),
+      • `persistence/` (WAL + checkpoints).
+  5) `src/index/` – vector indexes. `traits.rs` defines the interface; `selector.rs` picks Flat/HNSW/IVF; implementations in subfolders.
+  6) `src/search/` – unified search engine + filters.
+  7) `src/metrics/` – distance metrics and `LatencyTracker` (SIMD vs scalar).
+  8) `src/embeddings/` – provider abstraction (OpenAI/Ollama), retry/cache wrappers.
+  9) `src/validation.rs` – input checks (dims, batch sizes, names); reused everywhere.
+ 10) `src/quantization/mod.rs` – int8 quantization (how vectors are stored/loaded).
 
-  Architecture Flow
+  How a request flows
 
-  1. Startup (src/bin/server.rs): read config → create AppState (maybe with embedder) → build router (create_router).
-  2. Request hits Axum router (src/server/routes.rs) → handler in src/server/handlers/*.
-  3. Handler: validate input (src/validation.rs) → AppState::get_or_create_collection (loads/creates Collection with mmap, index, WAL) → perform op:
-      - Inserts/upserts: log to WAL, serialize doc to mmap, update in-memory offset index, update vector index, update metadata, track latency.
-      - Search: gather vectors, ask vector index for neighbors, score via metric, return DTOs.
-      - Embedding endpoints: call embedder (with retry/cache), then reuse insert/search paths.
-  4. Periodic checkpoints/flush on shutdown or WAL thresholds persist state.
+  1. Startup: load config → create `AppState` (maybe with embedder) → build router.
+  2. Request: Axum router → handler.
+  3. Handler steps: validate input → `AppState::get_or_create_collection` (load/create collection with mmap, index, WAL) → perform op:
+      - Insert/upsert: WAL log → serialize to mmap → update offset index → update vector index → update metadata → record latency.
+      - Search: use cached vectors → index.search → score with metric → return DTOs → record latency.
+      - Embed: call embedder (with retry/cache), then insert/search.
+  4. Shutdown/checkpoint: op-count or time-based checkpoints; flush on shutdown.
 
   Folder Cheat Sheet
 
-  - src/server/ – HTTP API wiring, state, DTOs.
-  - src/storage/ – on-disk layout, WAL, mmap, collection CRUD/search.
+  - src/server/ – HTTP API wiring, state, DTOs, metrics helpers.
+  - src/storage/ – on-disk layout, WAL, mmap, collection CRUD/search, cache, persistence.
   - src/index/ – vector index interface + Flat/HNSW/IVF implementations.
-  - src/search/ – search helpers and filters atop collection/index.
+  - src/search/ – unified search engine and filters.
   - src/embeddings/ – provider-agnostic embedding layer.
   - src/metrics/ – distance metrics + latency tracking.
-  - src/config/ – knobs for execution mode, mmap, WAL, index selection, etc.
+  - src/config/ – config types and loader.
   - dashboard/, website/, sdk/ – UI, marketing, and client SDKs (not core server).
 
 
@@ -54,4 +57,3 @@
   - Collections CRUD: Create just ensures collection exists (touches disk/index metadata); list enumerates loaded collections with counts; delete removes files/entries.
   - Metrics/Health: Read-only endpoints summarize counts, index type, memory usage, latency stats, and embedder status.
   - Shutdown: Ctrl+C → set shutting_down flag (new requests rejected) → checkpoint all collections (flush mmap/index/vector-index/metadata) → graceful drain.
-
