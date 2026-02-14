@@ -1,58 +1,49 @@
-### Production 
+### Production 
 
 **Configuration**
 
 [ ] Config hot reload (limited subset)
 
+[ ] Development mode with auto-reload
+
+
 **Embeddings Optimization**
 
-[ ] remove prebuilt embedding functionality for now
+[ ] Remove prebuilt embedding functionality for now
 
-[ ] CPU Local Embeddings support (e.g. sentence-transformers)
+[ ] CPU local embeddings support (e.g. sentence-transformers)
 
 [ ] Request metrics (count, latency, tokens, cost)
 
 [ ] Provider timeout configuration
 
-**Observability**
+**Observability & Health**
 
-[ ] Enhanced health checks (storage status, index health, disk space)
+[ ] Health endpoints with startup validation (storage status, index health, disk space, collections load, integrity on boot)
 
 [ ] Server version endpoint
 
 **Index Management**
 
-[ ] Index Warmup : Utility to fault-in mmap pages on startup to prevent initial latency spikes.
+[ ] Index warmup: fault-in mmap pages on startup
 
 [ ] Rebuild index function
 
-[ ] Index compaction (remove deleted vectors)
-
-[ ] Startup validation (check integrity on boot)
-
-[ ] Startup health check (validate all collections load)
+[ ] Compaction and cleanup (remove deleted vectors; reclaim space)
 
 [ ] Duplicate detection (find similar vectors in collection)
 
-[ ] Product Quantization (PQ) (CPU Compression)
+[ ] Product Quantization (PQ) (CPU compression)
 
-[ ] HNSW Tombstoning: Soft-delete nodes without breaking graph connectivity.
+[ ] HNSW tombstoning: soft-delete nodes without breaking graph connectivity
 
 **Resource Management**
 
-[ ] Max vectors per collection
+[ ] Collection limits (max vectors; storage size per collection)
 
-[ ] Storage size limits per collection
-
-[ ] Disk space monitoring
+[ ] Space safeguards (disk monitoring; read-only mode when full; cleanup of orphaned files)
 
 [ ] Memory pressure handling
-
-[ ] Read-only mode when disk full
-
-[ ] Automatic cleanup of orphaned files
-
-[ ] Data compaction (reclaim space from deletes)
 
 **HTTP & Networking**
 
@@ -72,48 +63,47 @@
 
 **Launch Prep**
 
-[ ] add /// doc based comments in codebase
-[ ] get rid of redundant functions 
-[ ] maintain proper logging
-[ ] Codebase final refactor and 
+[ ] Add /// doc-based comments in codebase
+[ ] Remove redundant functions
+[ ] Maintain proper logging
+[ ] Codebase final refactor
 
 **Dashboard**
 
-[ ] dashboard full update with functionality
-[ ] final docker image push
+[ ] Dashboard full update with functionality
+[ ] Final docker image push
 
 **CI/CD**
 
-[ ] fix broken ci pipleine gh workflow for cargo 
+[ ] Fix broken CI pipeline GitHub workflow for cargo 
 
-[ ] fix broken ci pipleine  gh workflow for pip  
+[ ] Fix broken CI pipeline GitHub workflow for pip  
 
-[ ] fix broken ci pipleine  gh workflow for npm 
+[ ] Fix broken CI pipeline GitHub workflow for npm 
 
-[ ] fix broken ci pipleine gh workflow for docker image  
+[ ] Fix broken CI pipeline GitHub workflow for docker image  
 
-[ ] cargo fuzz to test parser robustness.
+[ ] Cargo fuzz to test parser robustness.
 
-[ ] Add`proptest for state consistency verification.
+[ ] Add proptest for state consistency verification.
 
 **Documentation**
 
-[ ] Interactive API docs for rust sdk (Mintlify)
+[ ] Interactive API docs for SDKs (Rust/Python via Mintlify)
 
-[ ] `docs/CONTRIBUTION.md` - 5-minute tutorial and updates
+[ ] docs/CONTRIBUTION.md - 5-minute tutorial and updates
 
-[ ] `CHANGELOG.md` - Version tracking
+[ ] CHANGELOG.md - Version tracking
 
-[ ] `README.md` - update readme
+[ ] README.md - update readme
 
 [ ] License headers in source files
 
 [ ] Third-party license audit
 
-
 ---
 
-### Post-Launch 
+### Post-Launch 
 
 **ACID Transactions**
 
@@ -131,13 +121,9 @@
 
 [ ] Non-blocking writes (tokio-fs)
 
-[ ] Background flush worker
-
-[ ] Write batching/coalescing
+[ ] Async write pipeline (batching/coalescing, buffering, background flush worker)
 
 [ ] Prefetching for sequential reads
-
-[ ] Write buffering optimization
 
 [ ] Background job queue for long operations
 
@@ -147,9 +133,7 @@
 
 [ ] Query planning/optimization
 
-[ ] Query timeout enforcement
-
-[ ] Query complexity limits
+[ ] Query budget enforcement (timeouts, complexity limits)
 
 **Backup & Restore**
 
@@ -215,9 +199,7 @@
 
 **Python Support**
 
-[ ] Python client sdk
-
-[ ] Interactive API docs for python sdk (Mintlify)
+[ ] Python client SDK
 
 ---
 
@@ -255,21 +237,17 @@
 
 [ ] Automatic index rebuild on corruption
 
-[ ] Fallback to brute-force search if HNSW fails
-
 [ ] Circuit breaker for embedding API failures
 
 [ ] Soft delete with cleanup
 
 [ ] Collection aliases
 
-[ ] Hot reload configuration
-
 [ ] Move collection between directories
 
-[ ] Development mode with auto-reload
-
 [ ] Verbose debug logging mode
+
+[ ] CLI 
 
 
 **MCP Integration**
@@ -292,10 +270,10 @@
 
 [ ] VRAM Hydration: Utility to load existing on-disk vectors into GPU VRAM on startup.
 
-[ ] Dual-Write Architecture: Ensure `insert_vector` writes to both Disk (Persistence) and Zipy (VRAM).
+[ ] Dual-Write Architecture: Ensure insert_vector writes to both Disk (Persistence) and Zipy (VRAM).
 
-[ ] Search Router: Implement logic to route `POST /search` requests to Zipy when active.
+[ ] Search Router: Implement logic to route POST /search requests to Zipy when active.
 
 [ ] Fallback Circuit Breaker: Auto-switch to CPU search if Zipy returns OOM or timeout errors.
 
-[ ] Health Check Extension: Add GPU status (temperature, memory usage) to `/api/health`.
+[ ] Health Check Extension: Add GPU status (temperature, memory usage) to /api/health.
