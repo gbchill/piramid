@@ -9,9 +9,17 @@ use std::time::Duration;
 
 #[tokio::main]
 async fn main() {
-    // Structured logging with env-based filter (e.g., RUST_LOG=info,piramid=debug)
+    // Structured logging with env-based filter (default honors RUST_LOG).
+    let verbose = std::env::var("VERBOSE_DEBUG")
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
+    let env_filter = if verbose && std::env::var("RUST_LOG").is_err() {
+        EnvFilter::new("debug,piramid=debug,tower_http=info")
+    } else {
+        EnvFilter::from_default_env()
+    };
     tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::from_default_env())
+        .with_env_filter(env_filter)
         .with_target(false)
         .init();
 
@@ -128,6 +136,10 @@ async fn main() {
     println!("  HTTP:        http://{}", addr);
     println!("  Data:        {}", data_dir);
     println!("  Dashboard:   http://localhost:{}/", port);
+    if let Ok(cfg_file) = std::env::var("CONFIG_FILE") {
+        println!("  Config:      {}", cfg_file);
+    }
+    println!("  Routes:      /api/v1/* (also available at /api/*)");
     println!();
     println!("Press Ctrl+C to stop");
     

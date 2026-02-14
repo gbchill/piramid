@@ -8,6 +8,7 @@ use crate::error::{Result, ServerError};
 use crate::validation;
 use crate::server::metrics::{record_lock_read, record_lock_write};
 use crate::server::types::range::RangeSearchRequest;
+use tracing::info;
 use super::super::{
     state::SharedState,
     types::*,
@@ -115,6 +116,12 @@ pub async fn insert_vector(
     validation::validate_collection_name(&collection)?;
 
     state.get_or_create_collection(&collection)?;
+    info!(
+        collection=%collection,
+        single=req.vector.is_some(),
+        batch=req.vectors.as_ref().map(|v| v.len()),
+        "insert_request"
+    );
     
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
@@ -477,6 +484,7 @@ pub async fn upsert_vector(
         return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
     }
     state.ensure_write_allowed()?;
+    state.ensure_write_allowed()?;
 
     // Validate inputs
     validation::validate_collection_name(&collection)?;
@@ -523,6 +531,12 @@ pub async fn upsert_vector(
         }
     }
     state.enforce_cache_budget();
+    info!(
+        collection=%collection,
+        id=%id,
+        created=!exists,
+        "upsert_request"
+    );
     
     Ok(Json(UpsertResponse { 
         id: id.to_string(),

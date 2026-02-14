@@ -15,6 +15,9 @@ use axum::http::HeaderValue;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 use tower_http::set_header::SetResponseHeaderLayer;
+use tower_http::trace::{TraceLayer, DefaultMakeSpan, DefaultOnResponse};
+use tower_http::compression::CompressionLayer;
+use tracing::Level;
 
 use super::handlers;
 use super::state::SharedState;
@@ -83,12 +86,28 @@ pub fn create_router(state: SharedState) -> Router {
         // Middleware layers
         .layer(DefaultBodyLimit::max(100 * 1024 * 1024))  // 100MB for batch operations
         .layer(cors)
+        .layer(CompressionLayer::new())
         // Assign request IDs to all requests
         .layer(middleware::from_fn(assign_request_id))
+        // HTTP request/response tracing
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                .on_response(DefaultOnResponse::new().level(Level::INFO))
+        )
         // Add API version header
         .layer(SetResponseHeaderLayer::if_not_present(
             axum::http::header::HeaderName::from_static("x-api-version"),
             HeaderValue::from_static("v1"),
+        ))
+        // Basic security headers
+        .layer(SetResponseHeaderLayer::if_not_present(
+            axum::http::header::HeaderName::from_static("x-content-type-options"),
+            HeaderValue::from_static("nosniff"),
+        ))
+        .layer(SetResponseHeaderLayer::if_not_present(
+            axum::http::header::HeaderName::from_static("x-frame-options"),
+            HeaderValue::from_static("DENY"),
         ))
         // Serve static dashboard files (Next.js export)
         .fallback_service(

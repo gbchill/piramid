@@ -1,12 +1,6 @@
 
 ### Production 
 
-**Observability & Health**
-
-[ ] Add logs for server console like Next.js
-
-[ ] Verbose debug logging mode
-
 **Index Management**
 
 [ ] Product Quantization (PQ) (CPU compression)
@@ -29,7 +23,6 @@
 
 **Launch Prep**
 
-[ ] Add /// doc-based comments in codebase
 [ ] Remove redundant functions
 [ ] Maintain proper logging
 [ ] Codebase final refactor

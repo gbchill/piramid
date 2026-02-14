@@ -10,6 +10,7 @@ use super::super::{
     types::*,
     helpers::{json_to_metadata, metadata_to_json},
 };
+use tracing::info;
 
 // Embedding endpoints: embed text then reuse storage/search flows
 
@@ -40,6 +41,7 @@ pub async fn embed_text(
 
     let response = match (req.text.clone(), req.texts.clone()) {
         (Some(text), None) => {
+            info!(collection=%collection, "embed_single_request");
             let start = Instant::now();
             let response = embedder.embed(&text).await?;
             let embed_duration = start.elapsed();
@@ -71,6 +73,7 @@ pub async fn embed_text(
             if texts.is_empty() {
                 return Err(ServerError::InvalidRequest("texts cannot be empty".to_string()).into());
             }
+            info!(collection=%collection, batch=texts.len(), "embed_batch_request");
 
             let mut ids = Vec::with_capacity(texts.len());
             let mut embeddings = Vec::with_capacity(texts.len());
@@ -131,6 +134,7 @@ pub async fn search_by_text(
     let embedder = state.embedder.as_ref()
         .ok_or(ServerError::ServiceUnavailable(super::super::helpers::EMBEDDING_NOT_CONFIGURED.to_string()))?;
 
+    info!(collection=%collection, "search_by_text_request");
     let start = Instant::now();
     let response = embedder.embed(&req.query).await?;
     let embed_duration = start.elapsed();

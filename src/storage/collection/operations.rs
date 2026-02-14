@@ -9,6 +9,7 @@ use crate::storage::persistence::{EntryPointer, grow_mmap_if_needed};
 use crate::quantization::QuantizedVector;
 use crate::metadata::Metadata;
 use super::storage::Collection;
+use tracing::debug;
 
 // Enforce collection limits for a single entry. This function checks the size of the entry being inserted against the configured limits for the collection, such as maximum number of vectors, maximum total bytes, and maximum bytes per vector. If any of the limits are exceeded, it returns an error to prevent inserting data that would violate the collection's constraints. This is important for maintaining the integrity of the collection and ensuring that it operates within defined resource limits, especially when inserting large entries that could potentially consume excessive resources.
 fn enforce_limits_single(storage: &Collection, entry_bytes: usize) -> Result<()> {
@@ -112,7 +113,7 @@ pub fn insert_internal(storage: &mut Collection, entry: Document) -> Result<Uuid
     
     // 5. Update the vector index and cache with the new document's vector. We extract the vector from the document, update the metadata with the dimensions of the vector, and then insert the vector into the in-memory cache and the vector index. This ensures that the new document is included in future search operations and that its vector is readily available for similarity calculations.
     let index_entry = EntryPointer::new(offset, bytes.len() as u32);
-    storage.index.insert(id, index_entry);
+    storage.index.insert(id, index_entry.clone());
     
     let vec_f32 = entry.get_vector();
     
@@ -129,6 +130,7 @@ pub fn insert_internal(storage: &mut Collection, entry: Document) -> Result<Uuid
     storage.vector_index.insert(id, &vec_f32, &storage.vector_cache);
     
     storage.metadata.update_vector_count(storage.index.len());
+    debug!(collection=%storage.path, id=%id, offset=index_entry.offset, len=bytes.len(), "inserted_document");
     
     Ok(id)
 }
