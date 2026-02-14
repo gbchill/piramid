@@ -73,10 +73,9 @@ pub fn create_router(state: SharedState) -> Router {
         .allow_methods(Any)   // GET, POST, etc
         .allow_headers(Any);  // any headers
 
-    let api = api_router();
+    let api = api_router(state.clone());
     
-    Router::new()
-        .with_state(state.clone())
+    Router::<SharedState>::new()
         .nest("/api", api.clone())
         .nest("/api/v1", api)
         // Middleware layers
@@ -85,16 +84,15 @@ pub fn create_router(state: SharedState) -> Router {
         // Assign request IDs to all requests
         .layer(middleware::from_fn(assign_request_id))
         // Add API version header
-        .layer(middleware::map_response(|mut res: Response| {
-            res.headers_mut().insert(
-                "X-API-Version",
-                HeaderValue::from_static("v1"),
-            );
-            res
-        }))
+        .layer(SetResponseHeaderLayer::if_not_present(
+            axum::http::header::HeaderName::from_static("x-api-version"),
+            HeaderValue::from_static("v1"),
+        ))
         // Serve static dashboard files (Next.js export)
         .fallback_service(
             ServeDir::new("dashboard")
                 .not_found_service(ServeFile::new("dashboard/index.html"))
         )
+        // State available to all handlers
+        .with_state(state)
 }
