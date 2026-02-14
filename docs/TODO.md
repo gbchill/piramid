@@ -1,11 +1,3 @@
-### Search & Similarity
-
-[ ] **Filtered HNSW Traversal:** Integrate bitmap checks directly into the graph traversal loop.
-
-### Performance & Indexing
-
-[ ] **Index Warmup:** Utility to fault-in mmap pages on startup to prevent initial latency spikes.
-
 ### Data Durability & Reliability
 
 **Write-Ahead Log (WAL)**
@@ -48,6 +40,7 @@
 
 **Index Management**
 
+[ ] **Index Warmup:** Utility to fault-in mmap pages on startup to prevent initial latency spikes.
 
 [ ] Rebuild index function
 
