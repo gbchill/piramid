@@ -57,6 +57,7 @@ dashmap= "6.0"
 rayon = "1.10"
 num_cpus = "1.16"
 parking_lot = "0.12"
+libc = "0.2"
 
 [dev-dependencies]
 # Logging

@@ -29,9 +29,10 @@ pub fn create_router(state: SharedState) -> Router {
         .allow_headers(Any);  // any headers
     
     Router::new()
-        // Health check - always first, it's what load balancers hit
+        // Health and metrics endpoints
         .route("/api/health", get(handlers::health))
         .route("/api/health/embeddings", get(handlers::health_embeddings))
+        .route("/api/readyz", get(handlers::readyz))
         .route("/api/metrics", get(handlers::metrics))
         
         // Collections CRUD

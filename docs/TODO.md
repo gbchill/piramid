@@ -10,8 +10,6 @@
 
 **Observability & Health**
 
-[ ] Health endpoints with startup validation (storage status, index health, disk space, collections load, integrity on boot)
-
 [ ] Add logs for server console like Next.js
 
 [ ] Server version endpoint
