@@ -11,6 +11,8 @@ debug/
 /*.db
 /*.wal
 /*.index.db
+/*.meta
+/*.log
 
 # ide
 .idea/
