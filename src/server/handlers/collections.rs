@@ -175,16 +175,28 @@ pub async fn rebuild_index(
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound("Collection not found".into()))?;
     
-    let mut storage = storage_ref.write();
-    let start = Instant::now();
-    storage.rebuild_index()?;
-    let duration = start.elapsed();
+    // Run rebuild in background to avoid blocking the request.
+    let collection_name = collection.clone();
+    let storage_ref_clone = storage_ref.clone();
+
+    // We don't await this task because we want to return immediately. The index will be rebuilt in the background.
+    tokio::task::spawn_blocking(move || {
+        let mut storage = storage_ref_clone.write();
+        let start = Instant::now();macro
+        if let Err(e) = storage.rebuild_index() {
+            // % macro means “format this field with Display.” So collection=%collection_name logs the collection field using the Display impl (as opposed to ?value, which uses Debug).
+            tracing::error!(collection=%collection_name, error=%e, "index_rebuild_failed");
+        } else {
+            tracing::info!(
+                collection=%collection_name,
+                elapsed_ms = start.elapsed().as_millis(),
+                "index_rebuild_complete"
+            );
+        }
+    });
 
     Ok(Json(RebuildIndexResponse { 
         success: true,
-        latency_ms: Some(duration.as_millis() as f32),
+        latency_ms: None,
     }))
-
-
-
 }
