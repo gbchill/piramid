@@ -88,12 +88,8 @@ pub fn search_collection(
     params: SearchParams<'_>,
 ) -> Vec<Hit> {
     let vectors = storage.get_vectors();
-    let metadatas: HashMap<Uuid, crate::metadata::Metadata> = storage
-        .get_all()
-        .into_iter()
-        .map(|doc| (doc.id, doc.metadata.clone()))
-        .collect();
-    search_collection_with_maps(storage, query, k, metric, params, vectors, &metadatas)
+    let metadatas = storage.metadata_view();
+    search_collection_with_maps(storage, query, k, metric, params, vectors, metadatas)
 }
 
 pub fn search_batch_collection(
@@ -104,21 +100,17 @@ pub fn search_batch_collection(
     params: SearchParams<'_>,
 ) -> Vec<Vec<Hit>> {
     let vectors = storage.get_vectors();
-    let metadatas: HashMap<Uuid, crate::metadata::Metadata> = storage
-        .get_all()
-        .into_iter()
-        .map(|doc| (doc.id, doc.metadata.clone()))
-        .collect();
+    let metadatas = storage.metadata_view();
     if storage.config().parallelism.parallel_search {
         use rayon::prelude::*;
         queries
             .par_iter()
-            .map(|query| search_collection_with_maps(storage, query, k, metric, params, vectors, &metadatas))
+            .map(|query| search_collection_with_maps(storage, query, k, metric, params, vectors, metadatas))
             .collect()
     } else {
         queries
             .iter()
-            .map(|query| search_collection_with_maps(storage, query, k, metric, params, vectors, &metadatas))
+            .map(|query| search_collection_with_maps(storage, query, k, metric, params, vectors, metadatas))
             .collect()
     }
 }

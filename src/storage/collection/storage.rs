@@ -74,9 +74,10 @@ impl Collection {
         let vector_cache_size = self.vector_cache.iter()
             .map(|(_, vec)| std::mem::size_of::<Uuid>() + vec.len() * std::mem::size_of::<f32>())
             .sum::<usize>();
+        let metadata_cache_size = self.metadata_cache.len() * std::mem::size_of::<(Uuid, crate::metadata::Metadata)>();
         
         
-        mmap_size + index_size + vector_cache_size + self.vector_index.stats().memory_usage_bytes
+        mmap_size + index_size + vector_cache_size + metadata_cache_size + self.vector_index.stats().memory_usage_bytes
     }
 
     pub fn vector_index(&self) -> &dyn VectorIndex {
@@ -85,6 +86,10 @@ impl Collection {
 
     pub fn vectors_view(&self) -> &HashMap<Uuid, Vec<f32>> {
         &self.vector_cache
+    }
+
+    pub fn metadata_view(&self) -> &HashMap<Uuid, crate::metadata::Metadata> {
+        &self.metadata_cache
     }
 
     pub fn config(&self) -> &crate::config::CollectionConfig {

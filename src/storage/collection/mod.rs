@@ -113,7 +113,12 @@ mod tests {
     use super::*;
     use crate::metrics::Metric;
 
+    fn ensure_test_dir() {
+        let _ = std::fs::create_dir_all(".piramid/tests");
+    }
+
     fn cleanup_test_files(paths: &[&str]) {
+        ensure_test_dir();
         for path in paths {
             let _ = std::fs::remove_file(path);
         }
@@ -121,6 +126,7 @@ mod tests {
 
     #[test]
     fn test_basic_store_and_retrieve() {
+        ensure_test_dir();
         let test_path = ".piramid/tests/test_basic.db";
         let test_index = ".piramid/tests/test_basic.db.index.db";
         let test_wal = ".piramid/tests/test_basic.db.wal.db";
@@ -143,6 +149,7 @@ mod tests {
 
     #[test]
     fn test_persistence() {
+        ensure_test_dir();
         let test_path = ".piramid/tests/test_persist.db";
         let test_index = ".piramid/tests/test_persist.db.index.db";
         let test_wal = ".piramid/tests/test_persist.db.wal.db";
@@ -174,6 +181,7 @@ mod tests {
 
     #[test]
     fn test_search() {
+        ensure_test_dir();
         let test_path = ".piramid/tests/test_search.db";
         let test_index = ".piramid/tests/test_search.db.index.db";
         let test_wal = ".piramid/tests/test_search.db.wal.db";
@@ -211,6 +219,7 @@ mod tests {
 
     #[test]
     fn test_batch_search() {
+        ensure_test_dir();
         let test_path = ".piramid/tests/test_batch_search.db";
         let test_index = ".piramid/tests/test_batch_search.db.index.db";
         let test_wal = ".piramid/tests/test_batch_search.db.wal.db";

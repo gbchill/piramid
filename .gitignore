@@ -13,6 +13,7 @@ debug/
 /*.index.db
 /*.meta
 /*.log
+/*.meta
 
 # ide
 .idea/
@@ -32,7 +33,7 @@ Thumbs.db
 
 # data
 /data/
-piramid_data/
+**/.piramid/
 
 # node
 node_modules/
