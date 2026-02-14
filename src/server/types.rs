@@ -323,3 +323,10 @@ pub struct IndexStatsResponse {
     pub memory_usage_bytes: usize,
     pub details: serde_json::Value,
 }
+
+#[derive(Serialize)]
+pub struct RebuildIndexResponse {
+    pub success: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub latency_ms: Option<f32>,
+}

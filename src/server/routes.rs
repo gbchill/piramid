@@ -41,6 +41,7 @@ pub fn create_router(state: SharedState) -> Router {
         .route("/api/collections/{name}", delete(handlers::delete_collection))
         .route("/api/collections/{name}/count", get(handlers::collection_count))
         .route("/api/collections/{name}/index/stats", get(handlers::index_stats))
+        .route("/api/collections/{name}/index/rebuild", post(handlers::rebuild_index))
         
         // Vectors CRUD
         .route("/api/collections/{collection}/vectors", get(handlers::list_vectors))
@@ -56,6 +57,10 @@ pub fn create_router(state: SharedState) -> Router {
         .route("/api/collections/{collection}/search", post(handlers::search_vectors))
         .route("/api/collections/{collection}/search/range", post(handlers::range_search_vectors))
         
+        // Index Management (rebuild, stats)
+        .route("/api/collections/{collection}/index/rebuild", post(handlers::rebuild_index))
+
+
         // Embedding endpoints
         .route("/api/collections/{collection}/embed", post(handlers::embed_text))
         .route("/api/collections/{collection}/search/text", post(handlers::search_by_text))

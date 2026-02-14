@@ -7,6 +7,7 @@ use super::super::{
     state::SharedState,
     types::*,
 };
+use std::time::Instant;
 
 // GET /api/collections - list all loaded collections
 pub async fn list_collections(State(state): State<SharedState>) -> Result<Json<CollectionsResponse>> {
@@ -157,4 +158,33 @@ pub async fn index_stats(
         memory_usage_bytes: stats.memory_usage_bytes,
         details: serde_json::to_value(&stats.details).unwrap_or(serde_json::json!({})),
     }))
+}
+
+
+// POST /api/collections/:name/index/rebuild - trigger index rebuild
+pub async fn rebuild_index(
+    State(state): State<SharedState>,
+    Path(collection): Path<String>,
+) -> Result<Json<RebuildIndexResponse>> {
+    if state.shutting_down.load(Ordering::Relaxed) {
+        return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
+    }
+
+    state.get_or_create_collection(&collection)?;
+    
+    let storage_ref = state.collections.get(&collection)
+        .ok_or_else(|| ServerError::NotFound("Collection not found".into()))?;
+    
+    let mut storage = storage_ref.write();
+    let start = Instant::now();
+    storage.rebuild_index()?;
+    let duration = start.elapsed();
+
+    Ok(Json(RebuildIndexResponse { 
+        success: true,
+        latency_ms: Some(duration.as_millis() as f32),
+    }))
+
+
+
 }

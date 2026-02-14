@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use crate::error::Result;
 use crate::index::VectorIndex;
-use crate::storage::persistence::{EntryPointer, warm_mmap, warm_file, get_wal_path};
+use crate::storage::persistence::{EntryPointer, warm_mmap, warm_file, get_wal_path, save_vector_index};
 use crate::storage::metadata::CollectionMetadata;
 use super::persistence::PersistenceService;
 use super::cache;
@@ -125,5 +125,48 @@ impl Collection {
     // If cache and index diverge (e.g., after crash), rebuild to ensure consistency.
     pub fn ensure_cache_consistency(&mut self) {
         cache::ensure_consistent(self);
+    }
+
+    /// Rebuild the vector index from on-disk data and persist it.
+    pub fn rebuild_index(&mut self) -> Result<()> {
+        // Collect all vectors from storage
+        let mut vectors: HashMap<Uuid, Vec<f32>> = HashMap::new();
+
+        if let Some(mmap) = self.mmap.as_ref() {
+            for (id, pointer) in &self.index {
+                let offset = pointer.offset as usize;
+                let length = pointer.length as usize;
+                if offset + length <= mmap.len() {
+                    let bytes = &mmap[offset..offset + length];
+                    if let Ok(entry) = bincode::deserialize::<crate::storage::document::Document>(bytes) {
+                        vectors.insert(*id, entry.get_vector());
+                    }
+                }
+            }
+        } else {
+            // Fallback: read directly from file if mmap disabled.
+            use std::io::{Read, Seek, SeekFrom};
+            let mut file = self.data_file.try_clone()?;
+            for (id, pointer) in &self.index {
+                let mut buf = vec![0u8; pointer.length as usize];
+                file.seek(SeekFrom::Start(pointer.offset))?;
+                file.read_exact(&mut buf)?;
+                if let Ok(entry) = bincode::deserialize::<crate::storage::document::Document>(&buf) {
+                    vectors.insert(*id, entry.get_vector());
+                }
+            }
+        }
+
+        // Build fresh index
+        let mut new_index = self.config.index.create_index(self.index.len());
+        for (id, vec) in &vectors {
+            new_index.insert(*id, vec, &vectors);
+        }
+
+        // Swap and persist
+        self.vector_index = new_index;
+        self.rebuild_vector_cache();
+        save_vector_index(self.path.as_str(), self.vector_index())?;
+        Ok(())
     }
 }
