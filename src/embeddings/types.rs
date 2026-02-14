@@ -59,8 +59,6 @@ pub trait Embedder: Send + Sync {
     async fn embed(&self, text: &str) -> EmbeddingResult<EmbeddingResponse>;
 
     // Generate embeddings for multiple texts in a batch
-    async fn embed_batch(&self, texts: &[String]) -> EmbeddingResult<Vec<EmbeddingResponse>>;
-
     // Get the provider name
     fn provider_name(&self) -> &str;
 

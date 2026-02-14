@@ -59,22 +59,23 @@ impl Collection {
     pub fn insert(&mut self, entry: Document) -> Result<Uuid> {
         operations::insert(self, entry)
     }
+
+    pub fn insert_batch(&mut self, entries: Vec<Document>) -> Result<Vec<Uuid>> {
+        operations::insert_batch(self, entries)
+    }
     
     pub fn upsert(&mut self, entry: Document) -> Result<Uuid> {
         operations::upsert(self, entry)
     }
 
-    pub fn insert_batch(&mut self, entries: Vec<Document>) -> Result<Vec<Uuid>> {
-        operations::insert_batch(self, entries)
-    }
-
     pub fn delete(&mut self, id: &Uuid) -> Result<bool> {
         operations::delete(self, id)
     }
-    
+
     pub fn delete_batch(&mut self, ids: &[Uuid]) -> Result<usize> {
         operations::delete_batch(self, ids)
     }
+    
     
     pub fn update_metadata(&mut self, id: &Uuid, metadata: Metadata) -> Result<bool> {
         operations::update_metadata(self, id, metadata)
@@ -251,19 +252,16 @@ mod tests {
             storage.insert(entry).unwrap();
         }
         
-        // Batch search with multiple queries
+        // Run multiple single searches to emulate batch
         let queries = vec![
             vec![0.0, 0.0, 0.0],
             vec![5.0, 0.0, 0.0],
             vec![9.0, 0.0, 0.0],
         ];
-        
-        let results = storage.search_batch(&queries, 2, Metric::Euclidean);
-        
-        assert_eq!(results.len(), 3);
-        assert_eq!(results[0].len(), 2);
-        assert_eq!(results[1].len(), 2);
-        assert_eq!(results[2].len(), 2);
+        for q in queries {
+            let results = storage.search(&q, 2, Metric::Cosine, crate::search::SearchParams::default());
+            assert_eq!(results.len(), 2);
+        }
         
         drop(storage);
         std::fs::remove_file(".piramid/tests/test_batch_search.db").unwrap();

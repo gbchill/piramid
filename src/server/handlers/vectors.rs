@@ -1,7 +1,8 @@
-use axum::{extract::{Path, Query, State, Extension}, response::Json};
+use axum::{extract::{Path, Query, State, Extension}, Json};
 use uuid::Uuid;
 use std::sync::atomic::Ordering;
 use std::time::Instant;
+use std::collections::HashMap;
 use crate::{Metric, Document};
 use crate::error::{Result, ServerError};
 use crate::validation;
@@ -57,25 +58,15 @@ pub async fn insert_vector(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
     Json(mut req): Json<InsertRequest>,
-) -> Result<Json<InsertResponse>> {
+) -> Result<Json<InsertResultsResponse>> {
     if state.shutting_down.load(Ordering::Relaxed) {
         return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
     }
 
     // Validate inputs
     validation::validate_collection_name(&collection)?;
-    validation::validate_text(&req.text)?;
-    validation::validate_vector(&req.vector)?;
-    
-    // Normalize if requested
-    if req.normalize {
-        req.vector = validation::normalize_vector(&req.vector);
-    }
 
     state.get_or_create_collection(&collection)?;
-    
-    let metadata = json_to_metadata(req.metadata);
-    let entry = Document::with_metadata(req.vector, req.text, metadata);
     
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
@@ -83,98 +74,82 @@ pub async fn insert_vector(
     let mut storage = storage_ref.write();
     record_lock_write(state.latency_tracker.get(&collection).as_deref(), lock_start);
     
-    // Time the operation
-    let start = Instant::now();
-    let id = storage.insert(entry)?;
-    let duration = start.elapsed();
+    let response = match (req.vector.take(), req.vectors.take()) {
+        (Some(vector), None) => {
+            let text = req.text.clone().ok_or_else(|| ServerError::InvalidRequest("text is required for single insert".to_string()))?;
+            validation::validate_text(&text)?;
+            validation::validate_vector(&vector)?;
+            let mut vec_to_store = vector;
+            if req.normalize {
+                vec_to_store = validation::normalize_vector(&vec_to_store);
+            }
+
+            let metadata = json_to_metadata(req.metadata);
+            let entry = Document::with_metadata(vec_to_store, text, metadata);
+            
+            let start = Instant::now();
+            let id = storage.insert(entry)?;
+            let duration = start.elapsed();
+            
+            if let Some(tracker) = state.latency_tracker.get(&collection) {
+                tracker.record_insert(duration);
+            }
+            
+            InsertResultsResponse::Single(InsertResponse { 
+                id: id.to_string(),
+                latency_ms: Some(duration.as_millis() as f32),
+            })
+        }
+        (None, Some(vectors)) => {
+            let texts = req.texts.clone().ok_or_else(|| ServerError::InvalidRequest("texts are required for batch insert".to_string()))?;
+            validation::validate_batch_size(vectors.len(), MAX_BATCH_SIZE, "Insert")?;
+            if vectors.len() != texts.len() {
+                return Err(ServerError::InvalidRequest("vectors and texts length mismatch".to_string()).into());
+            }
+            validation::validate_vectors(&vectors)?;
+            for t in &texts {
+                validation::validate_text(t)?;
+            }
+            let vectors = if req.normalize {
+                vectors.iter().map(|v| validation::normalize_vector(v)).collect()
+            } else {
+                vectors
+            };
+
+            let mut entries = Vec::with_capacity(vectors.len());
+            for (idx, vector) in vectors.into_iter().enumerate() {
+                let md = if idx < req.metadata_list.len() {
+                    json_to_metadata(req.metadata_list[idx].clone())
+                } else {
+                    json_to_metadata(HashMap::new())
+                };
+                let entry = Document::with_metadata(
+                    vector,
+                    texts[idx].clone(),
+                    md,
+                );
+                entries.push(entry);
+            }
+
+            let start = Instant::now();
+            let ids: Vec<Uuid> = storage.insert_batch(entries)?;
+            let duration = start.elapsed();
+            
+            if let Some(tracker) = state.latency_tracker.get(&collection) {
+                tracker.record_insert(duration);
+            }
+
+            InsertResultsResponse::Multi(MultiInsertResponse { 
+                ids: ids.into_iter().map(|id| id.to_string()).collect(),
+                count: texts.len(),
+                latency_ms: Some(duration.as_millis() as f32),
+            })
+        }
+        (Some(_), Some(_)) => return Err(ServerError::InvalidRequest("Provide either vector or vectors, not both".to_string()).into()),
+        (None, None) => return Err(ServerError::InvalidRequest("No vectors provided".to_string()).into()),
+    };
     
-    // Record latency
-    if let Some(tracker) = state.latency_tracker.get(&collection) {
-        tracker.record_insert(duration);
-    }
-    
-    Ok(Json(InsertResponse { 
-        id: id.to_string(),
-        latency_ms: Some(duration.as_millis() as f32),
-    }))
-}
-
-// POST /api/collections/:collection/vectors/batch - store multiple vectors at once
-pub async fn insert_vectors_batch(
-    State(state): State<SharedState>,
-    Path(collection): Path<String>,
-    Json(mut req): Json<BatchInsertRequest>,
-) -> Result<Json<BatchInsertResponse>> {
-    if state.shutting_down.load(Ordering::Relaxed) {
-        return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
-    }
-
-    // Validate inputs
-    validation::validate_collection_name(&collection)?;
-    validation::validate_batch_size(req.vectors.len(), MAX_BATCH_SIZE, "Insert")?;
-
-    if req.texts.len() != req.vectors.len() {
-        return Err(ServerError::InvalidRequest("vectors and texts length mismatch".to_string()).into());
-    }
-
-    // Validate all vectors
-    validation::validate_vectors(&req.vectors)?;
-    
-    // Validate all texts
-    for text in &req.texts {
-        validation::validate_text(text)?;
-    }
-    
-    // Normalize if requested
-    if req.normalize {
-        req.vectors = req.vectors.iter()
-            .map(|v| validation::normalize_vector(v))
-            .collect();
-    }
-
-    state.get_or_create_collection(&collection)?;
-
-    // Build entries
-    let mut entries = Vec::with_capacity(req.vectors.len());
-    for (idx, vector) in req.vectors.into_iter().enumerate() {
-        let metadata = if idx < req.metadata.len() {
-            json_to_metadata(req.metadata[idx].clone())
-        } else {
-            crate::Metadata::new()
-        };
-        
-        let entry = Document::with_metadata(
-            vector,
-            req.texts[idx].clone(),
-            metadata,
-        );
-        entries.push(entry);
-    }
-
-    // Store in batch
-    let storage_ref = state.collections.get(&collection)
-        .ok_or_else(|| ServerError::NotFound(super::super::helpers::COLLECTION_NOT_FOUND.to_string()))?;
-    let lock_start = Instant::now();
-    let mut storage = storage_ref.write();
-    record_lock_write(state.latency_tracker.get(&collection).as_deref(), lock_start);
-
-    let start = Instant::now();
-    let ids: Vec<Uuid> = storage.insert_batch(entries)?;
-    let duration = start.elapsed();
-    
-    // Record latency
-    if let Some(tracker) = state.latency_tracker.get(&collection) {
-        tracker.record_insert(duration);
-    }
-
-    let count = ids.len();
-    let ids_str: Vec<String> = ids.into_iter().map(|id: Uuid| id.to_string()).collect();
-
-    Ok(Json(BatchInsertResponse { 
-        ids: ids_str,
-        count,
-        latency_ms: Some(duration.as_millis() as f32),
-    }))
+    Ok(Json(response))
 }
 
 // GET /api/collections/:collection/vectors/:id - get one vector
@@ -245,7 +220,7 @@ pub async fn list_vectors(
 pub async fn delete_vector(
     State(state): State<SharedState>,
     Path((collection, id)): Path<(String, String)>,
-) -> Result<Json<DeleteResponse>> {
+) -> Result<Json<DeleteResultsResponse>> {
     if state.shutting_down.load(Ordering::Relaxed) {
         return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
     }
@@ -268,23 +243,22 @@ pub async fn delete_vector(
         tracker.record_delete(duration);
     }
     
-    Ok(Json(DeleteResponse { 
+    Ok(Json(DeleteResultsResponse::Single(DeleteResponse { 
         deleted,
         latency_ms: Some(duration.as_millis() as f32),
-    }))
+    })))
 }
 
-// DELETE /api/collections/:collection/vectors/batch - delete multiple vectors at once
-pub async fn delete_vectors_batch(
+// DELETE /api/collections/:collection/vectors - delete multiple vectors at once
+pub async fn delete_vectors(
     State(state): State<SharedState>,
     Path(collection): Path<String>,
-    Json(req): Json<BatchDeleteRequest>,
-) -> Result<Json<BatchDeleteResponse>> {
+    Json(req): Json<DeleteVectorsRequest>,
+) -> Result<Json<DeleteResultsResponse>> {
     if state.shutting_down.load(Ordering::Relaxed) {
         return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
     }
 
-    // Validate inputs
     validation::validate_collection_name(&collection)?;
     validation::validate_batch_size(req.ids.len(), MAX_BATCH_SIZE, "Delete")?;
 
@@ -296,7 +270,6 @@ pub async fn delete_vectors_batch(
     let mut storage = storage_ref.write();
     record_lock_write(state.latency_tracker.get(&collection).as_deref(), lock_start);
 
-    // Parse UUIDs
     let mut uuids = Vec::with_capacity(req.ids.len());
     for id_str in &req.ids {
         let uuid = Uuid::parse_str(id_str)
@@ -307,16 +280,15 @@ pub async fn delete_vectors_batch(
     let start = Instant::now();
     let deleted_count = storage.delete_batch(&uuids)?;
     let duration = start.elapsed();
-    
-    // Record latency
+
     if let Some(tracker) = state.latency_tracker.get(&collection) {
         tracker.record_delete(duration);
     }
 
-    Ok(Json(BatchDeleteResponse { 
+    Ok(Json(DeleteResultsResponse::Multi(MultiDeleteResponse { 
         deleted_count,
         latency_ms: Some(duration.as_millis() as f32),
-    }))
+    })))
 }
 
 // POST /api/collections/:collection/search - search for similar vectors
@@ -427,7 +399,7 @@ pub async fn search_vectors(
 
             let response_results: Vec<Vec<HitResponse>> = batch_results
                 .into_iter()
-                .map(|results| {
+                .map(|results: Vec<crate::search::Hit>| {
                     results
                         .into_iter()
                         .map(|r| HitResponse {

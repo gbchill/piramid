@@ -45,8 +45,7 @@ pub fn create_router(state: SharedState) -> Router {
         // Vectors CRUD
         .route("/api/collections/{collection}/vectors", get(handlers::list_vectors))
         .route("/api/collections/{collection}/vectors", post(handlers::insert_vector))
-        .route("/api/collections/{collection}/vectors/batch", post(handlers::insert_vectors_batch))
-        .route("/api/collections/{collection}/vectors/batch", delete(handlers::delete_vectors_batch))
+        .route("/api/collections/{collection}/vectors", delete(handlers::delete_vectors))
         .route("/api/collections/{collection}/vectors/{id}", get(handlers::get_vector))
         .route("/api/collections/{collection}/vectors/{id}", delete(handlers::delete_vector))
         
@@ -60,7 +59,6 @@ pub fn create_router(state: SharedState) -> Router {
         
         // Embedding endpoints
         .route("/api/collections/{collection}/embed", post(handlers::embed_text))
-        .route("/api/collections/{collection}/embed/batch", post(handlers::embed_batch))
         .route("/api/collections/{collection}/search/text", post(handlers::search_by_text))
         
         // Middleware layers

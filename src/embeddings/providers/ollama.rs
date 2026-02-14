@@ -115,18 +115,6 @@ impl Embedder for OllamaEmbedderInner {
         })
     }
 
-    async fn embed_batch(&self, texts: &[String]) -> EmbeddingResult<Vec<EmbeddingResponse>> {
-        // Ollama doesn't have native batch support, so we do sequential requests
-        let mut results = Vec::with_capacity(texts.len());
-        
-        for text in texts {
-            let result = self.embed(text).await?;
-            results.push(result);
-        }
-        
-        Ok(results)
-    }
-
     fn provider_name(&self) -> &str {
         "ollama"
     }
@@ -145,10 +133,6 @@ impl Embedder for OllamaEmbedderInner {
 impl Embedder for OllamaEmbedder {
     async fn embed(&self, text: &str) -> EmbeddingResult<EmbeddingResponse> {
         self.cached.embed(text).await
-    }
-
-    async fn embed_batch(&self, texts: &[String]) -> EmbeddingResult<Vec<EmbeddingResponse>> {
-        self.cached.embed_batch(texts).await
     }
 
     fn provider_name(&self) -> &str {

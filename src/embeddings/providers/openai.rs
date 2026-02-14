@@ -129,63 +129,6 @@ impl Embedder for OpenAIEmbedderInner {
         })
     }
 
-    async fn embed_batch(&self, texts: &[String]) -> EmbeddingResult<Vec<EmbeddingResponse>> {
-        if texts.is_empty() {
-            return Ok(Vec::new());
-        }
-
-        let request = OpenAIEmbeddingRequest {
-            model: self.model.clone(),
-            input: EmbeddingInput::Batch(texts.to_vec()),
-            encoding_format: Some("float".to_string()),
-        };
-
-        let response = self
-            .client
-            .post(&self.base_url)
-            .header("Authorization", format!("Bearer {}", self.api_key))
-            .header("Content-Type", "application/json")
-            .json(&request)
-            .send()
-            .await
-            .map_err(|e| EmbeddingError::RequestFailed(e.to_string()))?;
-
-        if !response.status().is_success() {
-            let status = response.status();
-            let error_text = response
-                .text()
-                .await
-                .unwrap_or_else(|_| "Unknown error".to_string());
-
-            return Err(match status.as_u16() {
-                401 => EmbeddingError::AuthenticationFailed(error_text),
-                429 => EmbeddingError::RateLimitExceeded,
-                _ => EmbeddingError::ApiError(format!("{}: {}", status, error_text)),
-            });
-        }
-
-        let api_response: OpenAIEmbeddingResponse = response
-            .json()
-            .await
-            .map_err(|e| EmbeddingError::InvalidResponse(e.to_string()))?;
-
-        let data_len = api_response.data.len();
-        let total_tokens = api_response.usage.total_tokens;
-        let model = api_response.model.clone();
-
-        let results = api_response
-            .data
-            .into_iter()
-            .map(|embedding_data| EmbeddingResponse {
-                embedding: embedding_data.embedding,
-                tokens: Some(total_tokens / data_len as u32),
-                model: model.clone(),
-            })
-            .collect();
-
-        Ok(results)
-    }
-
     fn provider_name(&self) -> &str {
         "openai"
     }
@@ -204,10 +147,6 @@ impl Embedder for OpenAIEmbedderInner {
 impl Embedder for OpenAIEmbedder {
     async fn embed(&self, text: &str) -> EmbeddingResult<EmbeddingResponse> {
         self.cached.embed(text).await
-    }
-
-    async fn embed_batch(&self, texts: &[String]) -> EmbeddingResult<Vec<EmbeddingResponse>> {
-        self.cached.embed_batch(texts).await
     }
 
     fn provider_name(&self) -> &str {

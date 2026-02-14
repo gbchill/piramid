@@ -73,32 +73,6 @@ impl Embedder for RetryEmbedder {
         }
     }
 
-    async fn embed_batch(&self, texts: &[String]) -> EmbeddingResult<Vec<EmbeddingResponse>> {
-        let mut attempts = 0;
-        let mut delay_ms = self.initial_delay_ms;
-        
-        loop {
-            match self.inner.embed_batch(texts).await {
-                Ok(result) => return Ok(result),
-                Err(e) => {
-                    attempts += 1;
-                    
-                    if !is_retryable_error(&e) || attempts > self.max_retries {
-                        return Err(e);
-                    }
-                    
-                    eprintln!(
-                        "Batch embedding request failed (attempt {}/{}): {}. Retrying in {}ms...",
-                        attempts, self.max_retries + 1, e, delay_ms
-                    );
-                    
-                    sleep(Duration::from_millis(delay_ms)).await;
-                    delay_ms = (delay_ms * 2).min(self.max_delay_ms);
-                }
-            }
-        }
-    }
-
     fn provider_name(&self) -> &str {
         self.inner.provider_name()
     }
@@ -152,14 +126,6 @@ mod tests {
                 tokens: Some(10),
                 model: "test".to_string(),
             })
-        }
-
-        async fn embed_batch(&self, texts: &[String]) -> EmbeddingResult<Vec<EmbeddingResponse>> {
-            let mut results = Vec::new();
-            for text in texts {
-                results.push(self.embed(text).await?);
-            }
-            Ok(results)
         }
 
         fn provider_name(&self) -> &str {

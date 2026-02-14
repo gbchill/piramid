@@ -68,51 +68,6 @@ impl<E: Embedder> Embedder for CachedEmbedder<E> {
         Ok(response)
     }
 
-    async fn embed_batch(&self, texts: &[String]) -> EmbeddingResult<Vec<EmbeddingResponse>> {
-        let mut results = Vec::with_capacity(texts.len());
-        let mut uncached_texts = Vec::new();
-        let mut uncached_indices = Vec::new();
-        
-        // Check which texts are cached
-        {
-            let mut cache = self.cache.lock().unwrap();
-            for (i, text) in texts.iter().enumerate() {
-                if let Some(embedding) = cache.get(text.as_str()) {
-                    // Cache hit
-                    results.push(Some(EmbeddingResponse {
-                        embedding: embedding.clone(),
-                        tokens: None,
-                        model: self.inner.model_name().to_string(),
-                    }));
-                } else {
-                    // Cache miss
-                    results.push(None);
-                    uncached_texts.push(text.clone());
-                    uncached_indices.push(i);
-                }
-            }
-        }
-        
-        // If all cached, return immediately
-        if uncached_texts.is_empty() {
-            return Ok(results.into_iter().map(|r| r.unwrap()).collect());
-        }
-        
-        // Fetch uncached embeddings
-        let uncached_responses = self.inner.embed_batch(&uncached_texts).await?;
-        
-        // Store in cache and fill results
-        {
-            let mut cache = self.cache.lock().unwrap();
-            for (idx, response) in uncached_indices.iter().zip(uncached_responses.into_iter()) {
-                cache.put(texts[*idx].clone(), response.embedding.clone());
-                results[*idx] = Some(response);
-            }
-        }
-        
-        Ok(results.into_iter().map(|r| r.unwrap()).collect())
-    }
-
     fn provider_name(&self) -> &str {
         self.inner.provider_name()
     }
@@ -163,14 +118,6 @@ mod tests {
                 tokens: Some(1),
                 model: "mock".to_string(),
             })
-        }
-
-        async fn embed_batch(&self, texts: &[String]) -> EmbeddingResult<Vec<EmbeddingResponse>> {
-            let mut responses = Vec::new();
-            for text in texts {
-                responses.push(self.embed(text).await?);
-            }
-            Ok(responses)
         }
 
         fn provider_name(&self) -> &str {

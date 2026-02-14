@@ -76,30 +76,6 @@ pub fn insert(storage: &mut Collection, entry: Document) -> Result<Uuid> {
     insert_internal(storage, entry)
 }
 
-pub fn upsert(storage: &mut Collection, entry: Document) -> Result<Uuid> {
-    let id = entry.id;
-    if storage.index.contains_key(&id) {
-        let vector = entry.get_vector();
-        let mut wal_entry = WalEntry::Update {
-            id,
-            vector,
-            text: entry.text.clone(),
-            metadata: entry.metadata.clone(),
-            seq: 0,
-        };
-        storage.persistence.wal.log(&mut wal_entry)?;
-        
-        delete_internal(storage, &id);
-        insert_internal(storage, entry)?;
-        super::persistence::save_index(storage)?;
-        super::persistence::save_vector_index(storage)?;
-        storage.track_operation()?;
-        Ok(id)
-    } else {
-        insert(storage, entry)
-    }
-}
-
 pub fn insert_batch(storage: &mut Collection, entries: Vec<Document>) -> Result<Vec<Uuid>> {
     let mut ids = Vec::with_capacity(entries.len());
     
@@ -158,6 +134,30 @@ pub fn insert_batch(storage: &mut Collection, entries: Vec<Document>) -> Result<
     }
     
     Ok(ids)
+}
+
+pub fn upsert(storage: &mut Collection, entry: Document) -> Result<Uuid> {
+    let id = entry.id;
+    if storage.index.contains_key(&id) {
+        let vector = entry.get_vector();
+        let mut wal_entry = WalEntry::Update {
+            id,
+            vector,
+            text: entry.text.clone(),
+            metadata: entry.metadata.clone(),
+            seq: 0,
+        };
+        storage.persistence.wal.log(&mut wal_entry)?;
+        
+        delete_internal(storage, &id);
+        insert_internal(storage, entry)?;
+        super::persistence::save_index(storage)?;
+        super::persistence::save_vector_index(storage)?;
+        storage.track_operation()?;
+        Ok(id)
+    } else {
+        insert(storage, entry)
+    }
 }
 
 pub fn delete(storage: &mut Collection, id: &Uuid) -> Result<bool> {

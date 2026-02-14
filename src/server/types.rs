@@ -44,20 +44,43 @@ pub struct CreateCollectionRequest {
 // What the client sends to store a vector
 #[derive(Deserialize)]
 pub struct InsertRequest {
-    pub vector: Vec<f32>,
-    pub text: String,
-    #[serde(default)]  // if missing in JSON, use Default (empty HashMap)
+    #[serde(default)]
+    pub vector: Option<Vec<f32>>,
+    #[serde(default)]
+    pub vectors: Option<Vec<Vec<f32>>>,
+    #[serde(default)]
+    pub text: Option<String>,
+    #[serde(default)]
+    pub texts: Option<Vec<String>>,
+    #[serde(default)]  // single metadata map (used for single insert)
     pub metadata: HashMap<String, serde_json::Value>,
+    #[serde(default)]  // per-item metadata for batch
+    pub metadata_list: Vec<HashMap<String, serde_json::Value>>,
     #[serde(default)]  // if missing, defaults to false
-    pub normalize: bool,  // Whether to normalize the vector to unit length
+    pub normalize: bool,  // Whether to normalize the vector(s) to unit length
 }
 
-// What we return after storing
+// What we return after storing (single)
 #[derive(Serialize)]
 pub struct InsertResponse {
     pub id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub latency_ms: Option<f32>,
+}
+
+#[derive(Serialize)]
+pub struct MultiInsertResponse {
+    pub ids: Vec<String>,
+    pub count: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub latency_ms: Option<f32>,
+}
+
+#[derive(Serialize)]
+#[serde(untagged)]
+pub enum InsertResultsResponse {
+    Single(InsertResponse),
+    Multi(MultiInsertResponse),
 }
 
 // Full vector data returned to client
@@ -79,31 +102,6 @@ pub struct ListVectorsQuery {
 }
 
 fn default_limit() -> usize { 100 }
-
-// =============================================================================
-// BATCH INSERT
-// =============================================================================
-
-// Batch store request
-#[derive(Deserialize)]
-pub struct BatchInsertRequest {
-    pub vectors: Vec<Vec<f32>>,
-    pub texts: Vec<String>,
-    #[serde(default)]
-    pub metadata: Vec<HashMap<String, serde_json::Value>>,
-    #[serde(default)]
-    pub normalize: bool,  // Whether to normalize all vectors
-}
-
-// Batch store response
-#[derive(Serialize)]
-pub struct BatchInsertResponse {
-    pub ids: Vec<String>,
-    pub count: usize,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub latency_ms: Option<f32>,
-}
-
 
 // =============================================================================
 // SEARCH
@@ -171,25 +169,28 @@ pub struct DeleteResponse {
     pub latency_ms: Option<f32>,
 }
 
-#[derive(Serialize)]
-pub struct CountResponse {
-    pub count: usize,
-}
-
-// =============================================================================
-// BATCH DELETE
-// =============================================================================
-
 #[derive(Deserialize)]
-pub struct BatchDeleteRequest {
-    pub ids: Vec<String>,  // Vector IDs to delete
+pub struct DeleteVectorsRequest {
+    pub ids: Vec<String>,
 }
 
 #[derive(Serialize)]
-pub struct BatchDeleteResponse {
+pub struct MultiDeleteResponse {
     pub deleted_count: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub latency_ms: Option<f32>,
+}
+
+#[derive(Serialize)]
+#[serde(untagged)]
+pub enum DeleteResultsResponse {
+    Single(DeleteResponse),
+    Multi(MultiDeleteResponse),
+}
+
+#[derive(Serialize)]
+pub struct CountResponse {
+    pub count: usize,
 }
 
 // =============================================================================
@@ -212,20 +213,6 @@ pub struct EmbedResponse {
     pub tokens: Option<u32>,
 }
 
-// Request for batch embedding
-#[derive(Deserialize)]
-pub struct EmbedBatchRequest {
-    pub texts: Vec<String>,
-    #[serde(default)]
-    pub metadata: Vec<HashMap<String, serde_json::Value>>,
-}
-
-// Response from batch embedding
-#[derive(Serialize)]
-pub struct EmbedBatchResponse {
-    pub ids: Vec<String>,
-    pub total_tokens: Option<u32>,
-}
 
 // Request to search by text query (auto-embeds)
 #[derive(Deserialize)]
