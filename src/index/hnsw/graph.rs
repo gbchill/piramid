@@ -403,6 +403,8 @@ impl HnswIndex{
         let mut layer_sizes = vec![0; (self.max_level + 1) as usize];
         let mut total_connections = 0;
 
+
+
         for node in self.nodes.values() {
             for (layer, connections) in node.connections.iter().enumerate() {
                 if layer < layer_sizes.len() {
@@ -412,10 +414,15 @@ impl HnswIndex{
             }
         }
 
+        // calculate memory usage bytes 
+        let memory_usage_bytes = self.nodes.len() * std::mem::size_of::<(Uuid, HnswNode)>() + 
+                                 self.nodes.values().map(|n| n.connections.iter().map(|c| c.len() * std::mem::size_of::<Uuid>()).sum::<usize>()).sum::<usize>();
+
         HnswStats {
             total_nodes,
             max_layer: self.max_level,
             layer_sizes,
+            memory_usage_bytes,
             avg_connections: if total_nodes > 0 {
                 total_connections as f32 / total_nodes as f32
             } else {

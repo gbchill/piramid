@@ -38,7 +38,7 @@ impl VectorIndex for HnswIndex {
         IndexStats {
             index_type: IndexType::Hnsw,
             total_vectors: hnsw_stats.total_nodes,
-            memory_usage_bytes: 0, // TODO: calculate actual memory
+            memory_usage_bytes: hnsw_stats.memory_usage_bytes,
             details: IndexDetails::Hnsw {
                 max_layer: hnsw_stats.max_layer,
                 layer_sizes: hnsw_stats.layer_sizes,

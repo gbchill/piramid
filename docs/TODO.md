@@ -1,9 +1,3 @@
-### Data Durability & Reliability
-
-**Write-Ahead Log (WAL)**
-
-[ ] **WAL Truncation:** Logic to safely delete old WAL segments after a successful snapshot.
-
 ### Production 
 
 **Vector Operations**
@@ -40,7 +34,7 @@
 
 **Index Management**
 
-[ ] **Index Warmup:** Utility to fault-in mmap pages on startup to prevent initial latency spikes.
+[ ] Index Warmup : Utility to fault-in mmap pages on startup to prevent initial latency spikes.
 
 [ ] Rebuild index function
 
@@ -57,6 +51,8 @@
 [ ] HNSW Tombstoning: Soft-delete nodes without breaking graph connectivity.
 
 [ ] Implement HNSW Pre-filtering (Bitmap visitor) 
+
+[ ] Allow prefiltering in all methods if possible
 
 
 **Resource Management**
@@ -192,8 +188,6 @@
 [ ] Define expected dimensions per collection
 
 [ ] Metadata schema validation
-
-[ ] Schema versioning
 
 **Advanced Search**
 

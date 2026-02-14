@@ -38,4 +38,5 @@ pub struct HnswStats {
     pub max_layer: isize,
     pub layer_sizes: Vec<usize>,
     pub avg_connections: f32,
+    pub memory_usage_bytes: usize,
 }
