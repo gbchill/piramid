@@ -116,12 +116,9 @@
 
 **Documentation**
 
-
 [ ] `docs/API.md` - Interactive API docs (Swagger/OpenAPI)
 
 [ ] `pip/README.md` - Python client usage
-
-[ ] `npm/README.md` - JavaScript client usage
 
 [ ] `docs/QUICKSTART.md` - 5-minute tutorial
 
@@ -132,7 +129,6 @@
 [ ] Third-party license audit
 
 **Launch Prep**
-
 
 [ ] dashboard full update and revamp
 
@@ -146,9 +142,9 @@
 
 [ ] fix broken ci pipleine gh workflow for docker image  
 
-[ ] **Fuzz Testing:** Run `cargo fuzz` to test parser robustness.
+[ ] cargo fuzz to test parser robustness.
 
-[ ] **Property Testing:** Add `proptest` for state consistency verification.
+[ ] Add`proptest for state consistency verification.
 
 ### Post-Launch 
 
