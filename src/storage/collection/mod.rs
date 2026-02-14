@@ -4,6 +4,7 @@
 // - storage.rs: Core data structure and basic accessors
 // - builder.rs: Initialization and recovery logic
 // - operations.rs: CRUD operations (insert, delete, update)
+// - search.rs: Search helpers (single/batch)
 // - persistence.rs: Disk operations and checkpointing
 
 mod storage;
@@ -11,6 +12,7 @@ mod operations;
 mod builder;
 mod cache;
 mod persistence;
+mod search;
 
 pub use storage::Collection;
 pub use builder::CollectionBuilder;
@@ -75,7 +77,7 @@ impl Collection {
     pub fn delete_batch(&mut self, ids: &[Uuid]) -> Result<usize> {
         operations::delete_batch(self, ids)
     }
-    
+
     
     pub fn update_metadata(&mut self, id: &Uuid, metadata: Metadata) -> Result<bool> {
         operations::update_metadata(self, id, metadata)
@@ -86,35 +88,11 @@ impl Collection {
     }
 
     pub fn search(&self, query: &[f32], k: usize, metric: Metric, params: crate::search::SearchParams) -> Vec<Hit> {
-        let mut effective_params = params;
-        if matches!(effective_params.mode, crate::config::ExecutionMode::Auto) {
-            effective_params.mode = self.config().execution;
-        }
-        if effective_params.filter_overfetch_override.is_none() {
-            effective_params.filter_overfetch_override = Some(self.config.search.filter_overfetch);
-        }
-        crate::search::search_collection(self, query, k, metric, effective_params)
+        search::search(self, query, k, metric, params)
     }
 
     pub fn search_batch(&self, queries: &[Vec<f32>], k: usize, metric: Metric) -> Vec<Vec<Hit>> {
-        let params = crate::search::SearchParams {
-            mode: self.config().execution,
-            filter: None,
-            filter_overfetch_override: None,
-            search_config_override: None,
-        };
-        crate::search::search_batch_collection(self, queries, k, metric, params)
-    }
-
-    pub fn search_batch_with_params(&self, queries: &[Vec<f32>], k: usize, metric: Metric, params: crate::search::SearchParams) -> Vec<Vec<Hit>> {
-        let mut effective_params = params;
-        if matches!(effective_params.mode, crate::config::ExecutionMode::Auto) {
-            effective_params.mode = self.config().execution;
-        }
-        if effective_params.search_config_override.is_none() {
-            effective_params.search_config_override = Some(self.config.search);
-        }
-        crate::search::search_batch_collection(self, queries, k, metric, effective_params)
+        search::search_batch(self, queries, k, metric)
     }
 
     pub fn get_vectors(&self) -> &HashMap<Uuid, Vec<f32>> {

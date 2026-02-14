@@ -372,16 +372,18 @@ pub async fn search_vectors(
             validation::validate_vectors(&queries)?;
 
             let start = Instant::now();
-            let batch_results = storage.search_batch_with_params(
+            let params = crate::SearchParams {
+                mode: storage.config().execution,
+                filter: None,
+                filter_overfetch_override: overfetch,
+                search_config_override: Some(effective_search),
+            };
+            let batch_results = crate::search::search_batch_collection(
+                &storage,
                 &queries,
                 k,
                 metric,
-                crate::SearchParams {
-                    mode: storage.config().execution,
-                    filter: None,
-                    filter_overfetch_override: overfetch,
-                    search_config_override: Some(effective_search),
-                },
+                params,
             );
             let duration = start.elapsed();
             if duration.as_millis() > state.slow_query_ms {
