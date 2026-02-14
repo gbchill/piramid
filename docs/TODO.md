@@ -4,8 +4,6 @@
 
 [ ] Config hot reload (limited subset)
 
-[ ] Environment variable documentation
-
 **Embeddings Optimization**
 
 [ ] remove prebuilt embedding functionality for now
