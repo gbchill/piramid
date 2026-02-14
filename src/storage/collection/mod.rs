@@ -113,6 +113,12 @@ mod tests {
     use super::*;
     use crate::metrics::Metric;
 
+    fn cleanup_test_files(paths: &[&str]) {
+        for path in paths {
+            let _ = std::fs::remove_file(path);
+        }
+    }
+
     #[test]
     fn test_basic_store_and_retrieve() {
         let test_path = ".piramid/tests/test_basic.db";
@@ -121,11 +127,7 @@ mod tests {
         let test_vecindex = ".piramid/tests/test_basic.db.vecindex.db";
         let test_meta = ".piramid/tests/test_basic.db.metadata.db";
         
-        let _ = std::fs::remove_file(test_path);
-        let _ = std::fs::remove_file(test_index);
-        let _ = std::fs::remove_file(test_wal);
-        let _ = std::fs::remove_file(test_vecindex);
-        let _ = std::fs::remove_file(test_meta);
+        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta]);
         
         let mut storage = Collection::open(test_path).unwrap();
         let entry = Document::new(vec![1.0, 2.0, 3.0], "test".to_string());
@@ -136,11 +138,7 @@ mod tests {
         assert_eq!(retrieved.get_vector(), vec![1.0, 2.0, 3.0]);
         
         drop(storage);
-        std::fs::remove_file(test_path).unwrap();
-        std::fs::remove_file(test_index).unwrap();
-        let _ = std::fs::remove_file(test_wal);
-        let _ = std::fs::remove_file(test_vecindex);
-        let _ = std::fs::remove_file(test_meta);
+        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta]);
     }
 
     #[test]
@@ -151,11 +149,7 @@ mod tests {
         let test_vecindex = ".piramid/tests/test_persist.db.vecindex.db";
         let test_meta = ".piramid/tests/test_persist.db.metadata.db";
         
-        let _ = std::fs::remove_file(test_path);
-        let _ = std::fs::remove_file(test_index);
-        let _ = std::fs::remove_file(test_wal);
-        let _ = std::fs::remove_file(test_vecindex);
-        let _ = std::fs::remove_file(test_meta);
+        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta]);
         
         let id1;
         let id2;
@@ -175,11 +169,7 @@ mod tests {
             assert_eq!(storage.get(&id2).unwrap().text, "second");
         }
         
-        std::fs::remove_file(test_path).unwrap();
-        std::fs::remove_file(test_index).unwrap();
-        let _ = std::fs::remove_file(test_wal);
-        let _ = std::fs::remove_file(test_vecindex);
-        let _ = std::fs::remove_file(test_meta);
+        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta]);
     }
 
     #[test]

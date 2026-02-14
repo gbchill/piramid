@@ -68,10 +68,10 @@ impl Collection {
     
     pub fn memory_usage_bytes(&self) -> usize {
         let mmap_size = self.mmap.as_ref().map(|m| m.len()).unwrap_or(0);
-        let index_size = self.index.len() * std::mem::size_of::<(Uuid, EntryPointer)>();
+        let index_size = self.index.capacity() * std::mem::size_of::<(Uuid, EntryPointer)>();
 
         let vector_cache_size = self.vector_cache.iter()
-            .map(|(id, vec)| std::mem::size_of::<Uuid>() + vec.len() * std::mem::size_of::<f32>())
+            .map(|(_, vec)| std::mem::size_of::<Uuid>() + vec.len() * std::mem::size_of::<f32>())
             .sum::<usize>();
         
         
