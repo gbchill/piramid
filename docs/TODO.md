@@ -145,6 +145,8 @@
 
 [ ] Incremental backups
 
+[ ] Database Migrations 
+
 **Metadata Improvements**
 
 [ ] Complex filters (AND/OR/NOT combinations)
@@ -220,6 +222,8 @@
 [ ] Vector similarity between two stored vectors
 
 [ ] Vector count per metadata filter
+
+[ ] SQL integration
 
 **Data Import/Export**
 
