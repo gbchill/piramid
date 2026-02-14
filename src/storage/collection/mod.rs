@@ -133,7 +133,7 @@ mod tests {
         let test_vecindex = ".piramid/tests/test_basic.db.vecindex.db";
         let test_meta = ".piramid/tests/test_basic.db.metadata.db";
         
-        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta]);
+        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta][..]);
         
         let mut storage = Collection::open(test_path).unwrap();
         let entry = Document::new(vec![1.0, 2.0, 3.0], "test".to_string());
@@ -144,7 +144,7 @@ mod tests {
         assert_eq!(retrieved.get_vector(), vec![1.0, 2.0, 3.0]);
         
         drop(storage);
-        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta]);
+        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta][..]);
     }
 
     #[test]
@@ -156,7 +156,7 @@ mod tests {
         let test_vecindex = ".piramid/tests/test_persist.db.vecindex.db";
         let test_meta = ".piramid/tests/test_persist.db.metadata.db";
         
-        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta]);
+        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta][..]);
         
         let id1;
         let id2;
@@ -176,7 +176,7 @@ mod tests {
             assert_eq!(storage.get(&id2).unwrap().text, "second");
         }
         
-        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta]);
+        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta][..]);
     }
 
     #[test]
@@ -187,7 +187,7 @@ mod tests {
         let test_wal = ".piramid/tests/test_search.db.wal.db";
         let test_vecindex = ".piramid/tests/test_search.db.vecindex.db";
         let test_meta = ".piramid/tests/test_search.db.metadata.db";
-        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta]);
+        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta][..]);
         
         let mut storage = Collection::open(test_path).unwrap();
         
@@ -214,7 +214,7 @@ mod tests {
         assert_eq!(results.len(), 2);
         
         drop(storage);
-        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta]);
+        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta][..]);
     }
 
     #[test]
@@ -225,7 +225,7 @@ mod tests {
         let test_wal = ".piramid/tests/test_batch_search.db.wal.db";
         let test_vecindex = ".piramid/tests/test_batch_search.db.vecindex.db";
         let test_meta = ".piramid/tests/test_batch_search.db.metadata.db";
-        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta]);
+        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta][..]);
         
         let mut storage = Collection::open(test_path).unwrap();
         
@@ -248,6 +248,6 @@ mod tests {
         }
         
         drop(storage);
-        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta]);
+        cleanup_test_files(&[test_path, test_index, test_wal, test_vecindex, test_meta][..]);
     }
 }

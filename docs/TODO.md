@@ -56,7 +56,6 @@
 
 **HTTP & Networking**
 
-
 [ ] HTTP/2 support
 
 [ ] Compression (gzip/brotli) for responses
@@ -65,32 +64,11 @@
 
 **Security Basics**
 
-
-[ ] API key authentication
-
 [ ] Security headers (CORS, CSP, HSTS)
 
 [ ] TLS/SSL support
 
 ### Documentation & Testing
-
-**Documentation**
-
-[ ] `docs/API.md` - Interactive API docs (Swagger/OpenAPI)
-
-[ ] `pip/README.md` - Python client usage
-
-[ ] `docs/QUICKSTART.md` - 5-minute tutorial
-
-[ ] `CHANGELOG.md` - Version tracking
-
-[ ] License headers in source files
-
-[ ] Third-party license audit
-
-**Launch Prep**
-
-[ ] dashboard full update and revamp
 
 **CI/CD**
 
@@ -105,6 +83,30 @@
 [ ] cargo fuzz to test parser robustness.
 
 [ ] Add`proptest for state consistency verification.
+
+**Launch Prep**
+
+[ ] Python client sdk
+[ ] dashboard full update and revamp
+
+**Documentation**
+
+[ ] Interactive API docs for rust sdk (Mintlify)
+
+[ ] Interactive API docs for python sdk (Mintlify)
+
+[ ] `docs/CONTRIBUTION.md` - 5-minute tutorial and updates
+
+[ ] `CHANGELOG.md` - Version tracking
+
+[ ] `README.md` - update readme
+
+[ ] License headers in source files
+
+[ ] Third-party license audit
+
+
+---
 
 ### Post-Launch 
 
@@ -172,6 +174,42 @@
 
 [ ] Metadata schema validation
 
+**Advanced Security**
+
+[ ] JWT token support
+
+[ ] Multi-tenant isolation
+
+[ ] Collection-level permissions
+
+[ ] Rate limiting & quotas
+
+[ ] Audit logging
+
+**API Versioning**
+
+[ ] API version in URLs or headers
+
+[ ] Backward compatibility strategy
+
+[ ] Deprecation warnings for old endpoints
+
+[ ] API changelog tracking
+
+**Monitoring & Alerting**
+
+[ ] Email alerts for errors
+
+[ ] Disk space alerts
+
+[ ] Memory usage alerts
+
+[ ] Index corruption alerts
+
+[ ] Slow query alerts
+
+### Future Considerations
+
 **Advanced Search**
 
 [ ] Recommendation API (similar to these IDs, not those)
@@ -197,43 +235,6 @@
 [ ] Import progress tracking
 
 [ ] Format validation on import
-
-**Advanced Security**
-
-[ ] JWT token support
-
-[ ] Multi-tenant isolation
-
-[ ] Collection-level permissions
-
-[ ] Rate limiting & quotas
-
-[ ] Audit logging
-
-**API Versioning**
-
-[ ] API version in URLs or headers
-
-[ ] Backward compatibility strategy
-
-[ ] Deprecation warnings for old endpoints
-
-[ ] API changelog tracking
-
-**Monitoring & Alerting**
-
-
-[ ] Email alerts for errors
-
-[ ] Disk space alerts
-
-[ ] Memory usage alerts
-
-[ ] Index corruption alerts
-
-[ ] Slow query alerts
-
-### Future Considerations
 
 **Additional Features**
 
