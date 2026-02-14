@@ -1,9 +1,5 @@
 ### Production 
 
-**Vector Operations**
-
-[ ] implement actual memory detection for collection 
-
 **Configuration**
 
 [ ] make sure config is universal and accessed from one point 
@@ -49,11 +45,6 @@
 [ ] Product Quantization (PQ) (CPU Compression)
 
 [ ] HNSW Tombstoning: Soft-delete nodes without breaking graph connectivity.
-
-[ ] Implement HNSW Pre-filtering (Bitmap visitor) 
-
-[ ] Allow prefiltering in all methods if possible
-
 
 **Resource Management**
 
