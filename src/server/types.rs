@@ -330,3 +330,16 @@ pub struct RebuildIndexResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub latency_ms: Option<f32>,
 }
+
+#[derive(Serialize)]
+pub struct RebuildIndexStatusResponse {
+    pub status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub started_at: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub finished_at: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub elapsed_ms: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}

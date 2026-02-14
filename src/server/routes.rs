@@ -42,6 +42,7 @@ pub fn create_router(state: SharedState) -> Router {
         .route("/api/collections/{name}/count", get(handlers::collection_count))
         .route("/api/collections/{name}/index/stats", get(handlers::index_stats))
         .route("/api/collections/{name}/index/rebuild", post(handlers::rebuild_index))
+        .route("/api/collections/{name}/index/rebuild/status", get(handlers::rebuild_index_status))
         
         // Vectors CRUD
         .route("/api/collections/{collection}/vectors", get(handlers::list_vectors))

@@ -10,6 +10,22 @@ use crate::metrics::LatencyTracker;
 use crate::error::{Result, ServerError};
 use crate::config::AppConfig;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum RebuildState {
+    Running,
+    Completed,
+    Failed,
+}
+
+#[derive(Clone)]
+pub struct RebuildJobStatus {
+    pub status: RebuildState,
+    pub started_at: u64,
+    pub finished_at: Option<u64>,
+    pub error: Option<String>,
+    pub elapsed_ms: Option<u128>,
+}
+
 // Shared application state
 // Each collection is an independent Collection with its own file.
 // DashMap allows concurrent access to different collections without blocking.
@@ -22,6 +38,7 @@ pub struct AppState {
     pub latency_tracker: Arc<DashMap<String, LatencyTracker>>,  // Per-collection latency tracking
     pub app_config: AppConfig,
     pub slow_query_ms: u128,
+    pub rebuild_jobs: Arc<DashMap<String, RebuildJobStatus>>,
 }
 
 impl AppState {
@@ -36,6 +53,7 @@ impl AppState {
             latency_tracker: Arc::new(DashMap::new()),
             app_config,
             slow_query_ms,
+            rebuild_jobs: Arc::new(DashMap::new()),
         }
     }
 
@@ -50,6 +68,7 @@ impl AppState {
             latency_tracker: Arc::new(DashMap::new()),
             app_config,
             slow_query_ms,
+            rebuild_jobs: Arc::new(DashMap::new()),
         }
     }
 

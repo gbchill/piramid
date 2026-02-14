@@ -1,13 +1,13 @@
 use axum::{extract::{Path, State}, response::Json};
 use std::sync::atomic::Ordering;
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use crate::error::{Result, ServerError};
 use crate::validation;
 use crate::server::metrics::record_lock_read;
 use super::super::{
-    state::SharedState,
+    state::{SharedState, RebuildState, RebuildJobStatus},
     types::*,
 };
-use std::time::Instant;
 
 // GET /api/collections - list all loaded collections
 pub async fn list_collections(State(state): State<SharedState>) -> Result<Json<CollectionsResponse>> {
@@ -174,24 +174,48 @@ pub async fn rebuild_index(
     
     let storage_ref = state.collections.get(&collection)
         .ok_or_else(|| ServerError::NotFound("Collection not found".into()))?;
-    
+
+    let started_at = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+    state.rebuild_jobs.insert(collection.clone(), RebuildJobStatus {
+        status: RebuildState::Running,
+        started_at,
+        finished_at: None,
+        error: None,
+        elapsed_ms: None,
+    });
+
     // Run rebuild in background to avoid blocking the request.
     let collection_name = collection.clone();
     let storage_ref_clone = storage_ref.clone();
+    let jobs = state.rebuild_jobs.clone();
 
-    // We don't await this task because we want to return immediately. The index will be rebuilt in the background.
     tokio::task::spawn_blocking(move || {
         let mut storage = storage_ref_clone.write();
-        let start = Instant::now();macro
+        let start = Instant::now();
         if let Err(e) = storage.rebuild_index() {
-            // % macro means “format this field with Display.” So collection=%collection_name logs the collection field using the Display impl (as opposed to ?value, which uses Debug).
             tracing::error!(collection=%collection_name, error=%e, "index_rebuild_failed");
+            let finished = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+            jobs.insert(collection_name.clone(), RebuildJobStatus {
+                status: RebuildState::Failed,
+                started_at,
+                finished_at: Some(finished),
+                error: Some(e.to_string()),
+                elapsed_ms: Some(start.elapsed().as_millis()),
+            });
         } else {
             tracing::info!(
                 collection=%collection_name,
                 elapsed_ms = start.elapsed().as_millis(),
                 "index_rebuild_complete"
             );
+            let finished = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+            jobs.insert(collection_name.clone(), RebuildJobStatus {
+                status: RebuildState::Completed,
+                started_at,
+                finished_at: Some(finished),
+                error: None,
+                elapsed_ms: Some(start.elapsed().as_millis()),
+            });
         }
     });
 
@@ -199,4 +223,31 @@ pub async fn rebuild_index(
         success: true,
         latency_ms: None,
     }))
+}
+
+// GET /api/collections/:name/index/rebuild/status - check rebuild status
+pub async fn rebuild_index_status(
+    State(state): State<SharedState>,
+    Path(collection): Path<String>,
+) -> Result<Json<RebuildIndexStatusResponse>> {
+    if state.shutting_down.load(Ordering::Relaxed) {
+        return Err(ServerError::ServiceUnavailable("Server is shutting down".to_string()).into());
+    }
+
+    if let Some(job) = state.rebuild_jobs.get(&collection) {
+        let status_str = match job.status {
+            RebuildState::Running => "running",
+            RebuildState::Completed => "completed",
+            RebuildState::Failed => "failed",
+        };
+        Ok(Json(RebuildIndexStatusResponse {
+            status: status_str.to_string(),
+            started_at: Some(job.started_at),
+            finished_at: job.finished_at,
+            elapsed_ms: job.elapsed_ms.map(|ms| ms as f32),
+            error: job.error.clone(),
+        }))
+    } else {
+        Err(ServerError::NotFound("No rebuild job found for this collection".into()).into())
+    }
 }
