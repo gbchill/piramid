@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use crate::error::Result;
 use super::entry::WalEntry;
-
+// The WAL file starts with a header line containing the version number, followed by one JSON-serialized entry per line. Each entry includes a sequence number (seq) that is assigned when the entry is logged. The replay method reads the WAL file and returns all entries with a sequence number greater than a specified minimum sequence number (min_seq). The log method appends a new entry to the WAL file, automatically assigning it the next sequence number. The checkpoint method logs a special checkpoint entry that can be used to indicate a consistent state of the collection, allowing older entries to be safely discarded after checkpointing. The rotate method allows for rotating the WAL file by closing the current one and starting a new, empty file, which is typically done after checkpointing to prevent the WAL from growing indefinitely.
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 struct WalHeader {
     version: u32,

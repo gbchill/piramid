@@ -44,6 +44,10 @@ pub fn create_router(state: SharedState) -> Router {
         .route("/api/collections/{name}/index/rebuild", post(handlers::rebuild_index))
         .route("/api/collections/{name}/index/rebuild/status", get(handlers::rebuild_index_status))
         
+        // Config hot reload/status
+        .route("/api/config", get(handlers::config_status))
+        .route("/api/config/reload", post(handlers::reload_config))
+        
         // Vectors CRUD
         .route("/api/collections/{collection}/vectors", get(handlers::list_vectors))
         .route("/api/collections/{collection}/vectors", post(handlers::insert_vector))

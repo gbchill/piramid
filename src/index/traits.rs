@@ -59,10 +59,10 @@ pub trait VectorIndex: Send + Sync {
 // Statistics about an index
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndexStats {
-    pub index_type: IndexType,
-    pub total_vectors: usize,
-    pub memory_usage_bytes: usize,
-    pub details: IndexDetails,
+    pub index_type: IndexType, // Type of index (Flat, HNSW, IVF)
+    pub total_vectors: usize, // Total number of vectors indexed
+    pub memory_usage_bytes: usize, // Approximate memory usage of the index in bytes
+    pub details: IndexDetails, // Index-specific details (e.g. HNSW layer sizes, IVF cluster counts)
 }
 
 // Index-specific details
@@ -71,14 +71,14 @@ pub struct IndexStats {
 pub enum IndexDetails {
     Flat,
     Hnsw {
-        max_layer: isize,
-        layer_sizes: Vec<usize>,
-        avg_connections: f32,
+        max_layer: isize, // Maximum layer in the HNSW graph
+        layer_sizes: Vec<usize>, // Number of nodes in each layer
+        avg_connections: f32, // Average number of connections per node
     },
     Ivf {
-        num_clusters: usize,
-        vectors_per_cluster: Vec<usize>,
-        centroids_computed: bool,
+        num_clusters: usize, // Number of clusters in the IVF index
+        vectors_per_cluster: Vec<usize>, // Number of vectors assigned to each cluster
+        centroids_computed: bool, // Whether centroids have been computed for the clusters
     },
 }
 

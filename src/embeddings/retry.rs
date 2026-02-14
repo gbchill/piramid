@@ -8,11 +8,11 @@ use crate::embeddings::{Embedder, EmbeddingResponse, EmbeddingResult, EmbeddingE
 
 // RetryEmbedder wraps another Embedder and adds retry logic with exponential backoff
 pub struct RetryEmbedder {
-    inner: Arc<dyn Embedder>,
-    max_retries: u32,
-    initial_delay_ms: u64,
-    max_delay_ms: u64,
-}
+    inner: Arc<dyn Embedder>, // The underlying embedder that actually performs the embedding
+    max_retries: u32, // Maximum number of retry attempts
+    initial_delay_ms: u64, // Initial delay before the first retry attempt in milliseconds
+    max_delay_ms: u64, // Maximum delay between retry attempts in milliseconds
+} 
 
 // Configuration options for the RetryEmbedder
 #[derive(Clone, Debug)]

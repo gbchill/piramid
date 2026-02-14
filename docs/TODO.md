@@ -1,15 +1,6 @@
 ### Production 
 
-**Configuration**
-
-[ ] Config hot reload (limited subset)
-
-[ ] Development mode with auto-reload
-
-
 **Embeddings Optimization**
-
-[ ] Remove prebuilt embedding functionality for now
 
 [ ] CPU local embeddings support (e.g. sentence-transformers)
 

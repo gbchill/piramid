@@ -5,6 +5,7 @@ use piramid::server::{AppState, create_router};
 use piramid::embeddings;
 use piramid::config::loader::RuntimeConfig;
 use tracing_subscriber::EnvFilter;
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() {
@@ -57,6 +58,37 @@ async fn main() {
     
     // Build router with all our routes
     let app = create_router(state.clone());
+
+    // Dev auto-reload (CONFIG_FILE changes + DEV_AUTORELOAD=1)
+    if std::env::var("DEV_AUTORELOAD").map(|v| v == "1" || v.eq_ignore_ascii_case("true")).unwrap_or(false) {
+        if let Ok(config_path) = std::env::var("CONFIG_FILE") {
+            let state_clone = state.clone();
+            tokio::spawn(async move {
+                let mut last_mtime = std::fs::metadata(&config_path)
+                    .and_then(|m| m.modified())
+                    .ok();
+                let mut ticker = tokio::time::interval(Duration::from_secs(2));
+                loop {
+                    ticker.tick().await;
+                    let meta = match std::fs::metadata(&config_path) {
+                        Ok(m) => m,
+                        Err(_) => continue,
+                    };
+                    if let Ok(modified) = meta.modified() {
+                        if Some(modified) != last_mtime {
+                            last_mtime = Some(modified);
+                            if let Err(e) = state_clone.reload_config() {
+                                tracing::error!(error=%e, "config_auto_reload_failed");
+                            } else {
+                                let ts = state_clone.config_last_reload.load(std::sync::atomic::Ordering::Relaxed);
+                                tracing::info!(path=%config_path, reloaded_at=ts, "config_auto_reloaded");
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
     
     // Start listening
     let addr = format!("0.0.0.0:{}", port);

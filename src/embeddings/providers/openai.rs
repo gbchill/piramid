@@ -15,10 +15,10 @@ const DEFAULT_CACHE_SIZE: usize = 10000;
 
 // OpenAI embedding provider (with built-in LRU cache)
 struct OpenAIEmbedderInner {
-    client: Client,
-    api_key: String,
-    model: String,
-    base_url: String,
+    client: Client, // Reqwest client for making HTTP requests to the OpenAI API
+    api_key: String, // OpenAI API key for authentication
+    model: String, // OpenAI model name, e.g. "text-embedding-3-small"
+    base_url: String, // Base URL for the OpenAI API, defaulting to https://api.openai.com/v1/embeddings
 }
 
 pub struct OpenAIEmbedder {

@@ -96,7 +96,7 @@ pub async fn metrics(State(state): State<SharedState>) -> Result<Json<MetricsRes
         total_collections: state.collections.len(),
         total_vectors,
         collections: collection_metrics,
-        app_config: state.app_config.clone(),
+        app_config: state.current_config(),
         wal_stats,
     }))
 }

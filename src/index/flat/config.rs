@@ -7,9 +7,9 @@ use crate::config::ExecutionMode;
 // Flat index configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FlatConfig {
-    pub metric: Metric,
-    #[serde(default)]
-    pub mode: ExecutionMode,
+    pub metric: Metric, // Distance metric to use for similarity calculations (e.g., cosine, euclidean)
+    #[serde(default)] 
+    pub mode: ExecutionMode, // Execution mode for search operations (e.g., auto, single-threaded, multi-threaded)
 }
 // Implement default values for FlatConfig. By default, we will use cosine similarity as the distance metric and automatic execution mode, which allows the system to choose the best execution strategy based on the environment and workload.
 impl Default for FlatConfig {

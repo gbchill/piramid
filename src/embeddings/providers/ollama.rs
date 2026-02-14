@@ -15,9 +15,9 @@ const DEFAULT_CACHE_SIZE: usize = 10000;
 
 // Ollama embedding provider (with built-in LRU cache)
 struct OllamaEmbedderInner {
-    client: Client,
-    model: String,
-    base_url: String,
+    client: Client, // Reqwest client for making HTTP requests to the Ollama API
+    model: String, //  Ollama model name, e.g. "nomic-embed-text"
+    base_url: String, // Base URL for the Ollama API, defaulting to http://localhost:11434
 }
 
 pub struct OllamaEmbedder {

@@ -13,7 +13,7 @@ use crate::index::traits::{VectorIndex, IndexStats, IndexDetails, IndexType};
 // Stores nothing except config (vectors are in main storage)
 #[derive(Clone, Serialize, Deserialize)]
 pub struct FlatIndex {
-    config: FlatConfig,
+    config: FlatConfig, // Configuration for the flat index, including distance metric and execution mode
     vector_ids: Vec<Uuid>,  // Track which vectors we've seen
 }
 

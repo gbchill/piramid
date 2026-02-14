@@ -1,3 +1,5 @@
+//! Types for range search requests and responses.
+//! This module defines the data structures used for handling range search requests and responses in the API. It includes the `RangeSearchRequest` struct, which represents the parameters for a range search operation, such as the query vector, minimum score threshold, distance metric, and other search parameters. These types are used to deserialize incoming JSON requests for range search operations and to structure the data for processing the search
 use serde::Deserialize;
 
 fn default_k() -> usize { 10 }
