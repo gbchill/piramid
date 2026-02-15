@@ -83,6 +83,12 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-3">
                 <a
+                  href="/docs/"
+                  className="text-sm text-slate-300 hover:text-white transition"
+                >
+                  docs
+                </a>
+                <a
                   href="https://crates.io/crates/piramid"
                   className="text-sm text-slate-300 hover:text-white transition"
                 >
@@ -106,7 +112,7 @@ export default function Home() {
             <section className="grid gap-10 md:grid-cols-[1.1fr_0.9fr] items-center">
               <div className="space-y-6 fade-in">
                 <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">
-                  Latency-first vector DB
+                  GPU Powered
                 </p>
                 <h1 className="text-4xl md:text-5xl font-semibold leading-tight text-white">
                   Vectors, Tokens. One Device.
@@ -143,9 +149,7 @@ export default function Home() {
                   <pre className="code-block">
                     <code>{quickstart}</code>
                   </pre>
-                  <p className="mt-4 text-sm text-slate-300 leading-relaxed">
-                    One binary: generate config, start the server, insert vectors, search. Health/metrics at <code className="text-indigo-200">/healthz</code> and <code className="text-indigo-200">/api/metrics</code>.
-                  </p>
+
                 </div>
               </div>
             </section>
@@ -174,20 +178,20 @@ export default function Home() {
                 <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Architecture</p>
                 <h3 className="text-2xl font-semibold text-white mt-2">Current path</h3>
                 <ul className="mt-4 space-y-3 text-sm text-slate-200 leading-relaxed">
-                  <li>• Axum server + Rust core; single binary CLI (`piramid`).</li>
-                  <li>• Storage: mmap-backed data, WAL + checkpoints, sidecar indexes.</li>
-                  <li>• Indexes: Flat/HNSW/IVF with cached vectors/metadata; filter-aware search.</li>
-                  <li>• Embeddings: OpenAI/local HTTP with retry + cache; unified embed endpoint (single/batch).</li>
-                  <li>• Guardrails: limits, disk low-space read-only mode, cache caps, tracing + metrics/health.</li>
+                  <li>Axum server + Rust core; single binary CLI (`piramid`).</li>
+                  <li>Storage: mmap-backed data, WAL + checkpoints, sidecar indexes.</li>
+                  <li>Indexes: Flat/HNSW/IVF with cached vectors/metadata; filter-aware search.</li>
+                  <li>Embeddings: OpenAI/local HTTP with retry + cache; unified embed endpoint (single/batch).</li>
+                  <li>Guardrails: limits, disk low-space read-only mode, cache caps, tracing + metrics/health.</li>
                 </ul>
               </div>
               <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-cyan-500/10 p-6 shadow-xl shadow-cyan-900/30">
                 <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Roadmap</p>
                 <h3 className="text-2xl font-semibold text-white mt-2">GPU co-location (Zipy)</h3>
                 <ul className="mt-4 space-y-3 text-sm text-slate-200 leading-relaxed">
-                  <li>• Co-locate vector search and the LLM on the same GPU kernel to remove CPU hops.</li>
-                  <li>• GPU-aware index strategies and memory layout tuned for RAG/agent loops.</li>
-                  <li>• Retain the same API/CLI surface; swap execution backend when GPU is available.</li>
+                  <li>Co-locate vector search and the LLM on the same GPU kernel to remove CPU hops.</li>
+                  <li>GPU-aware index strategies and memory layout tuned for RAG/agent loops.</li>
+                  <li>Retain the same API/CLI surface; swap execution backend when GPU is available.</li>
                 </ul>
               </div>
             </section>
@@ -195,11 +199,12 @@ export default function Home() {
             {/* Footer */}
             <footer className="flex flex-col gap-3 pb-10 text-sm text-slate-400">
               <div className="flex gap-4">
+                <a href="/docs/" className="hover:text-white transition">Docs</a>
                 <a href="https://github.com/ashworks1706/piramid" className="hover:text-white transition">GitHub</a>
                 <a href="https://crates.io/crates/piramid" className="hover:text-white transition">crates.io</a>
                 <a href="https://github.com/ashworks1706/piramid/blob/main/docs/TODO.md" className="hover:text-white transition">Roadmap</a>
               </div>
-              <p>piramid @ 2025.</p>
+              <p>piramid @ 2026</p>
             </footer>
           </main>
         </div>

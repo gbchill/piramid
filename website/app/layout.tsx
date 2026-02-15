@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Piramid – Latency-first Rust vector database",
+  title: "Piramid – Vector Database for Agentic Applications",
   description: "Piramid is a Rust vector database built for agentic workloads: mmap + WAL, HNSW/IVF/Flat indexes, filter-aware search, embeddings (OpenAI/local), and a roadmap to GPU co-location with Zipy.",
   keywords: ["vector database", "rust", "low latency", "HNSW", "IVF", "flat index", "embeddings", "RAG", "agentic", "similarity search"],
   authors: [{ name: "ashworks1706" }],
