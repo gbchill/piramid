@@ -73,7 +73,7 @@ export default function Home() {
         <div className="relative">
           {/* Nav */}
           <header className="sticky top-0 z-20 backdrop-blur border-b border-white/5 bg-black/30">
-            <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+            <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-4">
               <div className="flex items-center gap-3">
                 <Image src="/logo_light.png" alt="Piramid" width={40} height={40} />
                 <div className="flex flex-col leading-tight">
@@ -98,20 +98,20 @@ export default function Home() {
           </header>
 
           {/* Hero */}
-          <main className="relative mx-auto flex max-w-6xl flex-col gap-16 px-6 py-14">
-            <div className="absolute inset-x-0 -top-10 md:-top-16 lg:-top-20 h-[420px] md:h-[500px] lg:h-[540px] -z-10">
+          <main className="relative mx-auto flex max-w-6xl flex-col gap-16 px-4 sm:px-6 py-12 sm:py-14">
+            <div className="absolute inset-x-0 -top-10 md:-top-16 lg:-top-20 h-[340px] sm:h-[420px] md:h-[500px] lg:h-[540px] -z-10">
               <div className="rounded-[32px] w-full h-full bg-[radial-gradient(circle_at_50%_20%,rgba(99,102,241,0.18),rgba(14,165,233,0.08)),linear-gradient(160deg,rgba(24,27,42,0.8),rgba(10,12,24,0.85))] border border-white/10 shadow-2xl shadow-indigo-900/30 blur-[0px]" />
             </div>
             <section className="grid gap-10 md:grid-cols-[1.1fr_0.9fr] items-center">
-              <div className="space-y-6 fade-in">
+              <div className="space-y-6 fade-in text-center md:text-left">
                 <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">
                   GPU Powered
                 </p>
-                <h1 className="text-4xl md:text-5xl font-semibold leading-tight text-white">
+                <h1 className="text-4xl sm:text-5xl font-semibold leading-tight text-white">
                   Vectors, Tokens. One Device.
                 </h1>
              
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap justify-center md:justify-start gap-3">
                   <a
                     href="https://crates.io/crates/piramid"
                     className="rounded-full bg-indigo-400 text-black px-5 py-2 text-sm font-semibold shadow-lg shadow-indigo-500/30 hover:bg-indigo-300 transition"
@@ -125,7 +125,7 @@ export default function Home() {
                     View on GitHub
                   </a>
                 </div>
-                <div className="flex flex-wrap gap-4 text-xs text-slate-400">
+                <div className="flex flex-wrap justify-center md:justify-start gap-2 sm:gap-4 text-xs text-slate-400">
                   <span className="rounded-full bg-white/5 px-3 py-1 border border-white/10">HNSW • IVF • Flat</span>
                   <span className="rounded-full bg-white/5 px-3 py-1 border border-white/10">Filters + metadata cache</span>
                   <span className="rounded-full bg-white/5 px-3 py-1 border border-white/10">Embeddings: OpenAI + local HTTP</span>

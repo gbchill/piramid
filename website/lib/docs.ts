@@ -30,6 +30,11 @@ export type Heading = {
   level: number;
 };
 
+export type DocNav = {
+  prev?: DocMeta;
+  next?: DocMeta;
+};
+
 function isMarkdown(file: string) {
   return file.toLowerCase().endsWith(".md");
 }
@@ -157,6 +162,21 @@ export function buildSidebar(): SidebarSection[] {
 export function findDoc(slug: string[]): DocMeta | null {
   const target = slug.join("/");
   return listDocs().find((d) => d.slug.join("/") === target) ?? null;
+}
+
+export function docNeighbors(slug: string[]): DocNav {
+  const key = slug.join("/");
+  const sections = buildSidebar();
+  let ordered = sections.flatMap((s) => s.items);
+  if (ordered.length === 0) {
+    ordered = listDocs();
+  }
+  const idx = ordered.findIndex((d) => d.slug.join("/") === key);
+  if (idx === -1) return { prev: undefined, next: undefined };
+  return {
+    prev: ordered[idx - 1],
+    next: ordered[idx + 1],
+  };
 }
 
 function stripFrontmatterAndMarkdown(raw: string): string {

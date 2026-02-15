@@ -5,8 +5,9 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 import { mdxComponents } from "../../mdx-components";
-import { findDoc, extractHeadings, docSeo } from "../../lib/docs";
+import { findDoc, extractHeadings, docSeo, docNeighbors } from "../../lib/docs";
 import { DocsToc } from "../../components/DocsToc";
+import { DocsPager } from "../../components/DocsPager";
 import type { Metadata } from "next";
 
 export const runtime = "nodejs";
@@ -38,6 +39,7 @@ export default async function DocsIndex() {
 
   const source = await fs.promises.readFile(doc.filePath, "utf8");
   const headings = extractHeadings(doc.filePath);
+  const nav = docNeighbors(doc.slug);
   const docTitle = doc.title || "Overview";
   const { content, frontmatter } = await compileMDX<{ title?: string }>({
     source,
@@ -53,6 +55,7 @@ export default async function DocsIndex() {
 
   return (
     <div className="space-y-6">
+      <DocsPager prev={nav.prev} next={nav.next} wide />
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_240px]">
         <article className="space-y-4 animate-fade-in rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-indigo-500/5 p-6 shadow-2xl shadow-slate-900/30 backdrop-blur">
           <h1>{frontmatter?.title ?? docTitle}</h1>
@@ -60,6 +63,7 @@ export default async function DocsIndex() {
         </article>
         <DocsToc headings={headings} />
       </div>
+      <DocsPager prev={nav.prev} next={nav.next} wide />
     </div>
   );
 }

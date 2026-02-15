@@ -5,16 +5,20 @@ import type { SidebarSection } from "../lib/docs";
 
 type Props = {
   sections: SidebarSection[];
+  sticky?: boolean;
+  className?: string;
 };
 
-export function DocsSidebar({ sections }: Props) {
+export function DocsSidebar({ sections, sticky = true, className = "" }: Props) {
   const hrefForSlug = (slugParts: string[]) => {
     const slugPath = slugParts.join("/");
     return slugPath === "index" ? "/docs" : "/docs/" + slugPath;
   };
 
   return (
-    <div className="sticky top-24 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-slate-900/30 backdrop-blur">
+    <div
+      className={`${sticky ? "sticky top-24" : ""} space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-slate-900/30 backdrop-blur ${className}`}
+    >
       <div className="space-y-6">
         {sections.map((section) => (
           <div key={section.label} className="space-y-2">

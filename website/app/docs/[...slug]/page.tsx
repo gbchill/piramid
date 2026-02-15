@@ -6,8 +6,9 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 import { mdxComponents } from "../../../mdx-components";
-import { findDoc, listDocs, extractHeadings, docSeo } from "../../../lib/docs";
+import { findDoc, listDocs, extractHeadings, docSeo, docNeighbors } from "../../../lib/docs";
 import { DocsToc } from "../../../components/DocsToc";
+import { DocsPager } from "../../../components/DocsPager";
 import type { Metadata } from "next";
 
 export async function generateStaticParams() {
@@ -40,8 +41,8 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
 
   const source = await fs.promises.readFile(doc.filePath, "utf8");
   const headings = extractHeadings(doc.filePath);
-  const docTitle = doc.title || slugArray.join(" / ");
-  const { content, frontmatter } = await compileMDX<{ title?: string }>({
+  const nav = docNeighbors(doc.slug);
+  const { content } = await compileMDX<{ title?: string }>({
     source,
     components: mdxComponents,
     options: {
@@ -56,12 +57,14 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <DocsPager prev={nav.prev} next={nav.next} wide />
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_240px]">
         <article className="space-y-4 rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-indigo-500/5 p-6 shadow-2xl shadow-slate-900/30 backdrop-blur">
           {content}
         </article>
         <DocsToc headings={headings} />
       </div>
+      <DocsPager prev={nav.prev} next={nav.next} wide />
     </div>
   );
 }
