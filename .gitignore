@@ -72,4 +72,3 @@ env/
 
 # docs builds (not used with Next MDX, but keep ignored if generated)
 /website/public/docs/
-/website/docs-content/
