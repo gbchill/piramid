@@ -1,20 +1,13 @@
 import type { Metadata } from "next";
-import { Open_Sans } from "next/font/google";
 import "./globals.css";
 
-const openSans = Open_Sans({
-  variable: "--font-open-sans",
-  subsets: ["latin"],
-  weight: ["300", "400", "600", "700"],
-});
-
 export const metadata: Metadata = {
-  title: "Piramid - Rust Based Vector database for Agentic Applications ",
-  description: "Piramid is an open-source hybrid vector database written in Rust, combining graph-based and traditional vector search capabilities for customizable, high-performance AI applications.",
-  keywords: ["vector database", "graph database", "hybrid database", "rust", "open source", "vector search", "AI", "machine learning", "embeddings", "similarity search"],
-  authors: [{ name: "Piramid Team" }],
-  creator: "Piramid",
-  publisher: "Piramid",
+  title: "Piramid – Latency-first Rust vector database",
+  description: "Piramid is a Rust vector database built for agentic workloads: mmap + WAL, HNSW/IVF/Flat indexes, filter-aware search, embeddings (OpenAI/local), and a roadmap to GPU co-location with Zipy.",
+  keywords: ["vector database", "rust", "low latency", "HNSW", "IVF", "flat index", "embeddings", "RAG", "agentic", "similarity search"],
+  authors: [{ name: "ashworks1706" }],
+  creator: "ashworks1706",
+  publisher: "ashworks1706",
   robots: {
     index: true,
     follow: true,
@@ -62,9 +55,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body
-        className={`${openSans.variable} antialiased`}
-      >
+      <body className="antialiased">
         {children}
       </body>
     </html>

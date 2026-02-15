@@ -24,7 +24,7 @@ export default function Dashboard() {
             The dashboard is currently under development while we focus on completing the core Rust engine.
           </p>
           <p className="text-[var(--text-secondary)]">
-            In the meantime, you can interact with Piramid via the REST API at{' '}
+            In the meantime, you can interact with piramid via the REST API at{' '}
             <code className="bg-[var(--bg-tertiary)] px-2 py-1 rounded text-[var(--accent)]">
               http://localhost:6333/api
             </code>
