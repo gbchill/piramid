@@ -1,11 +1,13 @@
 import "../globals.css";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { buildSidebar } from "../../lib/docs";
+import { buildSidebar, buildSearchIndex } from "../../lib/docs";
 import { DocsSidebar } from "../../components/DocsSidebar";
+import { DocsSearchLauncher } from "../../components/DocsSearchLauncher";
 
 export default function DocsLayout({ children }: { children: ReactNode }) {
   const sidebar = buildSidebar();
+  const searchEntries = buildSearchIndex();
 
   return (
     <div className="min-h-screen bg-[#05070d] text-slate-100">
@@ -22,12 +24,13 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3 text-sm text-slate-300">
             <Link href="/docs" className="hover:text-white transition">docs</Link>
             <a href="https://github.com/ashworks1706/piramid" className="hover:text-white transition">github</a>
+            <DocsSearchLauncher entries={searchEntries} />
           </div>
         </div>
       </header>
       <main className="mx-auto flex max-w-6xl gap-8 px-6 py-10">
         <aside className="hidden lg:block w-64">
-          <DocsSidebar sections={sidebar} />
+          <DocsSidebar sections={sidebar} entries={searchEntries} />
         </aside>
         <article className="flex-1">
           <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-indigo-500/5 p-6 shadow-2xl shadow-slate-900/30 backdrop-blur">

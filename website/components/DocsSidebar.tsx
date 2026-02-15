@@ -2,14 +2,26 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { SidebarSection } from "../lib/docs";
+import type { DocSearchEntry, SidebarSection } from "../lib/docs";
 
 type Props = {
   sections: SidebarSection[];
+  entries: DocSearchEntry[];
 };
 
-export function DocsSidebar({ sections }: Props) {
+export function DocsSidebar({ sections, entries }: Props) {
   const [query, setQuery] = useState("");
+
+  const entryMap = useMemo(
+    () =>
+      new Map(
+        entries.map((e) => [
+          e.slug.join("/"),
+          e,
+        ]),
+      ),
+    [entries],
+  );
 
   const filtered = useMemo(() => {
     if (!query.trim()) return sections;
@@ -19,12 +31,13 @@ export function DocsSidebar({ sections }: Props) {
         const items = section.items.filter(
           (item) =>
             item.title.toLowerCase().includes(q) ||
-            item.slug.join("/").toLowerCase().includes(q),
+            item.slug.join("/").toLowerCase().includes(q) ||
+            entryMap.get(item.slug.join("/"))?.text.toLowerCase().includes(q),
         );
         return { ...section, items };
       })
       .filter((section) => section.items.length > 0);
-  }, [query, sections]);
+  }, [query, sections, entryMap]);
 
   return (
     <div className="sticky top-24 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-slate-900/30 backdrop-blur">
