@@ -191,7 +191,7 @@ export default function Home() {
                 <a href="/docs" className="hover:text-white transition">Docs</a>
                 <a href="https://github.com/ashworks1706/piramid" className="hover:text-white transition">GitHub</a>
                 <a href="https://crates.io/crates/piramid" className="hover:text-white transition">crates.io</a>
-                <a href="https://github.com/ashworks1706/piramid/blob/main/docs/TODO.md" className="hover:text-white transition">Roadmap</a>
+                <a href="https://github.com/ashworks1706/piramid/blob/main/docs/roadmap/index.md" className="hover:text-white transition">Roadmap</a>
               </div>
               <p>piramid @ 2026</p>
             </footer>
