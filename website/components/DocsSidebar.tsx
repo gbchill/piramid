@@ -18,14 +18,17 @@ export function DocsSidebar({ sections }: Props) {
             </div>
             <div className="space-y-1">
               {section.items.map((item) => {
-                const href = "/docs/" + item.slug.join("/");
+                const slugPath = item.slug.join("/");
+                const isIndex = slugPath === "index";
+                const href = isIndex ? "/docs" : "/docs/" + slugPath;
+                const label = isIndex ? "Overview" : item.title;
                 return (
                   <Link
                     key={href}
                     href={href}
                     className="block rounded-lg px-3 py-2 text-sm text-slate-200 hover:bg-indigo-500/10 hover:text-white transition"
                   >
-                    {item.title}
+                    {label}
                   </Link>
                 );
               })}

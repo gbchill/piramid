@@ -38,6 +38,7 @@ export default async function DocsIndex() {
 
   const source = await fs.promises.readFile(doc.filePath, "utf8");
   const headings = extractHeadings(doc.filePath);
+  const docTitle = doc.title || "Overview";
   const { content, frontmatter } = await compileMDX<{ title?: string }>({
     source,
     components: mdxComponents,
@@ -54,7 +55,7 @@ export default async function DocsIndex() {
     <div className="space-y-6">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_240px]">
         <article className="space-y-4 animate-fade-in rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-indigo-500/5 p-6 shadow-2xl shadow-slate-900/30 backdrop-blur">
-          {frontmatter?.title ? <h1>{frontmatter.title}</h1> : <h1>Documentation</h1>}
+          <h1>{frontmatter?.title ?? docTitle}</h1>
           {content}
         </article>
         <DocsToc headings={headings} />
