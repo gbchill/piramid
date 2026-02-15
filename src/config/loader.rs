@@ -1,5 +1,7 @@
 use crate::config::AppConfig;
+use std::env;
 use std::fs;
+use std::path::PathBuf;
 
 /// Resolved runtime configuration (application + process-level settings).
 #[derive(Debug, Clone)]
@@ -39,31 +41,31 @@ pub fn load_app_config() -> AppConfig {
 pub fn load_runtime_config() -> RuntimeConfig {
     let app = load_app_config();
 
-    let port = std::env::var("PORT")
+    let port = env::var("PORT")
         .ok()
         .and_then(|v| v.parse::<u16>().ok())
         .unwrap_or(6333);
-    let data_dir = std::env::var("DATA_DIR").unwrap_or_else(|_| "./.piramid".to_string());
-    let slow_query_ms = std::env::var("SLOW_QUERY_MS")
+    let data_dir = env::var("DATA_DIR").unwrap_or_else(|_| default_data_dir());
+    let slow_query_ms = env::var("SLOW_QUERY_MS")
         .ok()
         .and_then(|v| v.parse::<u128>().ok())
         .unwrap_or(500);
 
-    let embedding_provider = std::env::var("EMBEDDING_PROVIDER").ok();
-    let embedding_model = std::env::var("EMBEDDING_MODEL").ok();
-    let embedding_base_url = std::env::var("EMBEDDING_BASE_URL").ok();
-    let embedding_api_key = std::env::var("OPENAI_API_KEY").ok();
-    let embedding_timeout = std::env::var("EMBEDDING_TIMEOUT_SECS")
+    let embedding_provider = env::var("EMBEDDING_PROVIDER").ok();
+    let embedding_model = env::var("EMBEDDING_MODEL").ok();
+    let embedding_base_url = env::var("EMBEDDING_BASE_URL").ok();
+    let embedding_api_key = env::var("OPENAI_API_KEY").ok();
+    let embedding_timeout = env::var("EMBEDDING_TIMEOUT_SECS")
         .ok()
         .and_then(|v| v.parse::<u64>().ok());
 
-    let disk_min_free_bytes = std::env::var("DISK_MIN_FREE_BYTES")
+    let disk_min_free_bytes = env::var("DISK_MIN_FREE_BYTES")
         .ok()
         .and_then(|v| v.parse::<u64>().ok());
-    let disk_readonly_on_low_space = std::env::var("DISK_READONLY_ON_LOW_SPACE")
+    let disk_readonly_on_low_space = env::var("DISK_READONLY_ON_LOW_SPACE")
         .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
         .unwrap_or(true);
-    let cache_max_bytes = std::env::var("CACHE_MAX_BYTES")
+    let cache_max_bytes = env::var("CACHE_MAX_BYTES")
         .ok()
         .and_then(|v| v.parse::<u64>().ok());
 
@@ -101,7 +103,7 @@ pub fn load_runtime_config() -> RuntimeConfig {
 }
 
 fn load_from_file() -> Option<AppConfig> {
-    let path = std::env::var("CONFIG_FILE").ok()?;
+    let path = env::var("CONFIG_FILE").ok()?;
     let data = fs::read_to_string(&path).ok()?;
 
     if path.ends_with(".yaml") || path.ends_with(".yml") {
@@ -111,4 +113,13 @@ fn load_from_file() -> Option<AppConfig> {
     } else {
         None
     }
+}
+
+fn default_data_dir() -> String {
+    let home = env::var("HOME")
+        .or_else(|_| env::var("USERPROFILE"))
+        .unwrap_or_else(|_| ".".to_string());
+    let mut path = PathBuf::from(home);
+    path.push(".piramid");
+    path.to_string_lossy().to_string()
 }

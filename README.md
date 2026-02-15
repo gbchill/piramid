@@ -13,7 +13,7 @@
     <a href="#usage">Usage</a> •
     <a href="#configuration">Configuration</a> •
     <a href="#development">Development</a> •
-    <a href="docs/CONTRIBUTION.md">Contributing</a>
+    <a href="docs/contributing/index.md">Contributing</a>
 </p>
 
 Piramid is a Rust vector database tuned for low-latency agentic workloads. The long-term goal is to colocate vector search and the LLM on the same GPU (future Zipy kernel) to avoid CPU round-trips. Today it is a lean CPU server with fast search, WAL durability, embedding providers, and guardrails for production use.
@@ -36,6 +36,7 @@ piramid serve --data-dir ./data
 ```
 
 Server defaults to `http://0.0.0.0:6333`.
+Data is stored under `~/.piramid` by default (set `DATA_DIR` to override).
 
 ### From source
 
@@ -85,6 +86,12 @@ Use a config file (`piramid.yaml`) and override with env vars.
 piramid init --path piramid.yaml   # generate defaults
 piramid serve --config piramid.yaml
 ```
+
+Environment overrides (examples):
+
+- Inline: `PORT=7000 DATA_DIR=~/piramid-data piramid serve`
+- Point to a config file: `CONFIG_FILE=~/piramid/piramid.yaml piramid serve`
+- Embeddings: `EMBEDDING_PROVIDER=openai OPENAI_API_KEY=sk-...`
 
 Key env overrides:
 
