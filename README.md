@@ -6,55 +6,48 @@
 
 <p align="center">
     <a href="https://crates.io/crates/piramid"><img src="https://img.shields.io/crates/v/piramid.svg" alt="crates.io"></a>
-    <a href="https://www.npmjs.com/package/piramid"><img src="https://img.shields.io/npm/v/piramid.svg" alt="npm"></a>
-    <a href="https://pypi.org/project/piramid/"><img src="https://img.shields.io/pypi/v/piramid.svg" alt="PyPI"></a>
 </p>
 
 <p align="center">
     <a href="#quick-start">Quick Start</a> •
     <a href="#usage">Usage</a> •
-    <a href="#contributing">Contributing</a>
+    <a href="#configuration">Configuration</a> •
+    <a href="#development">Development</a> •
+    <a href="docs/CONTRIBUTION.md">Contributing</a>
 </p>
 
- 
+Piramid is a Rust vector database tuned for low-latency agentic workloads. The long-term goal is to colocate vector search and the LLM on the same GPU (future Zipy kernel) to avoid CPU round-trips. Today it is a lean CPU server with fast search, WAL durability, embedding providers, and guardrails for production use.
 
-
-Piramid is a vector database built in Rust, designed specifically for AI agent applications. Store embeddings, search by similarity, and let agents discover and walk your data.
-
-- REST API + Rust library
-- Memory-safe, zero-cost abstractions
-- OpenAI, Ollama (local) support
-- Purpose-built with MCPs for LLM applications
-- Visual interface for management
-- WASM support for running in browser/edge/mobile
-
- 
+- Single binary (`piramid`) with CLI + server
+- Search engines: HNSW, IVF, flat; filters and metadata
+- WAL + checkpoints; mmap-backed storage with caches
+- Embeddings: OpenAI and local HTTP (Ollama/TEI-style), caching and retries
+- Limits and disk/memory guards; tracing + metrics/health endpoints
+- Roadmap: GPU kernel (Zipy) co-resident with the LLM for single-hop latency
 
 ## Quick Start
 
-### Docker
+### Cargo (recommended)
+
+```bash
+cargo install piramid
+piramid init                # writes piramid.yaml
+piramid serve --data-dir ./data
+```
+
+Server defaults to `http://0.0.0.0:6333`.
+
+### From source
 
 ```bash
 git clone https://github.com/ashworks1706/piramid
 cd piramid
-docker compose up -d
+cargo run --release -- serve --data-dir ./data
 ```
-
-Access dashboard at `http://localhost:6333`
-
-### From Source
-
-```bash
-# Prerequisites: Rust 1.70+
-cargo build --release
-./target/release/piramid-server
-```
-
- 
 
 ## Usage
 
-### REST API
+### REST API (v1)
 
 ```bash
 # Create collection
@@ -71,73 +64,76 @@ curl -X POST http://localhost:6333/api/collections/docs/vectors \
     "metadata": {"category": "greeting"}
   }'
 
+# Embed text (single or batch) and store
+curl -X POST http://localhost:6333/api/collections/docs/embed \
+  -H "Content-Type: application/json" \
+  -d '{"text": ["hello", "bonjour"], "metadata": [{"lang": "en"}, {"lang": "fr"}]}'
+
 # Search
 curl -X POST http://localhost:6333/api/collections/docs/search \
   -H "Content-Type: application/json" \
   -d '{"vector": [0.1, 0.2, 0.3, 0.4], "k": 5}'
 ```
- 
+
+Health and metrics: `/healthz`, `/readyz`, `/api/metrics`.
 
 ## Configuration
 
-Configure via environment variables:
+Use a config file (`piramid.yaml`) and override with env vars.
 
 ```bash
-PORT=6333              # HTTP server port
-DATA_DIR=/app/data     # Data storage directory
+piramid init --path piramid.yaml   # generate defaults
+piramid serve --config piramid.yaml
+```
 
-# Optional: Embedding provider
-EMBEDDING_PROVIDER=openai|ollama
+Key env overrides:
+
+```bash
+PORT=6333                 # HTTP server port
+DATA_DIR=/app/data        # Data storage directory
+CONFIG_FILE=./piramid.yaml
+
+# Embeddings
+EMBEDDING_PROVIDER=openai|local
 EMBEDDING_MODEL=text-embedding-3-small
 OPENAI_API_KEY=sk-...
-EMBEDDING_BASE_URL=http://localhost:11434
+EMBEDDING_BASE_URL=http://localhost:11434   # for local/Ollama/TEI
+EMBEDDING_TIMEOUT_SECS=15
+
+# Limits/guards
+DISK_MIN_FREE_BYTES=1073741824    # 1GB
+DISK_READONLY_ON_LOW_SPACE=true
+CACHE_MAX_BYTES=536870912         # 512MB
 ```
 
-```bash
-# Configure embedding provider
-export EMBEDDING_PROVIDER=openai
-export EMBEDDING_MODEL=text-embedding-3-small
-export OPENAI_API_KEY=sk-your-key-here
+Minimal YAML sample:
 
-# Or use local Ollama
-export EMBEDDING_PROVIDER=ollama
-export EMBEDDING_MODEL=nomic-embed-text
-export EMBEDDING_BASE_URL=http://localhost:11434
-
-# Embed text and store
-curl -X POST http://localhost:6333/api/collections/docs/embed \
-  -H "Content-Type: application/json" \
-  -d '{"text": "The quick brown fox", "metadata": {"source": "example"}}'
-
-# Search by text
-curl -X POST http://localhost:6333/api/collections/docs/search/text \
-  -H "Content-Type: application/json" \
-  -d '{"query": "fast animals", "k": 5}'
+```yaml
+index:
+  type: Auto
+  metric: Cosine
+  mode: Auto
+search:
+  ef: null
+  nprobe: null
+  filter_overfetch: 10
+wal:
+  enabled: true
+  checkpoint_frequency: 1000
+memory:
+  use_mmap: true
+limits:
+  max_vectors: null
+  max_bytes: null
 ```
-
-
- 
 
 ## Development
 
 ```bash
-# Build
 cargo build
-
-# Run tests
 cargo test
-
-# Run server
-cargo run --bin piramid-server
-
-# Dashboard (development)
-cd dashboard && npm install && npm run dev
+cargo run -- serve --data-dir ./data
 ```
-
-## Contributing
-
-See [docs/TODO.md](docs/TODO.md) for documentation.
-
 
 ## License
 
@@ -145,5 +141,4 @@ See [docs/TODO.md](docs/TODO.md) for documentation.
 
 ## Acknowledgments
 
-built by @ashworks1706 for educational purposes
-
+Built by @ashworks1706. Future work includes Zipy (GPU kernel) for co-located LLM + vector search. 

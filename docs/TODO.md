@@ -1,9 +1,5 @@
 ### Documentation & Testing
 
-**Dashboard**
-
-[ ] Dashboard full update with functionality
-[ ] Final docker image push
 
 **Documentation**
 
@@ -11,13 +7,11 @@
 
 [ ] Entire Technical architecture breakdown (MkDocs)
 
-[ ] docs/CONTRIBUTION.md - 5-minute tutorial and updates
+**Dashboard**
 
-[ ] README.md - update readme
+[ ] Dashboard full update with functionality
+[ ] Final docker image push
 
-[ ] License headers in source files
-
-[ ] Third-party license audit
 
 ---
 
