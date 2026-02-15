@@ -6,13 +6,15 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 import { mdxComponents } from "../../../mdx-components";
-import { findDoc, bannerPath, listDocs, extractHeadings } from "@/lib/docs";
+import { findDoc, bannerPath, listDocs, extractHeadings } from "../../../lib/docs";
 import { DocsToc } from "../../../components/DocsToc";
 
 export async function generateStaticParams() {
   const docs = listDocs().filter((d) => d.slug.join("/") !== "index");
   return docs.map((d) => ({ slug: d.slug }));
 }
+
+export const runtime = "nodejs";
 
 export default async function DocPage({ params }: { params: Promise<{ slug: string[] }> }) {
   const { slug } = await params;

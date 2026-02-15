@@ -5,8 +5,10 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 import { mdxComponents } from "../../mdx-components";
-import { bannerPath, findDoc, extractHeadings } from "@/lib/docs";
+import { bannerPath, findDoc, extractHeadings } from "../../lib/docs";
 import { DocsToc } from "../../components/DocsToc";
+
+export const runtime = "nodejs";
 
 export default async function DocsIndex() {
   const doc = findDoc(["index"]);
