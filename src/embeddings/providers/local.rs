@@ -72,12 +72,14 @@ struct LocalEmbeddingResponse {
 struct LocalEmbeddingData {
     embedding: Vec<f32>,
     #[serde(default)]
+    #[allow(dead_code)] // Present in some providers; we don't use the index value yet.
     index: Option<usize>,
 }
 
 #[derive(Debug, Deserialize, Default)]
 struct LocalUsage {
     #[serde(default)]
+    #[allow(dead_code)] // Not surfaced today, but kept for completeness.
     prompt_tokens: u32,
     #[serde(default)]
     total_tokens: u32,
