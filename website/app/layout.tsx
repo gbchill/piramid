@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://piramiddb.com",
-    title: "Piramid - Hybrid Vector Database",
+    title: "Piramid - Vector Database for Agentic Applications",
     description: "Open-source hybrid vector database combining graph-based and traditional vector search capabilities.",
     siteName: "Piramid",
     images: [
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Piramid - Hybrid Vector Database",
+    title: "Piramid - Vector Database for Agentic Applications",
     description: "Open-source hybrid vector database combining graph-based and traditional vector search capabilities.",
     images: ["../public/logo_dark.png"],
     creator: "@piramiddb",
