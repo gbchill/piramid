@@ -8,20 +8,32 @@ type Props = {
 };
 
 export function DocsSidebar({ sections }: Props) {
+  const hrefForSlug = (slugParts: string[]) => {
+    const slugPath = slugParts.join("/");
+    return slugPath === "index" ? "/docs" : "/docs/" + slugPath;
+  };
+
   return (
     <div className="sticky top-24 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-slate-900/30 backdrop-blur">
       <div className="space-y-6">
         {sections.map((section) => (
           <div key={section.label} className="space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-              {section.label}
-            </div>
+            {section.items.length > 0 ? (
+              <Link
+                href={hrefForSlug(section.items[0].slug)}
+                className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 hover:text-white"
+              >
+                {section.label}
+              </Link>
+            ) : (
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                {section.label}
+              </div>
+            )}
             <div className="space-y-1">
               {section.items.map((item) => {
-                const slugPath = item.slug.join("/");
-                const isIndex = slugPath === "index";
-                const href = isIndex ? "/docs" : "/docs/" + slugPath;
-                const label = isIndex ? "Overview" : item.title;
+                const href = hrefForSlug(item.slug);
+                const label = item.slug.join("/") === "index" ? "Overview" : item.title;
                 return (
                   <Link
                     key={href}

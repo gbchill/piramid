@@ -53,6 +53,7 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
     },
   });
 
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_240px]">

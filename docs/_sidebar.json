@@ -1,10 +1,39 @@
 {
   "sections": [
-    { "label": "Overview", "items": ["overview"] },
-    { "label": "Architecture", "items": ["architecture"] },
-    { "label": "API", "items": ["api", "configuration"] },
-    { "label": "Operations", "items": ["operations"] },
-    { "label": "Contributing", "items": ["contributing"] },
-    { "label": "Roadmap", "items": ["roadmap"] }
+    { "label": "Overview", "items": ["overview", "overview/history"] },
+    {
+      "label": "Architecture",
+      "items": [
+        "architecture",
+        "architecture/storage",
+        "architecture/indexing",
+        "architecture/embeddings"
+      ]
+    },
+    {
+      "label": "Operations",
+      "items": [
+        "operations",
+        "operations/health",
+        "operations/maintenance",
+        "operations/logging"
+      ]
+    },
+    {
+      "label": "Configuration",
+      "items": [
+        "configuration",
+        "configuration/env"
+      ]
+    },
+    {
+      "label": "API",
+      "items": [
+        "api",
+        "api/schemas"
+      ]
+    },
+    { "label": "Roadmap", "items": ["roadmap"] },
+    { "label": "Contributing", "items": ["contributing"] }
   ]
 }

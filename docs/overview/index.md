@@ -1,4 +1,4 @@
-# Piramid documentation (skeleton)
+# Overview
 
 Piramid is a latency-first vector database written in Rust. The goal is to keep the database and your LLM on the same device, minimize round-trips, and expose a simple HTTP API plus a single binary CLI.
 
