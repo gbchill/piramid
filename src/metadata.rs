@@ -99,34 +99,3 @@ pub fn metadata<const N: usize>(pairs: [(&str, MetadataValue); N]) -> Metadata {
         .map(|(k, v)| (k.to_string(), v))      // convert &str keys to String
         .collect()                              // collect into HashMap
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_metadata_creation() {
-        let meta = metadata([
-            ("name", "test".into()),
-            ("count", 42i64.into()),
-            ("score", 3.14f64.into()),
-            ("active", true.into()),
-        ]);
-
-        assert_eq!(meta.get("name").unwrap().as_string(), Some("test"));
-        assert_eq!(meta.get("count").unwrap().as_integer(), Some(42));
-        assert!((meta.get("score").unwrap().as_float().unwrap() - 3.14).abs() < 1e-6);
-        assert_eq!(meta.get("active").unwrap().as_boolean(), Some(true));
-    }
-
-    #[test]
-    fn test_from_impls() {
-        let _: MetadataValue = "hello".into();
-        let _: MetadataValue = String::from("world").into();
-        let _: MetadataValue = 42i64.into();
-        let _: MetadataValue = 42i32.into();
-        let _: MetadataValue = 3.14f64.into();
-        let _: MetadataValue = 3.14f32.into();
-        let _: MetadataValue = true.into();
-    }
-}

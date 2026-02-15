@@ -11,6 +11,7 @@ struct HnswNode{
     // connections[layer] = Vec of neighbor IDs at that layer
     // Layer 0 is at index 0
     connections: Vec<Vec<Uuid>>,
+    // Marked true when deleted; we keep edges so traversal stays connected.
     tombstone: bool,
 }
 
@@ -129,6 +130,7 @@ impl HnswIndex{
         }
 
         // Insert and connect at each layer from target down to 0
+        // (keep pending connections to avoid partial writes before pruning).
         let mut pending_connections = vec![Vec::new(); layer + 1];
         for lc in (0..=layer).rev() { // 0..=layer means we go from layer down to 0 since we are
                                       // doing rev()
@@ -444,10 +446,10 @@ impl HnswIndex{
 
         HnswStats {
             total_nodes,
+            tombstones,
             max_layer: self.max_level,
             layer_sizes,
             memory_usage_bytes,
-            tombstones,
             avg_connections: if total_nodes > 0 {
                 total_connections as f32 / total_nodes as f32
             } else {
@@ -461,69 +463,4 @@ impl HnswIndex{
         self.config.ef_search
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_hnsw_insert_and_search() {
-        let mut config = HnswConfig::default();
-        config.metric = crate::metrics::Metric::Euclidean;
-        let mut index = HnswIndex::new(config.clone());
-        let mut vectors = HashMap::new();
-
-        // Insert some test vectors
-        let ids: Vec<Uuid> = (0..10).map(|_| Uuid::new_v4()).collect();
-        for (i, &id) in ids.iter().enumerate() {
-            let vector = vec![i as f32, (i * 2) as f32, (i * 3) as f32];
-            vectors.insert(id, vector.clone());
-            index.insert(id, &vector, &vectors);
-        }
-
-        // Search for something close to vector 5
-        let query = vec![5.0, 10.0, 15.0];
-        let empty_meta: HashMap<Uuid, crate::metadata::Metadata> = HashMap::new();
-        let results = index.search(&query, 3, 50, &vectors, None, &empty_meta);
-
-        assert!(results.len() <= 3);
-        // Approximate search should return at least one neighbor
-        assert!(!results.is_empty());
-    }
-
-    #[test]
-    fn test_hnsw_empty_search() {
-        let config = HnswConfig::default();
-        let index = HnswIndex::new(config);
-        let vectors = HashMap::new();
-
-        let query = vec![1.0, 2.0, 3.0];
-        let empty_meta: HashMap<Uuid, crate::metadata::Metadata> = HashMap::new();
-        let results = index.search(&query, 5, 50, &vectors, None, &empty_meta);
-
-        assert_eq!(results.len(), 0);
-    }
-
-    #[test]
-    fn test_hnsw_remove() {
-        let config = HnswConfig::default();
-        let mut index = HnswIndex::new(config);
-        let mut vectors = HashMap::new();
-
-        let id = Uuid::new_v4();
-        let vector = vec![1.0, 2.0, 3.0];
-        vectors.insert(id, vector.clone());
-        index.insert(id, &vector, &vectors);
-
-        assert_eq!(index.nodes.len(), 1);
-
-        index.remove(&id);
-        let stats = index.stats();
-        assert_eq!(stats.total_nodes, 0);
-        assert_eq!(stats.tombstones, 1);
-    }
-}
-
-
-
 

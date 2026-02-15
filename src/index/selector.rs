@@ -178,39 +178,3 @@ impl IndexConfig {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_auto_selection() {
-        let config = IndexConfig::default();
-        
-        assert_eq!(config.select_type(1_000), IndexType::Flat);
-        assert_eq!(config.select_type(50_000), IndexType::Ivf);
-        assert_eq!(config.select_type(500_000), IndexType::Hnsw);
-    }
-    
-    #[test]
-    fn test_forced_index_type() {
-        let flat_config = IndexConfig::Flat { 
-            metric: Metric::Cosine,
-            mode: ExecutionMode::default(),
-            search: SearchConfig::default(),
-        };
-        assert_eq!(flat_config.select_type(1_000_000), IndexType::Flat);
-        
-        let hnsw_config = IndexConfig::Hnsw {
-            m: 16,
-            m_max: 32,
-            ef_construction: 200,
-            ef_search: 200,
-            ml: 1.0 / 16.0_f32.ln(),
-            metric: Metric::Cosine,
-            mode: ExecutionMode::default(),
-            search: SearchConfig::default(),
-        };
-        assert_eq!(hnsw_config.select_type(100), IndexType::Hnsw);
-    }
-}

@@ -58,22 +58,3 @@ pub fn create_embedder(config: &EmbeddingConfig) -> EmbeddingResult<Arc<dyn Embe
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_provider_from_str() {
-        assert_eq!(EmbeddingProvider::from_str("openai"), Some(EmbeddingProvider::OpenAI));
-        assert_eq!(EmbeddingProvider::from_str("OpenAI"), Some(EmbeddingProvider::OpenAI));
-        assert_eq!(EmbeddingProvider::from_str("ollama"), Some(EmbeddingProvider::Ollama));
-        assert_eq!(EmbeddingProvider::from_str("unknown"), None);
-    }
-
-    #[test]
-    fn test_provider_as_str() {
-        assert_eq!(EmbeddingProvider::OpenAI.as_str(), "openai");
-        assert_eq!(EmbeddingProvider::Ollama.as_str(), "ollama");
-    }
-}

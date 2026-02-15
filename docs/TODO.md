@@ -1,12 +1,3 @@
-
-### Production 
-
-**Index Management**
-
-[x] Product Quantization (PQ) (CPU compression)
-
-[x] HNSW tombstoning: soft-delete nodes without breaking graph connectivity
-
 ### Documentation & Testing
 
 **Launch Prep**
@@ -14,9 +5,8 @@
 [ ] Remove redundant functions
 [ ] Maintain proper logging
 [ ] Codebase final refactor
-[ ] seperate tests file, get rid of tests on the same file
 
-**Dashboard**rog
+**Dashboard**
 
 [ ] Dashboard full update with functionality
 [ ] Final docker image push

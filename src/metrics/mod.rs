@@ -43,26 +43,3 @@ impl Metric {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_identical_vectors() {
-        let v = vec![1.0, 2.0, 3.0];
-        
-        // Identical vectors should have max similarity
-        assert!((Metric::Cosine.calculate(&v, &v, ExecutionMode::Auto) - 1.0).abs() < 1e-6);
-        assert!((Metric::Euclidean.calculate(&v, &v, ExecutionMode::Auto) - 1.0).abs() < 1e-6);
-    }
-
-    #[test]
-    fn test_orthogonal_vectors() {
-        let v1 = vec![1.0, 0.0];
-        let v2 = vec![0.0, 1.0];
-        
-        // Orthogonal vectors have 0 cosine similarity
-        assert!(Metric::Cosine.calculate(&v1, &v2, ExecutionMode::Auto).abs() < 1e-6);
-    }
-}

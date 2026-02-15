@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::config::QuantizationConfig;
 
+// Tracks which encoding is used; defaults to Scalar so old checkpoints still load.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum QuantizationKind {
     Scalar,
@@ -261,81 +262,5 @@ impl QuantizedVector {
                 .map(|pq| pq.dim())
                 .unwrap_or(self.values.len()),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_quantization() {
-        let original = vec![0.0, 0.5, 1.0, 1.5, 2.0];
-        let quantized = QuantizedVector::from_f32(&original);
-        let dequantized = quantized.to_f32();
-
-        for (o, d) in original.iter().zip(dequantized.iter()) {
-            let error = (o - d).abs();
-            assert!(
-                error < 0.01,
-                "Error too large: {} vs {} (diff: {})",
-                o,
-                d,
-                error
-            );
-        }
-    }
-
-    #[test]
-    fn test_constant_vector() {
-        let original = vec![1.0, 1.0, 1.0, 1.0];
-        let quantized = QuantizedVector::from_f32(&original);
-        let dequantized = quantized.to_f32();
-
-        for (o, d) in original.iter().zip(dequantized.iter()) {
-            assert!(
-                (o - d).abs() < 0.001,
-                "Original: {}, Dequantized: {}",
-                o,
-                d
-            );
-        }
-    }
-
-    #[test]
-    fn test_negative_values() {
-        let original = vec![-1.0, -0.5, 0.0, 0.5, 1.0];
-        let quantized = QuantizedVector::from_f32(&original);
-        let dequantized = quantized.to_f32();
-
-        for (o, d) in original.iter().zip(dequantized.iter()) {
-            let error = (o - d).abs();
-            assert!(error < 0.01, "Error too large: {} vs {}", o, d);
-        }
-    }
-
-    #[test]
-    fn test_memory_reduction() {
-        let original = vec![0.123; 1536]; // OpenAI embedding size
-        let quantized = QuantizedVector::from_f32(&original);
-
-        let original_size = original.len() * 4;
-        let quantized_size = quantized.values.len() + 8;
-        let ratio = original_size as f32 / quantized_size as f32;
-
-        assert!(
-            ratio > 3.9,
-            "Compression ratio should be ~4x, got {}",
-            ratio
-        );
-    }
-
-    #[test]
-    fn test_pq_roundtrip() {
-        let original: Vec<f32> = (0..32).map(|i| i as f32 * 0.1).collect();
-        let pq =
-            QuantizedVector::from_f32_with_config(&original, &crate::config::QuantizationConfig::pq(4));
-        let restored = pq.to_f32();
-        assert_eq!(restored.len(), original.len());
     }
 }

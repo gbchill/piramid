@@ -5,7 +5,6 @@ pub mod collection;
 mod metadata;
 mod persistence;
 pub mod wal;
-
 pub use document::Document;
 pub use collection::Collection;
 pub use metadata::CollectionMetadata;

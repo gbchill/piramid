@@ -1,0 +1,131 @@
+use piramid::{Collection, Document, Metric, search::SearchParams};
+use std::fs;
+
+fn ensure_test_dir() {
+    let _ = fs::create_dir_all(".piramid/tests");
+}
+
+fn cleanup_test_files(paths: &[&str]) {
+    ensure_test_dir();
+    for path in paths {
+        let _ = fs::remove_file(path);
+    }
+}
+
+#[test]
+fn basic_store_and_retrieve() {
+    ensure_test_dir();
+    let test_path = ".piramid/tests/test_basic.db";
+    let files = vec![
+        test_path,
+        ".piramid/tests/test_basic.db.index.db",
+        ".piramid/tests/test_basic.db.wal.db",
+        ".piramid/tests/test_basic.db.vecindex.db",
+        ".piramid/tests/test_basic.db.metadata.db",
+    ];
+    cleanup_test_files(&files);
+
+    let mut storage = Collection::open(test_path).unwrap();
+    let entry = Document::new(vec![1.0, 2.0, 3.0], "test".to_string());
+    let id = storage.insert(entry).unwrap();
+
+    let retrieved = storage.get(&id).unwrap();
+    assert_eq!(retrieved.text, "test");
+    assert_eq!(retrieved.get_vector(), vec![1.0, 2.0, 3.0]);
+
+    drop(storage);
+    cleanup_test_files(&files);
+}
+
+#[test]
+fn persistence_roundtrip() {
+    ensure_test_dir();
+    let test_path = ".piramid/tests/test_persist.db";
+    let files = vec![
+        test_path,
+        ".piramid/tests/test_persist.db.index.db",
+        ".piramid/tests/test_persist.db.wal.db",
+        ".piramid/tests/test_persist.db.vecindex.db",
+        ".piramid/tests/test_persist.db.metadata.db",
+    ];
+    cleanup_test_files(&files);
+
+    let id1;
+    let id2;
+    {
+        let mut storage = Collection::open(test_path).unwrap();
+        id1 = storage.insert(Document::new(vec![1.0, 2.0], "first".into())).unwrap();
+        id2 = storage.insert(Document::new(vec![3.0, 4.0], "second".into())).unwrap();
+    }
+
+    {
+        let storage = Collection::open(test_path).unwrap();
+        assert_eq!(storage.count(), 2);
+        assert_eq!(storage.get(&id1).unwrap().text, "first");
+        assert_eq!(storage.get(&id2).unwrap().text, "second");
+    }
+
+    cleanup_test_files(&files);
+}
+
+#[test]
+fn search_returns_results() {
+    ensure_test_dir();
+    let test_path = ".piramid/tests/test_search.db";
+    let files = vec![
+        test_path,
+        ".piramid/tests/test_search.db.index.db",
+        ".piramid/tests/test_search.db.wal.db",
+        ".piramid/tests/test_search.db.vecindex.db",
+        ".piramid/tests/test_search.db.metadata.db",
+    ];
+    cleanup_test_files(&files);
+
+    let mut storage = Collection::open(test_path).unwrap();
+    let vectors = vec![
+        vec![1.0, 0.0, 0.0],
+        vec![0.0, 1.0, 0.0],
+        vec![0.0, 0.0, 1.0],
+        vec![0.9, 0.1, 0.0],
+    ];
+    for (i, vec) in vectors.iter().enumerate() {
+        storage.insert(Document::new(vec.clone(), format!("vec{}", i))).unwrap();
+    }
+
+    let params = SearchParams::default();
+    let results = storage.search(&[1.0, 0.0, 0.0], 2, Metric::Cosine, params);
+    assert_eq!(results.len(), 2);
+    assert_eq!(results[0].text, "vec0");
+
+    drop(storage);
+    cleanup_test_files(&files);
+}
+
+#[test]
+fn batch_search_multi_queries() {
+    ensure_test_dir();
+    let test_path = ".piramid/tests/test_batch_search.db";
+    let files = vec![
+        test_path,
+        ".piramid/tests/test_batch_search.db.index.db",
+        ".piramid/tests/test_batch_search.db.wal.db",
+        ".piramid/tests/test_batch_search.db.vecindex.db",
+        ".piramid/tests/test_batch_search.db.metadata.db",
+    ];
+    cleanup_test_files(&files);
+
+    let mut storage = Collection::open(test_path).unwrap();
+    for i in 0..10 {
+        storage
+            .insert(Document::new(vec![i as f32, 0.0, 0.0], format!("vec{}", i)))
+            .unwrap();
+    }
+
+    let queries = vec![vec![0.0, 0.0, 0.0], vec![5.0, 0.0, 0.0], vec![9.0, 0.0, 0.0]];
+    let results = storage.search_batch(&queries, 2, Metric::Cosine);
+    assert_eq!(results.len(), 3);
+    assert!(results.iter().all(|hits| !hits.is_empty()));
+
+    drop(storage);
+    cleanup_test_files(&files);
+}
