@@ -26,13 +26,6 @@
         "configuration/env"
       ]
     },
-    {
-      "label": "API",
-      "items": [
-        "api",
-        "api/schemas"
-      ]
-    },
     { "label": "Roadmap", "items": ["roadmap"] },
     { "label": "Contributing", "items": ["contributing"] }
   ]

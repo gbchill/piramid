@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { SidebarSection } from "../lib/docs";
+import type { SidebarSection } from "../lib/blogs";
 
 type Props = {
   sections: SidebarSection[];
@@ -12,7 +12,7 @@ type Props = {
 export function DocsSidebar({ sections, sticky = true, className = "" }: Props) {
   const hrefForSlug = (slugParts: string[]) => {
     const slugPath = slugParts.join("/");
-    return slugPath === "index" ? "/docs" : "/docs/" + slugPath;
+    return slugPath === "index" ? "/blogs" : "/blogs/" + slugPath;
   };
 
   return (
@@ -52,7 +52,7 @@ export function DocsSidebar({ sections, sticky = true, className = "" }: Props) 
           </div>
         ))}
         {sections.length === 0 ? (
-          <div className="text-xs text-slate-400">No docs.</div>
+          <div className="text-xs text-slate-400">No posts.</div>
         ) : null}
       </div>
     </div>

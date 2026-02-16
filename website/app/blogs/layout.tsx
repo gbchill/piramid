@@ -1,12 +1,13 @@
 import "../globals.css";
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { DocsSidebar } from "../../components/DocsSidebar";
 import { DocsSearchLauncher } from "../../components/DocsSearchLauncher";
 import { DocsSidebarMobile } from "../../components/DocsSidebarMobile";
-import { buildSidebar, buildSearchIndex } from "../../lib/docs";
+import { buildSidebar, buildSearchIndex } from "../../lib/blogs";
 
-export default function DocsLayout({ children }: { children: ReactNode }) {
+export default function BlogsLayout({ children }: { children: ReactNode }) {
   const sidebar = buildSidebar();
   const searchEntries = buildSearchIndex();
 
@@ -16,7 +17,7 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-4">
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-3">
-              <img src="/logo_light.png" alt="Piramid" className="h-9 w-9" />
+              <Image src="/logo_light.png" alt="Piramid" className="h-9 w-9" width={36} height={36} />
               <div className="flex flex-col leading-tight">
                 <span className="text-lg font-semibold tracking-wide">piramid</span>
               </div>

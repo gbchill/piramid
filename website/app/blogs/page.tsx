@@ -1,11 +1,10 @@
 import fs from "fs";
-import path from "path";
 import { compileMDX } from "next-mdx-remote/rsc";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 import { mdxComponents } from "../../mdx-components";
-import { findDoc, extractHeadings, docSeo, docNeighbors } from "../../lib/docs";
+import { findDoc, extractHeadings, docSeo, docNeighbors } from "../../lib/blogs";
 import { DocsToc } from "../../components/DocsToc";
 import { DocsPager } from "../../components/DocsPager";
 import type { Metadata } from "next";
@@ -14,9 +13,9 @@ export const runtime = "nodejs";
 
 export async function generateMetadata(): Promise<Metadata> {
   const seo = docSeo(["index"]);
-  const title = seo?.title ?? "Piramid docs";
-  const description = seo?.description ?? "Piramid documentation.";
-  const url = "/docs";
+  const title = seo?.title ?? "Piramid blog";
+  const description = seo?.description ?? "Piramid updates, notes, and deep dives.";
+  const url = "/blogs";
   return {
     title,
     description,
@@ -33,7 +32,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function DocsIndex() {
+export default async function BlogsIndex() {
   const doc = findDoc(["index"]);
   if (!doc) return null;
 

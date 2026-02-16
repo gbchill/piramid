@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 const features = [
   {
@@ -81,12 +82,12 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <a
-                  href="/docs"
+                <Link
+                  href="/blogs"
                   className="text-sm text-slate-300 hover:text-white transition"
                 >
-                  docs
-                </a>
+                  blog
+                </Link>
                 <a
                   href="https://github.com/ashworks1706/piramid"
                   className="text-sm text-slate-300 hover:text-white transition"
@@ -188,7 +189,7 @@ export default function Home() {
             {/* Footer */}
             <footer className="flex flex-col gap-3 pb-10 text-sm text-slate-400">
               <div className="flex gap-4">
-                <a href="/docs" className="hover:text-white transition">Docs</a>
+                <Link href="/blogs" className="hover:text-white transition">Blog</Link>
                 <a href="https://github.com/ashworks1706/piramid" className="hover:text-white transition">GitHub</a>
                 <a href="https://crates.io/crates/piramid" className="hover:text-white transition">crates.io</a>
                 <a href="https://github.com/ashworks1706/piramid/blob/main/docs/roadmap/index.md" className="hover:text-white transition">Roadmap</a>

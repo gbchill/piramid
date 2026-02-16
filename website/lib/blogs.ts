@@ -3,9 +3,9 @@ import fs from "fs";
 import path from "path";
 import GithubSlugger from "github-slugger";
 
-// Docs are read directly from the repo root ../docs
-const DOCS_DIR = path.join(process.cwd(), "..", "docs");
-const SIDEBAR_CONFIG = path.join(DOCS_DIR, "_sidebar.json");
+// Blog posts are read directly from the repo root ../docs
+const BLOGS_DIR = path.join(process.cwd(), "..", "docs");
+const SIDEBAR_CONFIG = path.join(BLOGS_DIR, "_sidebar.json");
 
 export type DocMeta = {
   slug: string[];
@@ -71,11 +71,11 @@ function parseFrontmatter(raw: string): Record<string, string> {
 }
 
 function slugFromPath(filePath: string): string[] {
-  const rel = path.relative(DOCS_DIR, filePath);
+  const rel = path.relative(BLOGS_DIR, filePath);
   const parts = rel.split(path.sep);
   const last = parts.pop()!;
   const base = last.replace(/\.md$/, "");
-  // Treat folder index.md as the folder slug (e.g., docs/foo/index.md -> /docs/foo)
+  // Treat folder index.md as the folder slug (e.g., docs/foo/index.md -> /blogs/foo)
   if (base === "index" && parts.length > 0) {
     return parts;
   }
@@ -108,7 +108,7 @@ export function listDocs(): DocMeta[] {
     }
   }
 
-  walk(DOCS_DIR);
+  walk(BLOGS_DIR);
   results.forEach((meta) => {
     if (meta.slug.join("/") === "index") {
       meta.title = "Overview";
@@ -128,7 +128,7 @@ function loadSidebarConfig(): SidebarConfig | null {
     const raw = fs.readFileSync(SIDEBAR_CONFIG, "utf8");
     const parsed = JSON.parse(raw) as SidebarConfig;
     if (Array.isArray(parsed.sections)) return parsed;
-  } catch (_) {
+  } catch {
     return null;
   }
   return null;
@@ -140,7 +140,7 @@ export function buildSidebar(): SidebarSection[] {
   if (!config) {
     return [
       {
-        label: "Docs",
+        label: "Blog",
         items: docs.filter((d) => d.slug.join("/") !== "index"),
       },
     ];
@@ -209,7 +209,7 @@ export function buildSearchIndex(): DocSearchEntry[] {
   return cachedSearch;
 }
 
-export { DOCS_DIR };
+export { BLOGS_DIR };
 
 export function extractHeadings(filePath: string): Heading[] {
   const raw = fs.readFileSync(filePath, "utf8");

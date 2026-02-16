@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { DocSearchEntry } from "../lib/docs";
+import type { DocSearchEntry } from "../lib/blogs";
 
 type Props = {
   entries: DocSearchEntry[];
@@ -51,7 +51,7 @@ export function DocsSearchLauncher({ entries, className }: Props) {
         onClick={() => setOpen(true)}
         className={`rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-semibold text-slate-100 hover:border-indigo-300/60 hover:text-white transition ${className ?? ""}`}
       >
-        Search docs <span className="ml-2 rounded bg-white/10 px-1.5 py-0.5 text-[11px] text-slate-300">⌘K</span>
+        Search blog <span className="ml-2 rounded bg-white/10 px-1.5 py-0.5 text-[11px] text-slate-300">⌘K</span>
       </button>
 
       {open ? (
@@ -66,7 +66,7 @@ export function DocsSearchLauncher({ entries, className }: Props) {
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search docs, titles, and content…"
+                placeholder="Search posts, titles, and content…"
                 className="w-full bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
               />
               <button
@@ -83,7 +83,7 @@ export function DocsSearchLauncher({ entries, className }: Props) {
                 </div>
               ) : (
                 results.map((res) => {
-                  const href = "/docs/" + res.slug.join("/");
+                  const href = "/blogs/" + res.slug.join("/");
                   return (
                     <Link
                       key={href}
@@ -93,7 +93,7 @@ export function DocsSearchLauncher({ entries, className }: Props) {
                     >
                       <div className="font-semibold text-white">{res.title}</div>
                       <div className="mt-1 line-clamp-2 text-xs text-slate-400">{res.text}</div>
-                      <div className="mt-1 text-[11px] text-indigo-200">{href.replace(/^\/docs/, "") || "/"}</div>
+                      <div className="mt-1 text-[11px] text-indigo-200">{href.replace(/^\/blogs/, "") || "/"}</div>
                     </Link>
                   );
                 })

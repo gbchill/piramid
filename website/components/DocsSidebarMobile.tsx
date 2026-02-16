@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { SidebarSection } from "../lib/docs";
+import type { SidebarSection } from "../lib/blogs";
 import { DocsSidebar } from "./DocsSidebar";
 
 type Props = {
@@ -18,7 +18,7 @@ export function DocsSidebarMobile({ sections }: Props) {
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-slate-900/30 transition hover:border-indigo-400/60"
       >
-        <span>Docs navigation</span>
+        <span>Blog navigation</span>
         <span aria-hidden="true" className="text-lg">
           {open ? "×" : "☰"}
         </span>
